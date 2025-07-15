@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
             <div className="mb-4">
               <Link to="/" className="flex items-center">
                 <img
-                  src="/public/Queue.png"
+                  src="/Queue.png"
                   alt="Queue Logo"
                   className="h-20 w-auto mb-4"
                 />

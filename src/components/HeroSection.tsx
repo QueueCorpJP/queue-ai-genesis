@@ -18,7 +18,7 @@ const HeroSection: React.FC = () => {
           playsInline
           className="absolute inset-0 w-full h-full object-cover opacity-30" style={{ filter: 'brightness(1.2)' }}
         >
-          <source src="/public/queue.mp4" type="video/mp4" />
+          <source src="/queue.mp4" type="video/mp4" />
         </video>
       </div>
       

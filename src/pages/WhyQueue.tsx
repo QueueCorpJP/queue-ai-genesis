@@ -57,7 +57,7 @@ const WhyQueue = () => {
               <div className="bg-navy-50 p-8 rounded-xl">
                 <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
                   <img 
-                    src="/public/first.png" 
+                    src="/first.png" 
                     alt="圧倒的な技術力" 
                     className="w-full h-full object-cover rounded-lg"
                   />
@@ -69,7 +69,7 @@ const WhyQueue = () => {
               <div className="order-2 md:order-1 bg-navy-50 p-8 rounded-xl">
                 <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
                   <img 
-                    src="/public/second.png" 
+                    src="/second.png" 
                     alt="圧倒的なスピード" 
                     className="w-full h-full object-cover rounded-lg"
                   />
@@ -133,7 +133,7 @@ const WhyQueue = () => {
               <div className="bg-navy-50 p-8 rounded-xl">
                 <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
                   <img 
-                    src="/public/third.png" 
+                    src="/third.png" 
                     alt="圧倒的な品質" 
                     className="w-full h-full object-cover rounded-lg"
                   />

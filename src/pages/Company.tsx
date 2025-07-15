@@ -40,7 +40,7 @@ const Company = () => {
               </p>
               <div className="flex items-center justify-center">
                 <img
-                  src="/public/Queue.png"
+                  src="/Queue.png"
                   alt="Queue Logo"
                   className="h-16 w-auto opacity-90"
                 />
@@ -58,7 +58,7 @@ const Company = () => {
               <div className="bg-gradient-to-br from-white to-navy-50 p-8 rounded-2xl shadow-lg border border-navy-100 hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center mb-8">
                   <img
-                    src="/public/Queue.png"
+                    src="/Queue.png"
                     alt="Queue Logo"
                     className="h-12 w-auto mr-4"
                   />
