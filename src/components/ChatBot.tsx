@@ -432,7 +432,7 @@ Queue株式会社について:
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code({ node, inline, className, children, ...props }: any) {
+                      code({ node, inline, className, children, ...props }: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
                         const match = /language-(\w+)/.exec(className || '');
                         return !inline && match ? (
                           <SyntaxHighlighter
@@ -535,7 +535,7 @@ Queue株式会社について:
         </Drawer>
       ) : (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetContent side="right" className="w-[420px] h-[650px] overflow-hidden p-0">
+          <SheetContent side="right" className="w-[420px] h-[650px] overflow-hidden p-0 [&>button]:right-2 [&>button]:top-2 [&>button]:z-50">
             <SheetTitle className="sr-only">Queueアシスタント</SheetTitle>
             <SheetDescription className="sr-only">
               Queue株式会社のAIアシスタントとのチャット

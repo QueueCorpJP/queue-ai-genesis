@@ -188,6 +188,21 @@
   }
 }
 
+/* Mobile menu full screen overlay */
+@media (max-width: 768px) {
+  .mobile-menu-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: #ffffff !important;
+    z-index: 9999 !important;
+  }
+}
+
 /* Animation for skeleton loading */
 @keyframes pulse {
   0%, 100% {

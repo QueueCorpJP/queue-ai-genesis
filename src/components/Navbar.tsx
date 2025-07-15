@@ -78,72 +78,89 @@ const Navbar: React.FC = () => {
           </Button>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button - hide when menu is open */}
         <button
-          className="md:hidden text-navy-800 p-2 z-50"
+          className={`md:hidden text-navy-800 p-2 z-50 transition-opacity ${
+            isMobileMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-label="Open menu"
         >
-          {isMobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
+          <Menu className="h-6 w-6" />
         </button>
       </div>
 
       {/* Mobile Menu - Full Screen Overlay */}
       <div 
-        className={`fixed inset-0 bg-white z-40 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-0 w-full h-full bg-white mobile-menu-overlay transform transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        } md:hidden`}
+        style={{ 
+          backgroundColor: '#ffffff',
+          width: '100vw',
+          height: '100vh',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999
+        }}
       >
-        <div className="container mx-auto px-6 py-20">
-          <nav className="flex flex-col space-y-6">
+        {/* Close Button - positioned at top right of overlay */}
+        <button
+          className="absolute top-4 right-4 text-navy-800 p-2 z-50 bg-white rounded-full shadow-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-label="Close menu"
+        >
+          <X className="h-6 w-6" />
+        </button>
+        
+        <div className="w-full h-full px-6 py-20 bg-white" style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
+          <nav className="flex flex-col space-y-6 bg-white w-full">
             <Link
               to="/services"
-              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 transition-colors p-2"
+              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Services
             </Link>
             <Link
               to="/why-queue"
-              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 transition-colors p-2"
+              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Why Queue?
             </Link>
             <Link
               to="/products"
-              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 transition-colors p-2"
+              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Products
             </Link>
             <Link
               to="/case-studies"
-              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 transition-colors p-2"
+              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Case Studies
             </Link>
             <Link
               to="/company"
-              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 transition-colors p-2"
+              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Company
             </Link>
             <Link
               to="/contact"
-              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 transition-colors p-2"
+              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Contact
             </Link>
 
-            <div className="pt-6">
+            <div className="pt-6 bg-white">
               <Button 
                 asChild 
                 className="w-full bg-navy-800 hover:bg-navy-700 text-white rounded-full text-lg py-6"
