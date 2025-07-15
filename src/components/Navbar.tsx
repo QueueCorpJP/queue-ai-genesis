@@ -43,7 +43,7 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2 z-50" onClick={() => setIsMobileMenuOpen(false)}>
           <img 
-            src="/Queue.png" 
+            src="/public/Queue.png" 
             alt="Queue Logo" 
             className="h-14 md:h-20 w-auto"
           />
