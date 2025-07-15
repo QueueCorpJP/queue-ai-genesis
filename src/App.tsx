@@ -28,7 +28,7 @@ import Products from "./pages/Products";
 import ChatBot from "./components/ChatBot";
 
 const queryClient = new QueryClient();
-
+//h
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AdminProvider>
