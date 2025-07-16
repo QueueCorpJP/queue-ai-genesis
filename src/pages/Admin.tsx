@@ -17,7 +17,7 @@ const Admin = () => {
     }
   }, [user, navigate]);
 
-  // リダイレクト中の表示
+  // リダイレクト中
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
