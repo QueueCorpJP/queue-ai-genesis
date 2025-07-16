@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -290,23 +290,25 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">チャットボット管理</h2>
+    <div className={`space-y-4 md:space-y-6 ${className}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-xl md:text-2xl font-bold">チャットボット管理</h2>
         <div className="flex items-center gap-2">
           <Button onClick={addTestData} variant="outline" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
-            テストデータ追加
+            <span className="hidden sm:inline">テストデータ追加</span>
+            <span className="sm:hidden">テスト</span>
           </Button>
           <Button onClick={exportConversations} className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            CSV出力
+            <span className="hidden sm:inline">CSV出力</span>
+            <span className="sm:hidden">CSV</span>
           </Button>
         </div>
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <StatsCard title="総会話数" value={stats.totalConversations} icon={MessageSquare} />
         <StatsCard title="今日の会話" value={stats.todayConversations} icon={Calendar} color="green" />
         <StatsCard title="週間会話数" value={stats.weeklyConversations} icon={Clock} color="yellow" />
@@ -314,8 +316,6 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         <StatsCard title="ユニークセッション" value={stats.uniqueSessions} icon={User} color="indigo" />
       </div>
       
-
-
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
@@ -338,7 +338,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
       </div>
 
       <Tabs defaultValue="list" className="w-full">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="list">会話一覧</TabsTrigger>
           <TabsTrigger value="details">会話詳細</TabsTrigger>
         </TabsList>
@@ -348,45 +348,43 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
             {filteredConversations.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500">会話履歴がありません</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    チャットボットでの会話があると、ここに表示されます。
-                  </p>
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">会話データなし</h3>
+                  <p className="text-gray-500">チャットボットの会話データが見つかりません。</p>
                 </CardContent>
               </Card>
             ) : (
               filteredConversations.map((conversation) => (
-                <Card key={conversation.id} className="cursor-pointer hover:bg-gray-50 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
+                <Card key={conversation.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
                           <Badge variant="outline" className="text-xs">
-                            {conversation.session_id.split('_')[1]}
+                            {conversation.session_id.substring(0, 8)}
                           </Badge>
                           <span className="text-sm text-gray-500">
-                            {formatDate(conversation.created_at)}
+                            {new Date(conversation.timestamp).toLocaleString('ja-JP')}
                           </span>
                         </div>
-                        <div className="space-y-1">
-                          <div className="text-sm">
-                            <span className="font-medium text-blue-600">ユーザー:</span>
-                            <span className="ml-2">{conversation.user_message}</span>
-                          </div>
-                          <div className="text-sm">
-                            <span className="font-medium text-green-600">ボット:</span>
-                            <span className="ml-2 line-clamp-2">{conversation.bot_response}</span>
-                          </div>
-                        </div>
+                        <p className="text-sm text-gray-700 mb-2 font-medium">
+                          ユーザー: {conversation.user_message}
+                        </p>
+                        <p className="text-sm text-gray-600 truncate">
+                          AI: {conversation.bot_response}
+                        </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedConversation(conversation)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedConversation(conversation)}
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span className="hidden sm:inline">詳細</span>
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -395,61 +393,54 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
           </div>
         </TabsContent>
 
-        <TabsContent value="details">
+        <TabsContent value="details" className="space-y-4">
           {selectedConversation ? (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  会話詳細
-                </CardTitle>
+                <CardTitle className="text-lg md:text-xl">会話詳細</CardTitle>
+                <CardDescription>
+                  セッションID: {selectedConversation.session_id}
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">セッションID</label>
-                    <p className="text-sm">{selectedConversation.session_id}</p>
+                    <label className="text-sm font-medium text-gray-700">セッションID</label>
+                    <p className="text-sm text-gray-900 font-mono">{selectedConversation.session_id}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">作成日時</label>
-                    <p className="text-sm">{formatDate(selectedConversation.created_at)}</p>
+                    <label className="text-sm font-medium text-gray-700">日時</label>
+                    <p className="text-sm text-gray-900">
+                      {new Date(selectedConversation.timestamp).toLocaleString('ja-JP')}
+                    </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">ユーザーエージェント</label>
-                    <p className="text-xs text-gray-500">{selectedConversation.user_agent}</p>
-                  </div>
+                  {selectedConversation.user_agent && (
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-gray-700">ユーザーエージェント</label>
+                      <p className="text-sm text-gray-900 break-all">{selectedConversation.user_agent}</p>
+                    </div>
+                  )}
                 </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-blue-600">ユーザーメッセージ</label>
-                    <Card className="mt-2">
-                      <CardContent className="p-3">
-                        <p className="text-sm">{selectedConversation.user_message}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-green-600">ボットレスポンス</label>
-                    <Card className="mt-2">
-                      <CardContent className="p-3">
-                        <div className="prose prose-sm max-w-none">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {selectedConversation.bot_response}
-                          </ReactMarkdown>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">ユーザーメッセージ</label>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap bg-blue-50 p-3 rounded-md mt-1">
+                    {selectedConversation.user_message}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">AIレスポンス</label>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md mt-1">
+                    {selectedConversation.bot_response}
+                  </p>
                 </div>
               </CardContent>
             </Card>
           ) : (
             <Card>
               <CardContent className="p-8 text-center">
-                <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500">会話を選択してください</p>
+                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">会話を選択してください</h3>
+                <p className="text-gray-500">会話一覧から詳細を確認したい会話を選択してください。</p>
               </CardContent>
             </Card>
           )}

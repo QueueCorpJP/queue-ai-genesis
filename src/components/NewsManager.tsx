@@ -3,365 +3,525 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Search, Edit2, Trash2, Eye, Plus, Calendar, ExternalLink, Image as ImageIcon } from 'lucide-react';
-import { toast } from 'sonner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import NewsEditor from './NewsEditor';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-type NewsArticle = {
+interface NewsArticle {
   id: string;
   title: string;
   summary: string;
   content: string;
-  source_name: string;
-  source_url: string | null;
-  image_url: string | null;
-  tags: string[];
-  status: 'draft' | 'published' | 'archived';
-  published_at: string | null;
+  image_url?: string;
+  image_caption?: string;
+  author: string;
+  source_url?: string;
+  published_at?: string;
   created_at: string;
-  updated_at: string;
-};
+  status: 'draft' | 'published' | 'archived';
+  tags?: string[];
+}
 
 const NewsManager: React.FC = () => {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchArticles();
   }, []);
 
-  useEffect(() => {
-    filterArticles();
-  }, [articles, searchTerm, statusFilter]);
-
   const fetchArticles = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('news_articles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching articles:', error);
+        toast.error('記事の取得に失敗しました');
+        return;
+      }
 
       setArticles(data || []);
     } catch (error) {
-      console.error('Error fetching articles:', error);
-      toast.error('記事の読み込みに失敗しました');
+      console.error('Error:', error);
+      toast.error('記事の取得に失敗しました');
     } finally {
       setLoading(false);
     }
   };
 
-  const filterArticles = () => {
-    let filtered = articles;
+  const deleteArticle = async (id: string) => {
+    if (!confirm('この記事を削除しますか？')) return;
 
-    // 検索フィルター
-    if (searchTerm) {
-      filtered = filtered.filter(article =>
-        article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.content.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // ステータスフィルター
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(article => article.status === statusFilter);
-    }
-
-    setFilteredArticles(filtered);
-  };
-
-  const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
         .from('news_articles')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting article:', error);
+        toast.error('記事の削除に失敗しました');
+        return;
+      }
 
+      setArticles(prev => prev.filter(article => article.id !== id));
       toast.success('記事を削除しました');
-      fetchArticles();
     } catch (error) {
-      console.error('Error deleting article:', error);
+      console.error('Error:', error);
       toast.error('記事の削除に失敗しました');
     }
-    setDeleteId(null);
   };
 
-  const handleStatusUpdate = async (id: string, status: 'draft' | 'published' | 'archived') => {
+  const toggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'published' ? 'archived' : 'published';
+    
     try {
-      const now = new Date().toISOString();
       const { error } = await supabase
         .from('news_articles')
-        .update({ 
-          status, 
-          published_at: status === 'published' ? now : null,
-          updated_at: now
-        })
+        .update({ status: newStatus })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating status:', error);
+        toast.error('ステータスの更新に失敗しました');
+        return;
+      }
+
+      setArticles(prev =>
+        prev.map(article =>
+          article.id === id ? { ...article, status: newStatus as NewsArticle['status'] } : article
+        )
+      );
 
       toast.success('ステータスを更新しました');
-      fetchArticles();
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error('Error:', error);
       toast.error('ステータスの更新に失敗しました');
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      draft: { label: '下書き', className: 'bg-gray-100 text-gray-800' },
-      published: { label: '公開', className: 'bg-green-100 text-green-800' },
-      archived: { label: 'アーカイブ', className: 'bg-blue-100 text-blue-800' }
+    const variants = {
+      draft: 'bg-gray-100 text-gray-800 border-gray-200',
+      published: 'bg-green-100 text-green-800 border-green-200',
+      archived: 'bg-red-100 text-red-800 border-red-200'
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    const labels = {
+      draft: '下書き',
+      published: '公開',
+      archived: 'アーカイブ'
+    };
+
+    return (
+      <Badge variant="outline" className={variants[status as keyof typeof variants]}>
+        {labels[status as keyof typeof labels]}
+      </Badge>
+    );
   };
 
+  const filteredArticles = articles.filter(article => {
+    const matchesSearch = 
+      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      article.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      article.content.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || article.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const exportToCSV = () => {
+    const csvData = filteredArticles.map(article => ({
+      タイトル: article.title,
+      概要: article.summary,
+      著者: article.author,
+      ステータス: getStatusBadge(article.status).props.children,
+      作成日: new Date(article.created_at).toLocaleString('ja-JP'),
+      公開日: article.published_at ? new Date(article.published_at).toLocaleString('ja-JP') : '未公開',
+      出典: article.source_url || '未設定'
+    }));
+
+    const csv = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `news_articles_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const ArticleCard = ({ article }: { article: NewsArticle }) => (
+    <Card className="mb-4">
+      <CardContent className="p-4">
+        <div className="flex gap-4">
+          {article.image_url && (
+            <div className="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+              <img 
+                src={article.image_url} 
+                alt={article.image_caption || article.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-medium text-gray-900 truncate">{article.title}</h3>
+              {getStatusBadge(article.status)}
+            </div>
+            <p className="text-sm text-gray-600 line-clamp-2 mb-2">{article.summary}</p>
+            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+              <span>{article.author}</span>
+              <span>•</span>
+              <span>{new Date(article.created_at).toLocaleDateString('ja-JP')}</span>
+              {article.published_at && (
+                <>
+                  <span>•</span>
+                  <span>公開: {new Date(article.published_at).toLocaleDateString('ja-JP')}</span>
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedArticle(article);
+                  setIsDetailDialogOpen(true);
+                }}
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                詳細
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => toggleStatus(article.id, article.status)}
+              >
+                <Calendar className="w-4 h-4 mr-1" />
+                {article.status === 'published' ? 'アーカイブ' : '公開'}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => deleteArticle(article.id)}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                削除
+              </Button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">ニュース記事管理</h2>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h2 className="text-xl md:text-2xl font-bold">ニュース記事管理</h2>
         <NewsEditor onSave={fetchArticles} />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>記事一覧</CardTitle>
+          <CardTitle className="text-lg md:text-xl">記事一覧</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="タイトル、概要、本文で検索..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="space-y-4">
+            {/* Mobile Filter Toggle */}
+            <div className="md:hidden">
+              <Button
+                variant="outline"
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+                className="w-full justify-between"
+              >
+                <span className="flex items-center">
+                  <Filter className="w-4 h-4 mr-2" />
+                  フィルター
+                </span>
+                <span className="text-sm text-gray-500">
+                  {filteredArticles.length}件
+                </span>
+              </Button>
+            </div>
+
+            {/* Filters */}
+            <div className={`${mobileFiltersOpen || !isMobile ? 'block' : 'hidden'} md:block`}>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="タイトル、概要、本文で検索..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full md:w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      <SelectItem value="draft">下書き</SelectItem>
+                      <SelectItem value="published">公開</SelectItem>
+                      <SelectItem value="archived">アーカイブ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={exportToCSV} variant="outline" size="icon">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">すべて</SelectItem>
-                <SelectItem value="draft">下書き</SelectItem>
-                <SelectItem value="published">公開</SelectItem>
-                <SelectItem value="archived">アーカイブ</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Results Count */}
+            <div className="text-sm text-gray-600">
+              {filteredArticles.length}件の結果
+            </div>
           </div>
 
           {loading ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">読み込み中...</p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>画像</TableHead>
-                    <TableHead>タイトル</TableHead>
-                    <TableHead>ステータス</TableHead>
-                    <TableHead>作成日</TableHead>
-                    <TableHead>公開日</TableHead>
-                    <TableHead>出典</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredArticles.map((article) => (
-                    <TableRow key={article.id}>
-                      <TableCell className="w-20">
-                        {article.image_url ? (
-                          <div className="w-16 h-12 rounded overflow-hidden bg-gray-100">
-                            <img
-                              src={article.image_url}
-                              alt={article.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                target.parentElement!.innerHTML = `
-                                  <div class="flex items-center justify-center h-full bg-gray-200 text-gray-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                  </div>
-                                `;
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-16 h-12 rounded bg-gray-100 flex items-center justify-center">
-                            <ImageIcon className="w-4 h-4 text-gray-400" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div>
-                          <div className="font-medium truncate">{article.title}</div>
-                          <div className="text-sm text-gray-500 truncate">{article.summary}</div>
-                          {article.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {article.tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                              {article.tags.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{article.tags.length - 3}
-                                </Badge>
-                              )}
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>画像</TableHead>
+                        <TableHead>タイトル</TableHead>
+                        <TableHead>ステータス</TableHead>
+                        <TableHead>作成日</TableHead>
+                        <TableHead>公開日</TableHead>
+                        <TableHead>出典</TableHead>
+                        <TableHead>操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredArticles.map((article) => (
+                        <TableRow key={article.id}>
+                          <TableCell className="w-20">
+                            {article.image_url ? (
+                              <img 
+                                src={article.image_url} 
+                                alt={article.image_caption || article.title}
+                                className="w-16 h-16 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                                <ImageIcon className="w-6 h-6 text-gray-400" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-xs">
+                              <div className="font-medium truncate">{article.title}</div>
+                              <div className="text-sm text-gray-500 truncate">{article.summary}</div>
                             </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={article.status}
-                          onValueChange={(value: any) => handleStatusUpdate(article.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">下書き</SelectItem>
-                            <SelectItem value="published">公開</SelectItem>
-                            <SelectItem value="archived">アーカイブ</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {formatDate(article.created_at)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {article.published_at ? (
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            {formatDate(article.published_at)}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{article.source_name}</span>
-                          {article.source_url && (
-                            <a
-                              href={article.source_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <a
-                            href="/news"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </a>
-                          
-                          <NewsEditor
-                            article={article}
-                            onSave={fetchArticles}
-                            trigger={
-                              <Button variant="ghost" size="sm">
-                                <Edit2 className="h-4 w-4" />
+                          </TableCell>
+                          <TableCell>{getStatusBadge(article.status)}</TableCell>
+                          <TableCell className="text-sm">
+                            {new Date(article.created_at).toLocaleDateString('ja-JP')}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {article.published_at 
+                              ? new Date(article.published_at).toLocaleDateString('ja-JP') 
+                              : '未公開'}
+                          </TableCell>
+                          <TableCell>
+                            {article.source_url ? (
+                              <a 
+                                href={article.source_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-sm"
+                              >
+                                出典
+                              </a>
+                            ) : (
+                              <span className="text-gray-400 text-sm">未設定</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedArticle(article);
+                                  setIsDetailDialogOpen(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4" />
                               </Button>
-                            }
-                          />
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
-                                <Trash2 className="h-4 w-4" />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => toggleStatus(article.id, article.status)}
+                              >
+                                <Calendar className="w-4 h-4" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>記事を削除しますか？</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  「{article.title}」を完全に削除します。この操作は取り消せません。
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(article.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  削除
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => deleteArticle(article.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-          {!loading && filteredArticles.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500">記事が見つかりませんでした。</p>
-              {searchTerm || statusFilter !== 'all' ? (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                  }}
-                  className="mt-2"
-                >
-                  フィルターをクリア
-                </Button>
-              ) : null}
-            </div>
+              {/* Mobile Cards */}
+              <div className="md:hidden">
+                {filteredArticles.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">記事が見つかりません</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredArticles.map((article) => (
+                      <ArticleCard key={article.id} article={article} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>記事詳細</DialogTitle>
+          </DialogHeader>
+          {selectedArticle && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">タイトル</label>
+                  <p className="text-sm text-gray-900">{selectedArticle.title}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">著者</label>
+                  <p className="text-sm text-gray-900">{selectedArticle.author}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">ステータス</label>
+                  <div className="pt-1">
+                    {getStatusBadge(selectedArticle.status)}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">作成日</label>
+                  <p className="text-sm text-gray-900">
+                    {new Date(selectedArticle.created_at).toLocaleString('ja-JP')}
+                  </p>
+                </div>
+                {selectedArticle.published_at && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">公開日</label>
+                    <p className="text-sm text-gray-900">
+                      {new Date(selectedArticle.published_at).toLocaleString('ja-JP')}
+                    </p>
+                  </div>
+                )}
+                {selectedArticle.source_url && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">出典</label>
+                    <a 
+                      href={selectedArticle.source_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      {selectedArticle.source_url}
+                    </a>
+                  </div>
+                )}
+              </div>
+              
+              {selectedArticle.image_url && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">画像</label>
+                  <div className="mt-2">
+                    <img 
+                      src={selectedArticle.image_url} 
+                      alt={selectedArticle.image_caption || selectedArticle.title}
+                      className="max-w-full h-auto rounded-lg"
+                    />
+                    {selectedArticle.image_caption && (
+                      <p className="text-sm text-gray-500 mt-1">{selectedArticle.image_caption}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">概要</label>
+                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md mt-1">
+                  {selectedArticle.summary}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">本文</label>
+                <div className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md mt-1 whitespace-pre-wrap">
+                  {selectedArticle.content}
+                </div>
+              </div>
+
+              {selectedArticle.tags && selectedArticle.tags.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">タグ</label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {selectedArticle.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

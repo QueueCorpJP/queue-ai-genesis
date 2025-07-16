@@ -15,7 +15,9 @@ import {
   Newspaper,
   BarChart3,
   RefreshCw,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -26,6 +28,7 @@ import ContactManager from '@/components/ContactManager';
 import NewsManager from '@/components/NewsManager';
 import Analytics from '@/components/Analytics';
 import ChatbotManager from '@/components/ChatbotManager';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
   todayContacts: number;
@@ -47,8 +50,10 @@ interface RecentActivity {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { user, session, logout, isLoading } = useAdmin();
+  const { user, session, logout } = useAdmin();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     todayContacts: 0,
     todayConsultations: 0,
@@ -58,18 +63,18 @@ const AdminDashboard: React.FC = () => {
     monthlyConsultations: 0,
     publishedNews: 0
   });
-  
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 認証チェック - 依存関係を明確にする
   useEffect(() => {
-    if (!isLoading && !user?.isAuthenticated) {
+    if (!user?.isAuthenticated) {
       console.log('User not authenticated, redirecting to login');
       navigate('/admin/login', { replace: true });
     }
-  }, [user?.isAuthenticated, isLoading, navigate]);
+  }, [user?.isAuthenticated, navigate]);
 
   // データフェッチ関数をuseCallbackでメモ化
   const fetchStats = useCallback(async () => {
@@ -196,7 +201,7 @@ const AdminDashboard: React.FC = () => {
       activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       
       console.log('Activities fetched:', activities.length);
-      setRecentActivities(activities.slice(0, 10));
+      setActivities(activities.slice(0, 10));
     } catch (error) {
       console.error('Error fetching recent activities:', error);
       toast.error('アクティビティの取得に失敗しました');
@@ -350,32 +355,23 @@ const AdminDashboard: React.FC = () => {
   ];
 
   // ローディング中またはログイン状態確認中
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-600">認証状態を確認中...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 未認証の場合
   if (!user?.isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">管理者ダッシュボード</h1>
-              <p className="text-gray-600">Queue株式会社 - 管理システム</p>
+      <div className="max-w-7xl mx-auto p-4 md:p-6">
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">管理者ダッシュボード</h1>
+              <p className="text-gray-600 text-sm md:text-base">Queue株式会社 - 管理システム</p>
             </div>
-            <div className="flex items-center space-x-4">
+            
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center space-x-4">
               <Button 
                 onClick={refreshData} 
                 disabled={refreshing}
@@ -407,55 +403,137 @@ const AdminDashboard: React.FC = () => {
                 ログアウト
               </Button>
             </div>
+
+            {/* Mobile Actions */}
+            <div className="flex md:hidden items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">
+                    {user.email.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm text-gray-700">{user.email}</span>
+                  {session && (
+                    <span className="text-xs text-green-600">セッション有効</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  onClick={refreshData} 
+                  disabled={refreshing}
+                  variant="outline"
+                  size="sm"
+                  className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </Button>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="overview" className="flex items-center space-x-2">
-              <Home className="w-4 h-4" />
-              <span>概要</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center space-x-2">
-              <BarChart3 className="w-4 h-4" />
-              <span>分析</span>
-            </TabsTrigger>
-            <TabsTrigger value="consultations" className="flex items-center space-x-2">
-              <MessageSquare className="w-4 h-4" />
-              <span>相談申込</span>
-            </TabsTrigger>
-            <TabsTrigger value="contacts" className="flex items-center space-x-2">
-              <Phone className="w-4 h-4" />
-              <span>お問い合わせ</span>
-            </TabsTrigger>
-            <TabsTrigger value="chatbot" className="flex items-center space-x-2">
-              <MessageSquare className="w-4 h-4" />
-              <span>チャットボット</span>
-            </TabsTrigger>
-            <TabsTrigger value="news" className="flex items-center space-x-2">
-              <Newspaper className="w-4 h-4" />
-              <span>ニュース</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center space-x-2">
-              <Settings className="w-4 h-4" />
-              <span>設定</span>
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          {/* Desktop Tabs */}
+          <div className="hidden md:block">
+            <TabsList className="grid w-full grid-cols-7">
+              <TabsTrigger value="overview" className="flex items-center space-x-2">
+                <Home className="w-4 h-4" />
+                <span>概要</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center space-x-2">
+                <BarChart3 className="w-4 h-4" />
+                <span>分析</span>
+              </TabsTrigger>
+              <TabsTrigger value="consultations" className="flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4" />
+                <span>相談申込</span>
+              </TabsTrigger>
+              <TabsTrigger value="contacts" className="flex items-center space-x-2">
+                <Phone className="w-4 h-4" />
+                <span>お問い合わせ</span>
+              </TabsTrigger>
+              <TabsTrigger value="chatbot" className="flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4" />
+                <span>チャットボット</span>
+              </TabsTrigger>
+              <TabsTrigger value="news" className="flex items-center space-x-2">
+                <Newspaper className="w-4 h-4" />
+                <span>ニュース</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center space-x-2">
+                <Settings className="w-4 h-4" />
+                <span>設定</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="overview" className="space-y-6">
+          {/* Mobile Tab Selector */}
+          <div className="md:hidden">
+            <Button
+              variant="outline"
+              className="w-full justify-between"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <span className="flex items-center space-x-2">
+                {getTabIcon(activeTab)}
+                <span>{getTabLabel(activeTab)}</span>
+              </span>
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </Button>
+            
+            {mobileMenuOpen && (
+              <div className="mt-2 bg-white rounded-lg shadow-lg border overflow-hidden">
+                {[
+                  { value: 'overview', icon: Home, label: '概要' },
+                  { value: 'analytics', icon: BarChart3, label: '分析' },
+                  { value: 'consultations', icon: MessageSquare, label: '相談申込' },
+                  { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
+                  { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
+                  { value: 'news', icon: Newspaper, label: 'ニュース' },
+                  { value: 'settings', icon: Settings, label: '設定' }
+                ].map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => {
+                      setActiveTab(tab.value);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
+                      activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <TabsContent value="overview" className="space-y-4 md:space-y-6">
             {/* 統計カード */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {statsCards.map((card, index) => (
                 <Card key={index}>
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                        <p className="text-3xl font-bold text-gray-900">
+                        <p className="text-2xl md:text-3xl font-bold text-gray-900">
                           {loading ? '...' : card.value}
                         </p>
                       </div>
-                      <card.icon className={`w-8 h-8 ${card.color}`} />
+                      <card.icon className={`w-6 h-6 md:w-8 md:h-8 ${card.color}`} />
                     </div>
                   </CardContent>
                 </Card>
@@ -465,38 +543,43 @@ const AdminDashboard: React.FC = () => {
             {/* 最近のアクティビティ */}
             <Card>
               <CardHeader>
-                <CardTitle>最近のアクティビティ</CardTitle>
+                <CardTitle className="flex items-center text-lg md:text-xl">
+                  <Clock className="w-5 h-5 mr-2" />
+                  最近のアクティビティ
+                </CardTitle>
                 <CardDescription>
-                  最新のお問い合わせ、相談申込、ニュース記事の活動履歴
+                  直近の申込み・問い合わせ状況
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-gray-400" />
-                    <p className="text-gray-500">読み込み中...</p>
-                  </div>
-                ) : recentActivities.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">アクティビティがありません</p>
-                ) : (
-                  <div className="space-y-4">
-                    {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex-shrink-0">
-                          {getActivityIcon(activity.type)}
-                        </div>
+                <div className="space-y-4">
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
+                    </div>
+                  ) : activities.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">アクティビティがありません</p>
+                    </div>
+                  ) : (
+                    activities.map((activity, index) => (
+                      <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${
+                          activity.type === 'consultation' ? 'bg-blue-500' : 'bg-green-500'
+                        }`}></div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                          <p className="text-sm text-gray-500">{activity.description}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {getStatusBadge(activity.status, activity.type)}
-                          <span className="text-sm text-gray-500">{formatRelativeTime(activity.time)}</span>
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {activity.name} ({activity.company})
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {activity.type === 'consultation' ? '無料相談申込' : 'お問い合わせ'} • {activity.date}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -524,7 +607,7 @@ const AdminDashboard: React.FC = () => {
           <TabsContent value="settings">
             <Card>
               <CardHeader>
-                <CardTitle>システム設定</CardTitle>
+                <CardTitle className="text-lg md:text-xl">システム設定</CardTitle>
                 <CardDescription>
                   管理システムの設定を変更できます
                 </CardDescription>
@@ -532,12 +615,12 @@ const AdminDashboard: React.FC = () => {
               <CardContent>
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-medium mb-4">アカウント情報</h3>
+                    <h3 className="text-base md:text-lg font-medium mb-4">アカウント情報</h3>
                     <div className="space-y-2">
                       <p className="text-sm">
                         <span className="font-medium">管理者:</span> Queue株式会社
                       </p>
-                      <p className="text-sm">
+                      <p className="text-sm break-all">
                         <span className="font-medium">メール:</span> {user.email}
                       </p>
                       <p className="text-sm">
@@ -550,7 +633,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-medium mb-4">システム情報</h3>
+                    <h3 className="text-base md:text-lg font-medium mb-4">システム情報</h3>
                     <div className="space-y-2">
                       <p className="text-sm">
                         <span className="font-medium">バージョン:</span> 1.3.0 (Analytics対応)
@@ -566,28 +649,6 @@ const AdminDashboard: React.FC = () => {
                       </p>
                     </div>
                   </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">セッション管理</h3>
-                    <div className="space-y-4">
-                      <Button
-                        onClick={refreshData}
-                        variant="outline"
-                        className="w-full"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        データを更新
-                      </Button>
-                      <Button
-                        onClick={handleLogout}
-                        variant="outline"
-                        className="w-full text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        ログアウト
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -596,6 +657,33 @@ const AdminDashboard: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// Helper functions for mobile tab selector
+const getTabIcon = (tab: string) => {
+  const icons = {
+    overview: <Home className="w-4 h-4" />,
+    analytics: <BarChart3 className="w-4 h-4" />,
+    consultations: <MessageSquare className="w-4 h-4" />,
+    contacts: <Phone className="w-4 h-4" />,
+    chatbot: <MessageSquare className="w-4 h-4" />,
+    news: <Newspaper className="w-4 h-4" />,
+    settings: <Settings className="w-4 h-4" />
+  };
+  return icons[tab as keyof typeof icons] || <Home className="w-4 h-4" />;
+};
+
+const getTabLabel = (tab: string) => {
+  const labels = {
+    overview: '概要',
+    analytics: '分析',
+    consultations: '相談申込',
+    contacts: 'お問い合わせ',
+    chatbot: 'チャットボット',
+    news: 'ニュース',
+    settings: '設定'
+  };
+  return labels[tab as keyof typeof labels] || '概要';
 };
 
 export default AdminDashboard; 

@@ -2,25 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Calendar, Search, RefreshCw, Eye, Phone, Mail, MessageSquare, Filter, Download } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit,
-  RefreshCw,
-  Calendar,
-  Building,
-  Mail,
-  Phone,
-  MessageSquare
-} from 'lucide-react';
+import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ConsultationRequest {
   id: string;
@@ -28,7 +18,7 @@ interface ConsultationRequest {
   company: string;
   email: string;
   phone: string;
-  service: 'ai_development' | 'prompt_engineering' | 'prototype' | 'other';
+  service: string;
   message: string;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   created_at: string;
@@ -37,67 +27,41 @@ interface ConsultationRequest {
 
 const ConsultationManager: React.FC = () => {
   const [consultations, setConsultations] = useState<ConsultationRequest[]>([]);
-  const [filteredConsultations, setFilteredConsultations] = useState<ConsultationRequest[]>([]);
-  const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [serviceFilter, setServiceFilter] = useState<string>('all');
-  const { toast } = useToast();
-
-  // データを取得
-  const fetchConsultations = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('consultation_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setConsultations(data || []);
-      setFilteredConsultations(data || []);
-    } catch (error) {
-      console.error('Error fetching consultations:', error);
-      toast({
-        title: "データ取得エラー",
-        description: "無料相談データの取得に失敗しました。",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRequest | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchConsultations();
   }, []);
 
-  // フィルタリング
-  useEffect(() => {
-    let filtered = consultations;
+  const fetchConsultations = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('consultation_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (searchTerm) {
-      filtered = filtered.filter(consultation =>
-        consultation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        consultation.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        consultation.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      if (error) {
+        console.error('Error fetching consultations:', error);
+        toast.error('データの取得に失敗しました');
+        return;
+      }
+
+      setConsultations(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('データの取得に失敗しました');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(consultation => consultation.status === statusFilter);
-    }
-
-    if (serviceFilter !== 'all') {
-      filtered = filtered.filter(consultation => consultation.service === serviceFilter);
-    }
-
-    setFilteredConsultations(filtered);
-  }, [consultations, searchTerm, statusFilter, serviceFilter]);
-
-  // ステータス更新
   const updateStatus = async (id: string, newStatus: string) => {
     try {
       const { error } = await supabase
@@ -105,59 +69,152 @@ const ConsultationManager: React.FC = () => {
         .update({ status: newStatus })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating status:', error);
+        toast.error('ステータスの更新に失敗しました');
+        return;
+      }
 
       setConsultations(prev =>
         prev.map(consultation =>
-          consultation.id === id ? { ...consultation, status: newStatus as any } : consultation
+          consultation.id === id
+            ? { ...consultation, status: newStatus as ConsultationRequest['status'] }
+            : consultation
         )
       );
 
-      toast({
-        title: "ステータス更新完了",
-        description: "無料相談のステータスを更新しました。",
-      });
+      toast.success('ステータスを更新しました');
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast({
-        title: "更新エラー",
-        description: "ステータスの更新に失敗しました。",
-        variant: "destructive",
-      });
+      console.error('Error:', error);
+      toast.error('ステータスの更新に失敗しました');
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap = {
-      pending: { label: '未対応', variant: 'destructive' as const },
-      in_progress: { label: '対応中', variant: 'default' as const },
-      completed: { label: '完了', variant: 'secondary' as const },
-      cancelled: { label: 'キャンセル', variant: 'outline' as const }
+    const variants = {
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
+      completed: 'bg-green-100 text-green-800 border-green-200',
+      cancelled: 'bg-red-100 text-red-800 border-red-200'
     };
 
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.pending;
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+    const labels = {
+      pending: '未対応',
+      in_progress: '対応中',
+      completed: '完了',
+      cancelled: 'キャンセル'
+    };
+
+    return (
+      <Badge variant="outline" className={variants[status as keyof typeof variants]}>
+        {labels[status as keyof typeof labels]}
+      </Badge>
+    );
   };
 
   const getServiceLabel = (service: string) => {
-    const serviceMap = {
-      ai_development: 'AI受託開発',
+    const labels = {
+      ai_development: 'AI開発',
       prompt_engineering: 'プロンプトエンジニアリング',
-      prototype: '高速プロトタイピング',
+      prototype: 'プロトタイプ開発',
       other: 'その他'
     };
-    return serviceMap[service as keyof typeof serviceMap] || service;
+    return labels[service as keyof typeof labels] || service;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ja-JP');
+  const filteredConsultations = consultations.filter(consultation => {
+    const matchesSearch = 
+      consultation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      consultation.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      consultation.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || consultation.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const exportToCSV = () => {
+    const csvData = filteredConsultations.map(consultation => ({
+      名前: consultation.name,
+      会社名: consultation.company,
+      メール: consultation.email,
+      電話番号: consultation.phone,
+      サービス: getServiceLabel(consultation.service),
+      ステータス: getStatusBadge(consultation.status).props.children,
+      申込日時: new Date(consultation.created_at).toLocaleString('ja-JP'),
+      メッセージ: consultation.message
+    }));
+
+    const csv = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `consultation_requests_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
+
+  const ConsultationCard = ({ consultation }: { consultation: ConsultationRequest }) => (
+    <Card className="mb-4">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900">{consultation.name}</h3>
+            <p className="text-sm text-gray-600">{consultation.company}</p>
+          </div>
+          {getStatusBadge(consultation.status)}
+        </div>
+        <div className="space-y-1 text-sm text-gray-600 mb-3">
+          <p className="flex items-center">
+            <Mail className="w-4 h-4 mr-1" />
+            {consultation.email}
+          </p>
+          <p className="flex items-center">
+            <Phone className="w-4 h-4 mr-1" />
+            {consultation.phone}
+          </p>
+          <p>サービス: {getServiceLabel(consultation.service)}</p>
+          <p>申込日: {new Date(consultation.created_at).toLocaleDateString('ja-JP')}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedConsultation(consultation);
+              setIsDetailDialogOpen(true);
+            }}
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            詳細
+          </Button>
+          <Select
+            value={consultation.status}
+            onValueChange={(value) => updateStatus(consultation.id, value)}
+          >
+            <SelectTrigger className="w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">未対応</SelectItem>
+              <SelectItem value="in_progress">対応中</SelectItem>
+              <SelectItem value="completed">完了</SelectItem>
+              <SelectItem value="cancelled">キャンセル</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-lg md:text-xl">
             <Calendar className="w-5 h-5 mr-2" />
             無料相談管理
           </CardTitle>
@@ -167,169 +224,242 @@ const ConsultationManager: React.FC = () => {
         </CardHeader>
         <CardContent>
           {/* フィルター・検索 */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="名前、会社名、メールアドレスで検索"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="space-y-4">
+            {/* Mobile Filter Toggle */}
+            <div className="md:hidden">
+              <Button
+                variant="outline"
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+                className="w-full justify-between"
+              >
+                <span className="flex items-center">
+                  <Filter className="w-4 h-4 mr-2" />
+                  フィルター
+                </span>
+                <span className="text-sm text-gray-500">
+                  {filteredConsultations.length}件
+                </span>
+              </Button>
+            </div>
+
+            {/* Filters */}
+            <div className={`${mobileFiltersOpen || !isMobile ? 'block' : 'hidden'} md:block`}>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="名前、会社名、メールアドレスで検索"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full md:w-48">
+                      <SelectValue placeholder="ステータス" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      <SelectItem value="pending">未対応</SelectItem>
+                      <SelectItem value="in_progress">対応中</SelectItem>
+                      <SelectItem value="completed">完了</SelectItem>
+                      <SelectItem value="cancelled">キャンセル</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={fetchConsultations} variant="outline" size="icon">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={exportToCSV} variant="outline" size="icon">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="ステータス" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">すべて</SelectItem>
-                <SelectItem value="pending">未対応</SelectItem>
-                <SelectItem value="in_progress">対応中</SelectItem>
-                <SelectItem value="completed">完了</SelectItem>
-                <SelectItem value="cancelled">キャンセル</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={serviceFilter} onValueChange={setServiceFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="サービス" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">すべて</SelectItem>
-                <SelectItem value="ai_development">AI受託開発</SelectItem>
-                <SelectItem value="prompt_engineering">プロンプトエンジニアリング</SelectItem>
-                <SelectItem value="prototype">高速プロトタイピング</SelectItem>
-                <SelectItem value="other">その他</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={fetchConsultations} variant="outline" size="icon">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+
+            {/* Results Count */}
+            <div className="text-sm text-gray-600">
+              {filteredConsultations.length}件の結果
+            </div>
           </div>
 
-          {/* テーブル */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>申込者</TableHead>
-                  <TableHead>会社名</TableHead>
-                  <TableHead>サービス</TableHead>
-                  <TableHead>ステータス</TableHead>
-                  <TableHead>申込日時</TableHead>
-                  <TableHead>操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      読み込み中...
-                    </TableCell>
+                    <TableHead>申込者</TableHead>
+                    <TableHead>会社名</TableHead>
+                    <TableHead>サービス</TableHead>
+                    <TableHead>ステータス</TableHead>
+                    <TableHead>申込日時</TableHead>
+                    <TableHead>操作</TableHead>
                   </TableRow>
-                ) : filteredConsultations.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      データが見つかりません
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredConsultations.map((consultation) => (
-                    <TableRow key={consultation.id}>
-                      <TableCell className="font-medium">{consultation.name}</TableCell>
-                      <TableCell>{consultation.company}</TableCell>
-                      <TableCell>{getServiceLabel(consultation.service)}</TableCell>
-                      <TableCell>{getStatusBadge(consultation.status)}</TableCell>
-                      <TableCell>{formatDate(consultation.created_at)}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedConsultation(consultation)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>無料相談詳細</DialogTitle>
-                                <DialogDescription>
-                                  申込内容の詳細を確認できます
-                                </DialogDescription>
-                              </DialogHeader>
-                              {selectedConsultation && (
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <label className="text-sm font-medium">お名前</label>
-                                      <p className="p-2 bg-gray-50 rounded">{selectedConsultation.name}</p>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <label className="text-sm font-medium">会社名</label>
-                                      <p className="p-2 bg-gray-50 rounded">{selectedConsultation.company}</p>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <label className="text-sm font-medium">メールアドレス</label>
-                                      <p className="p-2 bg-gray-50 rounded">{selectedConsultation.email}</p>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <label className="text-sm font-medium">電話番号</label>
-                                      <p className="p-2 bg-gray-50 rounded">{selectedConsultation.phone}</p>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium">興味のあるサービス</label>
-                                    <p className="p-2 bg-gray-50 rounded">{getServiceLabel(selectedConsultation.service)}</p>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium">メッセージ</label>
-                                    <p className="p-3 bg-gray-50 rounded min-h-[100px] whitespace-pre-wrap">
-                                      {selectedConsultation.message}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center justify-between pt-4">
-                                    <div className="space-y-2">
-                                      <label className="text-sm font-medium">ステータス変更</label>
-                                      <Select
-                                        value={selectedConsultation.status}
-                                        onValueChange={(value) => updateStatus(selectedConsultation.id, value)}
-                                      >
-                                        <SelectTrigger className="w-48">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="pending">未対応</SelectItem>
-                                          <SelectItem value="in_progress">対応中</SelectItem>
-                                          <SelectItem value="completed">完了</SelectItem>
-                                          <SelectItem value="cancelled">キャンセル</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="text-right text-sm text-gray-600">
-                                      <p>申込日時: {formatDate(selectedConsultation.created_at)}</p>
-                                      <p>更新日時: {formatDate(selectedConsultation.updated_at)}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </DialogContent>
-                          </Dialog>
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        読み込み中...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredConsultations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        データが見つかりません
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredConsultations.map((consultation) => (
+                      <TableRow key={consultation.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{consultation.name}</div>
+                            <div className="text-sm text-gray-500">{consultation.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{consultation.company}</TableCell>
+                        <TableCell>{getServiceLabel(consultation.service)}</TableCell>
+                        <TableCell>{getStatusBadge(consultation.status)}</TableCell>
+                        <TableCell>
+                          {new Date(consultation.created_at).toLocaleDateString('ja-JP')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedConsultation(consultation);
+                                setIsDetailDialogOpen(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Select
+                              value={consultation.status}
+                              onValueChange={(value) => updateStatus(consultation.id, value)}
+                            >
+                              <SelectTrigger className="w-24">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">未対応</SelectItem>
+                                <SelectItem value="in_progress">対応中</SelectItem>
+                                <SelectItem value="completed">完了</SelectItem>
+                                <SelectItem value="cancelled">キャンセル</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
+              </div>
+            ) : filteredConsultations.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">データが見つかりません</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredConsultations.map((consultation) => (
+                  <ConsultationCard key={consultation.id} consultation={consultation} />
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>相談申込詳細</DialogTitle>
+          </DialogHeader>
+          {selectedConsultation && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">申込者名</label>
+                  <p className="text-sm text-gray-900">{selectedConsultation.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">会社名</label>
+                  <p className="text-sm text-gray-900">{selectedConsultation.company}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">メールアドレス</label>
+                  <p className="text-sm text-gray-900">{selectedConsultation.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">電話番号</label>
+                  <p className="text-sm text-gray-900">{selectedConsultation.phone}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">興味のあるサービス</label>
+                  <p className="text-sm text-gray-900">{getServiceLabel(selectedConsultation.service)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">ステータス</label>
+                  <div className="pt-1">
+                    {getStatusBadge(selectedConsultation.status)}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">申込日時</label>
+                  <p className="text-sm text-gray-900">
+                    {new Date(selectedConsultation.created_at).toLocaleString('ja-JP')}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">更新日時</label>
+                  <p className="text-sm text-gray-900">
+                    {new Date(selectedConsultation.updated_at).toLocaleString('ja-JP')}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">メッセージ</label>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md mt-1">
+                  {selectedConsultation.message}
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                <Button
+                  className="flex-1"
+                  onClick={() => window.open(`mailto:${selectedConsultation.email}`, '_blank')}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  メール送信
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => window.open(`tel:${selectedConsultation.phone}`, '_self')}
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  電話をかける
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
