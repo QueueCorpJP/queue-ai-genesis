@@ -24,7 +24,6 @@ import {
   DrawerDescription
 } from '@/components/ui/drawer';
 
-
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -157,55 +156,6 @@ Queue株式会社について:
     }
   };
 
-  // Ensure the chat container maintains proper dimensions
-  useEffect(() => {
-    const updateMessageContainerHeight = () => {
-      if (messageContainerRef.current && isOpen) {
-        const viewportHeight = window.innerHeight;
-        const maxHeight = isMobile ? viewportHeight * 0.6 : 500;
-        messageContainerRef.current.style.maxHeight = `${maxHeight}px`;
-        messageContainerRef.current.style.minHeight = isMobile ? '300px' : '400px';
-        scrollToBottom();
-      }
-    };
-
-    updateMessageContainerHeight();
-    window.addEventListener('resize', updateMessageContainerHeight);
-
-    return () => {
-      window.removeEventListener('resize', updateMessageContainerHeight);
-    };
-  }, [isOpen, isMobile, messages]);
-
-  // Auto-focus input when chat opens and maintain focus
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      const timeoutId = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 300);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isOpen]);
-
-  // Prevent focus loss on re-renders
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      const textarea = inputRef.current;
-      const handleBlur = () => {
-        // Re-focus after a short delay to prevent focus fighting
-        setTimeout(() => {
-          if (textarea && document.activeElement !== textarea) {
-            textarea.focus();
-          }
-        }, 10);
-      };
-      
-      textarea.addEventListener('blur', handleBlur);
-      return () => textarea.removeEventListener('blur', handleBlur);
-    }
-  }, [isOpen]);
-
   // Store chat history in local storage
   useEffect(() => {
     if (messages.length > 1) {
@@ -218,16 +168,13 @@ Queue株式会社について:
   const handleSend = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    const currentInput = inputRef.current?.value || '';
-    if (!currentInput.trim() || isLoading) return;
+    const currentInput = input.trim();
+    if (!currentInput || isLoading) return;
     
-    const userMessage = currentInput.trim();
+    const userMessage = currentInput;
     const timestamp = new Date().toISOString();
     
-    // Clear input field
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
+    // Clear input field immediately
     setInput('');
     setMessages(prev => [...prev, { role: 'user', content: userMessage, timestamp }]);
     setIsLoading(true);
@@ -351,14 +298,8 @@ Queue株式会社について:
       }]);
     } finally {
       setIsLoading(false);
-      if (inputRef.current) {
-        inputRef.current.style.height = 'auto';
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 100);
-      }
     }
-  }, [isLoading]);
+  }, [input, isLoading, messages]);
 
   // Handle key down
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -368,40 +309,49 @@ Queue株式会社について:
     }
   }, [handleSend]);
 
+  // Handle input change
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  }, []);
+
   // Separate input component to prevent re-renders
   const InputForm = React.memo(() => (
-    <form onSubmit={handleSend} className="p-3 border-t bg-white">
-      <div className="flex gap-2 items-center">
-        <div className="relative flex-grow">
+    <div className="p-3 border-t bg-white shrink-0">
+      <form onSubmit={handleSend} className="flex gap-2 items-end">
+        <div className="relative flex-1">
           <Textarea 
             ref={inputRef}
+            value={input}
+            onChange={handleInputChange}
             placeholder="メッセージを入力..." 
             onKeyDown={handleKeyDown}
-            className="resize-none min-h-[45px] max-h-[120px] overflow-y-auto text-sm border rounded-full pr-12 py-3"
+            className="resize-none min-h-[45px] max-h-[120px] text-sm border rounded-lg pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
-            style={{ paddingLeft: '16px' }}
-            autoComplete="off"
-            spellCheck="false"
-            key="chat-input"
+            rows={1}
+            style={{ 
+              paddingLeft: '16px',
+              lineHeight: '1.4',
+              overflow: 'hidden'
+            }}
           />
           <Button 
             type="submit" 
             size="icon" 
             className="h-[35px] w-[35px] shrink-0 absolute right-2 top-1/2 transform -translate-y-1/2 bg-queue-blue hover:bg-queue-purple transition-all rounded-full"
-            disabled={isLoading}
+            disabled={isLoading || !input.trim()}
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   ));
 
   // Chat UI component to be reused in both Drawer and Sheet
   const ChatUI = React.memo(() => (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Chat Header */}
-      <div className="border-b bg-white px-4 py-3">
+      <div className="border-b bg-white px-4 py-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           <div className="text-lg font-semibold">Queueアシスタント</div>
@@ -411,7 +361,11 @@ Queue株式会社について:
       {/* Messages Container */}
       <div 
         ref={messageContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 min-h-0"
+        style={{ 
+          maxHeight: isMobile ? 'calc(100vh - 200px)' : '500px',
+          minHeight: isMobile ? '300px' : '400px'
+        }}
       >
         {messages.map((msg, index) => (
           <div 
@@ -426,7 +380,7 @@ Queue株式会社について:
               }`}
             >
               {msg.role === 'user' ? (
-                <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
+                <p className="whitespace-pre-wrap text-sm break-words">{msg.content}</p>
               ) : (
                 <div className="text-sm prose prose-sm max-w-none prose-gray">
                   <ReactMarkdown
@@ -525,7 +479,7 @@ Queue株式会社について:
       
       {isMobile ? (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent className="h-[85vh] rounded-t-3xl overflow-hidden">
+          <DrawerContent className="max-h-[80vh] rounded-t-3xl overflow-hidden">
             <DrawerTitle className="sr-only">Queueアシスタント</DrawerTitle>
             <DrawerDescription className="sr-only">
               Queue株式会社のAIアシスタントとのチャット
