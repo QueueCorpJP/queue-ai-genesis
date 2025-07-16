@@ -267,29 +267,29 @@ const NewsManager: React.FC = () => {
             {/* Filters */}
             <div className={`${mobileFiltersOpen || !isMobile ? 'block' : 'hidden'} md:block`}>
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="タイトル、概要、本文で検索..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="タイトル、概要、本文で検索..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
                 <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full md:w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      <SelectItem value="draft">下書き</SelectItem>
-                      <SelectItem value="published">公開</SelectItem>
-                      <SelectItem value="archived">アーカイブ</SelectItem>
-                    </SelectContent>
-                  </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">すべて</SelectItem>
+                <SelectItem value="draft">下書き</SelectItem>
+                <SelectItem value="published">公開</SelectItem>
+                <SelectItem value="archived">アーカイブ</SelectItem>
+              </SelectContent>
+            </Select>
                   <Button onClick={exportToCSV} variant="outline" size="icon">
                     <Download className="h-4 w-4" />
                   </Button>
@@ -312,65 +312,65 @@ const NewsManager: React.FC = () => {
             <>
               {/* Desktop Table */}
               <div className="hidden md:block">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>画像</TableHead>
-                        <TableHead>タイトル</TableHead>
-                        <TableHead>ステータス</TableHead>
-                        <TableHead>作成日</TableHead>
-                        <TableHead>公開日</TableHead>
-                        <TableHead>出典</TableHead>
-                        <TableHead>操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredArticles.map((article) => (
-                        <TableRow key={article.id}>
-                          <TableCell className="w-20">
-                            {article.image_url ? (
-                              <img 
-                                src={article.image_url} 
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>画像</TableHead>
+                    <TableHead>タイトル</TableHead>
+                    <TableHead>ステータス</TableHead>
+                    <TableHead>作成日</TableHead>
+                    <TableHead>公開日</TableHead>
+                    <TableHead>出典</TableHead>
+                    <TableHead>操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredArticles.map((article) => (
+                    <TableRow key={article.id}>
+                      <TableCell className="w-20">
+                        {article.image_url ? (
+                            <img
+                              src={article.image_url}
                                 alt={article.image_caption || article.title}
                                 className="w-16 h-16 object-cover rounded"
                               />
                             ) : (
                               <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
                                 <ImageIcon className="w-6 h-6 text-gray-400" />
-                              </div>
-                            )}
-                          </TableCell>
+                          </div>
+                        )}
+                      </TableCell>
                           <TableCell>
                             <div className="max-w-xs">
-                              <div className="font-medium truncate">{article.title}</div>
-                              <div className="text-sm text-gray-500 truncate">{article.summary}</div>
-                            </div>
-                          </TableCell>
+                          <div className="font-medium truncate">{article.title}</div>
+                          <div className="text-sm text-gray-500 truncate">{article.summary}</div>
+                        </div>
+                      </TableCell>
                           <TableCell>{getStatusBadge(article.status)}</TableCell>
                           <TableCell className="text-sm">
                             {new Date(article.created_at).toLocaleDateString('ja-JP')}
-                          </TableCell>
+                      </TableCell>
                           <TableCell className="text-sm">
                             {article.published_at 
                               ? new Date(article.published_at).toLocaleDateString('ja-JP') 
                               : '未公開'}
-                          </TableCell>
-                          <TableCell>
+                      </TableCell>
+                      <TableCell>
                             {article.source_url ? (
-                              <a 
-                                href={article.source_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
+                            <a
+                              href={article.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline text-sm"
-                              >
+                            >
                                 出典
-                              </a>
+                            </a>
                             ) : (
                               <span className="text-gray-400 text-sm">未設定</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
+                          )}
+                      </TableCell>
+                      <TableCell>
                             <div className="flex space-x-2">
                               <Button
                                 size="sm"
@@ -396,19 +396,19 @@ const NewsManager: React.FC = () => {
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
               </div>
 
               {/* Mobile Cards */}
               <div className="md:hidden">
                 {filteredArticles.length === 0 ? (
-                  <div className="text-center py-8">
+            <div className="text-center py-8">
                     <p className="text-gray-500">記事が見つかりません</p>
                   </div>
                 ) : (
@@ -418,7 +418,7 @@ const NewsManager: React.FC = () => {
                     ))}
                   </div>
                 )}
-              </div>
+            </div>
             </>
           )}
         </CardContent>

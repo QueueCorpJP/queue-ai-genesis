@@ -245,33 +245,33 @@ const ConsultationManager: React.FC = () => {
             {/* Filters */}
             <div className={`${mobileFiltersOpen || !isMobile ? 'block' : 'hidden'} md:block`}>
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="名前、会社名、メールアドレスで検索"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="名前、会社名、メールアドレスで検索"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
                 <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full md:w-48">
-                      <SelectValue placeholder="ステータス" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      <SelectItem value="pending">未対応</SelectItem>
-                      <SelectItem value="in_progress">対応中</SelectItem>
-                      <SelectItem value="completed">完了</SelectItem>
-                      <SelectItem value="cancelled">キャンセル</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={fetchConsultations} variant="outline" size="icon">
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="ステータス" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">すべて</SelectItem>
+                <SelectItem value="pending">未対応</SelectItem>
+                <SelectItem value="in_progress">対応中</SelectItem>
+                <SelectItem value="completed">完了</SelectItem>
+                <SelectItem value="cancelled">キャンセル</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={fetchConsultations} variant="outline" size="icon">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
                   <Button onClick={exportToCSV} variant="outline" size="icon">
                     <Download className="h-4 w-4" />
                   </Button>
@@ -287,79 +287,79 @@ const ConsultationManager: React.FC = () => {
 
           {/* Desktop Table */}
           <div className="hidden md:block">
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>申込者</TableHead>
+                  <TableHead>会社名</TableHead>
+                  <TableHead>サービス</TableHead>
+                  <TableHead>ステータス</TableHead>
+                  <TableHead>申込日時</TableHead>
+                  <TableHead>操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
                   <TableRow>
-                    <TableHead>申込者</TableHead>
-                    <TableHead>会社名</TableHead>
-                    <TableHead>サービス</TableHead>
-                    <TableHead>ステータス</TableHead>
-                    <TableHead>申込日時</TableHead>
-                    <TableHead>操作</TableHead>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      読み込み中...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        読み込み中...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredConsultations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        データが見つかりません
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredConsultations.map((consultation) => (
-                      <TableRow key={consultation.id}>
+                ) : filteredConsultations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      データが見つかりません
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredConsultations.map((consultation) => (
+                    <TableRow key={consultation.id}>
                         <TableCell>
                           <div>
                             <div className="font-medium">{consultation.name}</div>
                             <div className="text-sm text-gray-500">{consultation.email}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{consultation.company}</TableCell>
-                        <TableCell>{getServiceLabel(consultation.service)}</TableCell>
-                        <TableCell>{getStatusBadge(consultation.status)}</TableCell>
+                      <TableCell>{consultation.company}</TableCell>
+                      <TableCell>{getServiceLabel(consultation.service)}</TableCell>
+                      <TableCell>{getStatusBadge(consultation.status)}</TableCell>
                         <TableCell>
                           {new Date(consultation.created_at).toLocaleDateString('ja-JP')}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
+                      <TableCell>
+                        <div className="flex space-x-2">
+                              <Button
                               size="sm"
-                              variant="outline"
+                                variant="outline"
                               onClick={() => {
                                 setSelectedConsultation(consultation);
                                 setIsDetailDialogOpen(true);
                               }}
                             >
                               <Eye className="w-4 h-4" />
-                            </Button>
-                            <Select
+                              </Button>
+                                      <Select
                               value={consultation.status}
                               onValueChange={(value) => updateStatus(consultation.id, value)}
-                            >
+                                      >
                               <SelectTrigger className="w-24">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">未対応</SelectItem>
-                                <SelectItem value="in_progress">対応中</SelectItem>
-                                <SelectItem value="completed">完了</SelectItem>
-                                <SelectItem value="cancelled">キャンセル</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="pending">未対応</SelectItem>
+                                          <SelectItem value="in_progress">対応中</SelectItem>
+                                          <SelectItem value="completed">完了</SelectItem>
+                                          <SelectItem value="cancelled">キャンセル</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
             </div>
           </div>
 

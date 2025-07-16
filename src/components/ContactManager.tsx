@@ -237,33 +237,33 @@ const ContactManager: React.FC = () => {
             {/* Filters */}
             <div className={`${mobileFiltersOpen || !isMobile ? 'block' : 'hidden'} md:block`}>
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="名前、会社名、メールアドレスで検索"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="名前、会社名、メールアドレスで検索"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
                 <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full md:w-48">
-                      <SelectValue placeholder="ステータス" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      <SelectItem value="pending">未対応</SelectItem>
-                      <SelectItem value="in_progress">対応中</SelectItem>
-                      <SelectItem value="completed">完了</SelectItem>
-                      <SelectItem value="cancelled">キャンセル</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={fetchContacts} variant="outline" size="icon">
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="ステータス" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">すべて</SelectItem>
+                <SelectItem value="pending">未対応</SelectItem>
+                <SelectItem value="in_progress">対応中</SelectItem>
+                <SelectItem value="completed">完了</SelectItem>
+                <SelectItem value="cancelled">キャンセル</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={fetchContacts} variant="outline" size="icon">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
                   <Button onClick={exportToCSV} variant="outline" size="icon">
                     <Download className="h-4 w-4" />
                   </Button>
@@ -279,35 +279,35 @@ const ContactManager: React.FC = () => {
 
           {/* Desktop Table */}
           <div className="hidden md:block">
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>問い合わせ者</TableHead>
+                  <TableHead>会社名</TableHead>
+                  <TableHead>連絡先</TableHead>
+                  <TableHead>ステータス</TableHead>
+                  <TableHead>問い合わせ日時</TableHead>
+                  <TableHead>操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
                   <TableRow>
-                    <TableHead>問い合わせ者</TableHead>
-                    <TableHead>会社名</TableHead>
-                    <TableHead>連絡先</TableHead>
-                    <TableHead>ステータス</TableHead>
-                    <TableHead>問い合わせ日時</TableHead>
-                    <TableHead>操作</TableHead>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      読み込み中...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        読み込み中...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredContacts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        データが見つかりません
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredContacts.map((contact) => (
-                      <TableRow key={contact.id}>
-                        <TableCell>
+                ) : filteredContacts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      データが見つかりません
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredContacts.map((contact) => (
+                    <TableRow key={contact.id}>
+                      <TableCell>
                           <div>
                             <div className="font-medium">{contact.name}</div>
                             <div className="text-sm text-gray-500">{contact.email}</div>
@@ -316,49 +316,49 @@ const ContactManager: React.FC = () => {
                         <TableCell>{contact.company}</TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            {contact.phone && (
+                          {contact.phone && (
                               <div className="flex items-center mb-1">
-                                <Phone className="w-3 h-3 mr-1" />
-                                {contact.phone}
-                              </div>
-                            )}
+                              <Phone className="w-3 h-3 mr-1" />
+                              {contact.phone}
+                            </div>
+                          )}
                             <div className="flex items-center">
                               <Mail className="w-3 h-3 mr-1" />
                               {contact.email}
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(contact.status)}</TableCell>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(contact.status)}</TableCell>
                         <TableCell>
                           {new Date(contact.created_at).toLocaleDateString('ja-JP')}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
+                      <TableCell>
+                        <div className="flex space-x-2">
+                              <Button
                               size="sm"
-                              variant="outline"
+                                variant="outline"
                               onClick={() => {
                                 setSelectedContact(contact);
                                 setIsDetailDialogOpen(true);
                               }}
                             >
                               <Eye className="w-4 h-4" />
-                            </Button>
-                            <Select
+                              </Button>
+                                      <Select
                               value={contact.status}
                               onValueChange={(value) => updateStatus(contact.id, value)}
-                            >
+                                      >
                               <SelectTrigger className="w-24">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">未対応</SelectItem>
-                                <SelectItem value="in_progress">対応中</SelectItem>
-                                <SelectItem value="completed">完了</SelectItem>
-                                <SelectItem value="cancelled">キャンセル</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="pending">未対応</SelectItem>
+                                          <SelectItem value="in_progress">対応中</SelectItem>
+                                          <SelectItem value="completed">完了</SelectItem>
+                                          <SelectItem value="cancelled">キャンセル</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -432,8 +432,8 @@ const ContactManager: React.FC = () => {
                   <p className="text-sm text-gray-900">
                     {new Date(selectedContact.updated_at).toLocaleString('ja-JP')}
                   </p>
-                </div>
-              </div>
+                                    </div>
+                                  </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">お問い合わせ内容</label>
                 <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md mt-1">
@@ -441,28 +441,28 @@ const ContactManager: React.FC = () => {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 pt-4">
-                <Button
+                                      <Button
                   className="flex-1"
-                  onClick={() => window.open(`mailto:${selectedContact.email}`, '_blank')}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  メール送信
-                </Button>
-                {selectedContact.phone && (
-                  <Button
-                    variant="outline"
+                                        onClick={() => window.open(`mailto:${selectedContact.email}`, '_blank')}
+                                      >
+                                        <Mail className="w-4 h-4 mr-2" />
+                                        メール送信
+                                      </Button>
+                                      {selectedContact.phone && (
+                                        <Button
+                                          variant="outline"
                     className="flex-1"
                     onClick={() => window.open(`tel:${selectedContact.phone}`, '_self')}
-                  >
-                    <Phone className="w-4 h-4 mr-2" />
-                    電話をかける
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                                        >
+                                          <Phone className="w-4 h-4 mr-2" />
+                                          電話をかける
+                                        </Button>
+                                      )}
+                                  </div>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
     </div>
   );
 };

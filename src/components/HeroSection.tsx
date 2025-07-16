@@ -56,15 +56,16 @@ const HeroSection: React.FC = () => {
             </Button>
           </div>
           
-          <div className="mt-12 md:mt-20 flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8">
+          {/* Temporarily commented out - 信頼のパートナー section */}
+          {/* <div className="mt-12 md:mt-20 flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8">
             <p className="text-sm text-navy-500 font-medium">信頼のパートナー</p>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8 opacity-70">
               {/* Company logos would go here */}
-              <div className="w-28 h-12 md:w-36 md:h-14 bg-navy-200 rounded animate-pulse-slow"></div>
+              {/* <div className="w-28 h-12 md:w-36 md:h-14 bg-navy-200 rounded animate-pulse-slow"></div>
               <div className="w-28 h-12 md:w-36 md:h-14 bg-navy-200 rounded animate-pulse-slow"></div>
               <div className="w-28 h-12 md:w-36 md:h-14 bg-navy-200 rounded animate-pulse-slow"></div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       
