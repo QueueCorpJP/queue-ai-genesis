@@ -8,7 +8,7 @@ const Admin = () => {
   const { user, isLoading } = useAdmin();
 
   useEffect(() => {
-    // ローディング中は何もしない
+    // ローディング中は何もしな
     if (isLoading) return;
     
     // 管理者が認証済みの場合はダッシュボードにリダイレクト
