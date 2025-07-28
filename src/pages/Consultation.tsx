@@ -73,7 +73,7 @@ const Consultation = () => {
         throw error;
       }
 
-      console.log("Form submitted successfully:", data);
+
       
       // 成功メッセージを表示
       toast({
@@ -85,7 +85,6 @@ const Consultation = () => {
       form.reset();
       
     } catch (error) {
-      console.error("Error submitting form:", error);
       
       toast({
         title: "エラーが発生しました",

@@ -48,14 +48,12 @@ const ConsultationManager: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching consultations:', error);
         toast.error('データの取得に失敗しました');
         return;
       }
 
       setConsultations(data || []);
     } catch (error) {
-      console.error('Error:', error);
       toast.error('データの取得に失敗しました');
     } finally {
       setLoading(false);
@@ -70,7 +68,6 @@ const ConsultationManager: React.FC = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error updating status:', error);
         toast.error('ステータスの更新に失敗しました');
         return;
       }
@@ -85,7 +82,6 @@ const ConsultationManager: React.FC = () => {
 
       toast.success('ステータスを更新しました');
     } catch (error) {
-      console.error('Error:', error);
       toast.error('ステータスの更新に失敗しました');
     }
   };
@@ -181,8 +177,9 @@ const ConsultationManager: React.FC = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
-            size="sm"
+            size={isMobile ? "default" : "sm"}
             variant="outline"
+            className={isMobile ? "min-h-[44px] px-4" : ""}
             onClick={() => {
               setSelectedConsultation(consultation);
               setIsDetailDialogOpen(true);
@@ -387,13 +384,13 @@ const ConsultationManager: React.FC = () => {
 
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className={`${isMobile ? 'max-w-[95vw] w-[95vw]' : 'max-w-2xl'} max-h-[90vh] overflow-y-auto`}>
           <DialogHeader>
             <DialogTitle>相談申込詳細</DialogTitle>
           </DialogHeader>
           {selectedConsultation && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-4`}>
                 <div>
                   <label className="text-sm font-medium text-gray-700">申込者名</label>
                   <p className="text-sm text-gray-900">{selectedConsultation.name}</p>

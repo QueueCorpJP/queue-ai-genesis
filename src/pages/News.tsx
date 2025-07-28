@@ -48,7 +48,7 @@ const News: React.FC = () => {
 
       setArticles(data || []);
     } catch (error) {
-      console.error('Error fetching articles:', error);
+      // Silently handle error in production
     } finally {
       setLoading(false);
     }
@@ -70,10 +70,10 @@ const News: React.FC = () => {
         });
 
       if (error) {
-        console.error('Error tracking article view:', error);
+        // Silently handle error in production
       }
     } catch (error) {
-      console.error('Error tracking article view:', error);
+      // Silently handle error in production
     }
   };
 

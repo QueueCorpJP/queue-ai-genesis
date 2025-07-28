@@ -365,13 +365,12 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="source_name">出典名 *</Label>
+              <Label htmlFor="source_name">出典名</Label>
               <Input
                 id="source_name"
                 value={formData.source_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, source_name: e.target.value }))}
                 placeholder="例：PR TIMES"
-                required
               />
             </div>
             <div className="space-y-2">

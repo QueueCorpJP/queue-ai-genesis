@@ -50,7 +50,7 @@ interface RecentActivity {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { user, session, logout } = useAdmin();
+  const { user, session, logout, isLoading } = useAdmin();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [refreshing, setRefreshing] = useState(false);
@@ -68,13 +68,12 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // 認証チェック - 依存関係を明確にする
+  // 認証チェック - ローディング完了後に実行
   useEffect(() => {
-    if (!user?.isAuthenticated) {
-      console.log('User not authenticated, redirecting to login');
+    if (!isLoading && !user?.isAuthenticated) {
       navigate('/admin/login', { replace: true });
     }
-  }, [user?.isAuthenticated, navigate]);
+  }, [user?.isAuthenticated, isLoading, navigate]);
 
   // データフェッチ関数をuseCallbackでメモ化
   const fetchStats = useCallback(async () => {
@@ -87,8 +86,6 @@ const AdminDashboard: React.FC = () => {
       thisMonth.setDate(1);
       thisMonth.setHours(0, 0, 0, 0);
       const monthStart = thisMonth.toISOString();
-
-      console.log('Fetching dashboard stats...');
 
       // 今日の件数
       const [
@@ -126,10 +123,8 @@ const AdminDashboard: React.FC = () => {
         publishedNews: publishedNews || 0
       };
 
-      console.log('Stats fetched:', newStats);
       setStats(newStats);
     } catch (error) {
-      console.error('Error fetching stats:', error);
       toast.error('統計データの取得に失敗しました');
     }
   }, []);
@@ -137,8 +132,6 @@ const AdminDashboard: React.FC = () => {
   const fetchRecentActivities = useCallback(async () => {
     try {
       const activities: RecentActivity[] = [];
-
-      console.log('Fetching recent activities...');
 
       // 最新の相談申込を取得
       const { data: consultations } = await supabase
@@ -200,36 +193,36 @@ const AdminDashboard: React.FC = () => {
       // 時間順でソート
       activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       
-      console.log('Activities fetched:', activities.length);
       setActivities(activities.slice(0, 10));
     } catch (error) {
-      console.error('Error fetching recent activities:', error);
       toast.error('アクティビティの取得に失敗しました');
     }
   }, []);
 
-  // データフェッチ関数をメモ化
+  // データフェッチ関数をメモ化（モバイル最適化）
   const fetchDashboardData = useCallback(async () => {
     if (!user?.isAuthenticated) {
-      console.log('User not authenticated, skipping data fetch');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Fetching dashboard data...');
-      await Promise.all([
-        fetchStats(),
-        fetchRecentActivities()
-      ]);
-      console.log('Dashboard data fetched successfully');
+      
+      // モバイルでは統計のみ、デスクトップでは全データを取得
+      if (isMobile) {
+        await fetchStats();
+      } else {
+        await Promise.all([
+          fetchStats(),
+          fetchRecentActivities()
+        ]);
+      }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
       toast.error('ダッシュボードデータの読み込みに失敗しました');
     } finally {
       setLoading(false);
     }
-  }, [user?.isAuthenticated, fetchStats, fetchRecentActivities]);
+  }, [user?.isAuthenticated, fetchStats, fetchRecentActivities, isMobile]);
 
   // 初回データフェッチ - 依存関係を明確にする
   useEffect(() => {
@@ -252,7 +245,6 @@ const AdminDashboard: React.FC = () => {
       toast.success('ログアウトしました');
       navigate('/admin/login');
     } catch (error) {
-      console.error('Logout error:', error);
       toast.error('ログアウトに失敗しました');
     }
   };
@@ -354,7 +346,19 @@ const AdminDashboard: React.FC = () => {
     }
   ];
 
-  // ローディング中またはログイン状態確認中
+  // 認証状態確認中はローディング表示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">認証状態を確認中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 認証されていない場合はログインページにリダイレクト
   if (!user?.isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
@@ -540,7 +544,8 @@ const AdminDashboard: React.FC = () => {
               ))}
             </div>
 
-            {/* 最近のアクティビティ */}
+            {/* 最近のアクティビティ - モバイルでは非表示 */}
+            {!isMobile && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center text-lg md:text-xl">
@@ -582,6 +587,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="analytics">

@@ -3,7 +3,7 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Queue株式会社 | AI駆動で、圧倒的スピードと品質を。</title>
     <meta name="description" content="Queue株式会社｜AI技術で企業のDXを加速。AI受託開発、LLMソリューション、AIコンサルティングなど、最先端のAIサービスを提供。" />
     <meta name="author" content="Queue株式会社" />
@@ -72,6 +72,22 @@
 
   <body>
     <div id="root"></div>
+    <!-- Suppress Chrome extension errors in development -->
+    <script>
+      // Suppress Chrome extension runtime errors in development
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        const originalError = console.error;
+        console.error = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('Could not establish connection') || 
+              message.includes('Receiving end does not exist') ||
+              message.includes('service-worker-loader.js')) {
+            return; // Suppress these specific errors
+          }
+          originalError.apply(console, args);
+        };
+      }
+    </script>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>

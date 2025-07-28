@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MessageSquare, Search, Filter, Download, Eye, Calendar, User, Clock } from 'lucide-react';
 import { supabase, supabaseAdmin, ChatbotConversation } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -21,6 +23,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [selectedConversation, setSelectedConversation] = useState<ChatbotConversation | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [stats, setStats] = useState({
     totalConversations: 0,
     todayConversations: 0,
@@ -29,42 +32,75 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
     uniqueSessions: 0
   });
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+
+  // Status update function
+  const updateStatus = async (conversationId: string, newStatus: string) => {
+    try {
+      const { error } = await supabaseAdmin
+        .from('chatbot_conversations')
+        .update({ 
+          status: newStatus as 'pending' | 'reviewed' | 'flagged' | 'resolved',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversationId);
+
+      if (error) {
+        console.error('Error updating status:', error);
+        toast({
+          title: "エラー",
+          description: "ステータスの更新に失敗しました",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, status: newStatus as 'pending' | 'reviewed' | 'flagged' | 'resolved' }
+            : conv
+        )
+      );
+
+      // Update selected conversation if it's the one being updated
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(prev => 
+          prev ? { ...prev, status: newStatus as 'pending' | 'reviewed' | 'flagged' | 'resolved' } : null
+        );
+      }
+
+      toast({
+        title: "成功",
+        description: "ステータスを更新しました",
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "エラー",
+        description: "ステータスの更新に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Helper function to get status badge
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'reviewed':
+        return <Badge variant="secondary">確認済み</Badge>;
+      case 'flagged':
+        return <Badge variant="destructive">要注意</Badge>;
+      case 'resolved':
+        return <Badge variant="default">解決済み</Badge>;
+      case 'pending':
+      default:
+        return <Badge variant="outline">未確認</Badge>;
+    }
+  };
 
   useEffect(() => {
-    console.log('ChatbotManager component mounted, fetching data...');
-    
-    // Test Supabase connection and RLS policies
-    const testConnection = async () => {
-      try {
-        // Test basic connection with count using admin client
-        const { data, error } = await supabaseAdmin
-          .from('chatbot_conversations')
-          .select('count', { count: 'exact', head: true });
-        
-        console.log('Supabase admin connection test:', { data, error });
-        
-        // Test with admin client (bypasses RLS)
-        const { data: adminData, error: adminError } = await supabaseAdmin
-          .from('chatbot_conversations')
-          .select('*')
-          .limit(1);
-        
-        console.log('Admin query test:', {
-          adminData,
-          adminError,
-          hasData: adminData?.length > 0,
-          errorCode: adminError?.code,
-          errorMessage: adminError?.message,
-          supabaseAdminURL: import.meta.env.VITE_SUPABASE_URL,
-          serviceRoleKey: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Not Set'
-        });
-        
-      } catch (err) {
-        console.error('Supabase connection error:', err);
-      }
-    };
-    
-    testConnection();
     fetchConversations();
     fetchStats();
   }, []);
@@ -72,7 +108,6 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
   const fetchConversations = async () => {
     try {
       setLoading(true);
-      console.log('Fetching chatbot conversations with admin client...');
       
       // Use admin client to bypass RLS
       const { data: tableData, error: tableError, count } = await supabaseAdmin
@@ -80,15 +115,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
-      console.log('Supabase admin query result:', {
-        data: tableData,
-        error: tableError,
-        count,
-        dataLength: tableData?.length || 0
-      });
-
       if (tableError) {
-        console.error('Error fetching conversations:', tableError);
         
         // Show more detailed error information
         if (tableError.code === 'PGRST116') {
@@ -107,7 +134,6 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         return;
       }
 
-      console.log('Conversations fetched successfully:', tableData?.length || 0);
       setConversations(tableData || []);
       
       // Show success message if data is found
@@ -125,7 +151,6 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         });
       }
     } catch (error) {
-      console.error('Error fetching conversations:', error);
       toast({
         title: "エラー",
         description: "チャットボットの会話履歴の取得に失敗しました",
@@ -169,10 +194,9 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         uniqueSessions
       };
 
-      console.log('Calculated stats:', calculatedStats);
       setStats(calculatedStats);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      // Error handling without console.error for production
     }
   };
 
@@ -188,21 +212,17 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         user_agent: "Test Agent"
       };
 
-      console.log('Adding test data with admin client:', testConversation);
-      
       const { data, error } = await supabaseAdmin
         .from('chatbot_conversations')
         .insert(testConversation);
       
       if (error) {
-        console.error('Error adding test data:', error);
         toast({
           title: "テストデータ追加エラー",
           description: `エラー: ${error.message}`,
           variant: "destructive",
         });
       } else {
-        console.log('Test data added successfully:', data);
         toast({
           title: "テストデータ追加成功",
           description: "テストデータが正常に追加されました。",
@@ -214,7 +234,6 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         fetchStats();
       }
     } catch (error) {
-      console.error('Error adding test data:', error);
       toast({
         title: "テストデータ追加エラー",
         description: "予期しないエラーが発生しました。",
@@ -359,27 +378,49 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
                   <CardContent className="p-4 md:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <Badge variant="outline" className="text-xs">
                             {conversation.session_id.substring(0, 8)}
                           </Badge>
+                          {getStatusBadge(conversation.status)}
                           <span className="text-sm text-gray-500">
                             {new Date(conversation.timestamp).toLocaleString('ja-JP')}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700 mb-2 font-medium">
-                          ユーザー: {conversation.user_message}
-                        </p>
-                        <p className="text-sm text-gray-600 truncate">
-                          AI: {conversation.bot_response}
-                        </p>
+                        <div className="text-sm text-gray-700 mb-2 font-medium">
+                          <span className="text-gray-500">ユーザー:</span>
+                          <p className="mt-1 break-words line-clamp-2">{conversation.user_message}</p>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <span className="text-gray-500">AI:</span>
+                          <p className="mt-1 break-words line-clamp-3">{conversation.bot_response}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Select
+                          value={conversation.status || 'pending'}
+                          onValueChange={(value) => updateStatus(conversation.id, value)}
+                        >
+                          <SelectTrigger className={`w-auto ${isMobile ? "min-h-[44px]" : "h-8"}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">未確認</SelectItem>
+                            <SelectItem value="reviewed">確認済み</SelectItem>
+                            <SelectItem value="flagged">要注意</SelectItem>
+                            <SelectItem value="resolved">解決済み</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Button
                           variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedConversation(conversation)}
-                          className="flex items-center gap-1"
+                          size={isMobile ? "default" : "sm"}
+                          className={`flex items-center gap-1 ${isMobile ? "min-h-[44px] px-4" : ""}`}
+                          onClick={() => {
+                            setSelectedConversation(conversation);
+                            if (isMobile) {
+                              setIsDetailDialogOpen(true);
+                            }
+                          }}
                         >
                           <Eye className="h-4 w-4" />
                           <span className="hidden sm:inline">詳細</span>
@@ -406,7 +447,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-700">セッションID</label>
-                    <p className="text-sm text-gray-900 font-mono">{selectedConversation.session_id}</p>
+                    <p className="text-sm text-gray-900 font-mono break-words">{selectedConversation.session_id}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700">日時</label>
@@ -414,24 +455,49 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
                       {new Date(selectedConversation.timestamp).toLocaleString('ja-JP')}
                     </p>
                   </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">ステータス</label>
+                    <div className="pt-1">
+                      {getStatusBadge(selectedConversation.status)}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">ステータス変更</label>
+                    <Select
+                      value={selectedConversation.status || 'pending'}
+                      onValueChange={(value) => updateStatus(selectedConversation.id, value)}
+                    >
+                      <SelectTrigger className="w-full mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">未確認</SelectItem>
+                        <SelectItem value="reviewed">確認済み</SelectItem>
+                        <SelectItem value="flagged">要注意</SelectItem>
+                        <SelectItem value="resolved">解決済み</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   {selectedConversation.user_agent && (
                     <div className="md:col-span-2">
                       <label className="text-sm font-medium text-gray-700">ユーザーエージェント</label>
-                      <p className="text-sm text-gray-900 break-all">{selectedConversation.user_agent}</p>
+                      <p className="text-sm text-gray-900 break-words text-wrap">{selectedConversation.user_agent}</p>
                     </div>
                   )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">ユーザーメッセージ</label>
-                  <p className="text-sm text-gray-900 whitespace-pre-wrap bg-blue-50 p-3 rounded-md mt-1">
+                  <div className="text-sm text-gray-900 whitespace-pre-wrap bg-blue-50 p-3 rounded-md mt-1 break-words max-w-full overflow-hidden">
                     {selectedConversation.user_message}
-                  </p>
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">AIレスポンス</label>
-                  <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md mt-1">
-                    {selectedConversation.bot_response}
-                  </p>
+                  <div className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md mt-1 break-words max-w-full overflow-hidden prose prose-sm max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {selectedConversation.bot_response}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -446,6 +512,74 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Mobile Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>会話詳細</DialogTitle>
+          </DialogHeader>
+          {selectedConversation && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">セッションID</label>
+                  <p className="text-sm text-gray-900 font-mono break-words">{selectedConversation.session_id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">日時</label>
+                  <p className="text-sm text-gray-900">
+                    {new Date(selectedConversation.timestamp).toLocaleString('ja-JP')}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">ステータス</label>
+                  <div className="pt-1">
+                    {getStatusBadge(selectedConversation.status)}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">ステータス変更</label>
+                  <Select
+                    value={selectedConversation.status || 'pending'}
+                    onValueChange={(value) => updateStatus(selectedConversation.id, value)}
+                  >
+                    <SelectTrigger className="w-full mt-1 min-h-[44px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">未確認</SelectItem>
+                      <SelectItem value="reviewed">確認済み</SelectItem>
+                      <SelectItem value="flagged">要注意</SelectItem>
+                      <SelectItem value="resolved">解決済み</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedConversation.user_agent && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">ユーザーエージェント</label>
+                    <p className="text-sm text-gray-900 break-words text-wrap">{selectedConversation.user_agent}</p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">ユーザーメッセージ</label>
+                <div className="text-sm text-gray-900 whitespace-pre-wrap bg-blue-50 p-3 rounded-md mt-1 break-words max-w-full overflow-hidden">
+                  {selectedConversation.user_message}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">AIレスポンス</label>
+                <div className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md mt-1 break-words max-w-full overflow-hidden prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {selectedConversation.bot_response}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -4,6 +4,25 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+// Suppress Chrome extension errors in development
+if (import.meta.env.DEV) {
+  window.addEventListener('error', (event) => {
+    if (event.message?.includes('Could not establish connection') ||
+        event.message?.includes('Receiving end does not exist') ||
+        event.filename?.includes('service-worker-loader.js')) {
+      event.preventDefault();
+      return false;
+    }
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason?.message?.includes('Could not establish connection') ||
+        event.reason?.message?.includes('Receiving end does not exist')) {
+      event.preventDefault();
+    }
+  });
+}
+
 // Set global meta description for SEO
 const setMetaDescription = () => {
   const metaDescription = document.querySelector('meta[name="description"]');

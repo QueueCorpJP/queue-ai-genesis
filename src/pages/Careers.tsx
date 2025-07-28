@@ -173,8 +173,8 @@ const Careers = () => {
                   </p>
                   
                   <div className="text-center">
-                    <a href="mailto:careers@queue-tech.jp" className="text-xl font-medium text-navy-700 hover:text-navy-900 transition-colors">
-                      careers@queue-tech.jp
+                                    <a href="mailto:queue@queue-tech.jp" className="text-xl font-medium text-navy-700 hover:text-navy-900 transition-colors">
+                  queue@queue-tech.jp
                     </a>
                   </div>
                 </CardContent>

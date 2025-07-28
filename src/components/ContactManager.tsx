@@ -47,14 +47,12 @@ const ContactManager: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching contacts:', error);
         toast.error('データの取得に失敗しました');
         return;
       }
 
       setContacts(data || []);
     } catch (error) {
-      console.error('Error:', error);
       toast.error('データの取得に失敗しました');
     } finally {
       setLoading(false);
@@ -69,7 +67,6 @@ const ContactManager: React.FC = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error updating status:', error);
         toast.error('ステータスの更新に失敗しました');
         return;
       }
@@ -84,7 +81,6 @@ const ContactManager: React.FC = () => {
 
       toast.success('ステータスを更新しました');
     } catch (error) {
-      console.error('Error:', error);
       toast.error('ステータスの更新に失敗しました');
     }
   };
@@ -173,8 +169,9 @@ const ContactManager: React.FC = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
-            size="sm"
+            size={isMobile ? "default" : "sm"}
             variant="outline"
+            className={isMobile ? "min-h-[44px] px-4" : ""}
             onClick={() => {
               setSelectedContact(contact);
               setIsDetailDialogOpen(true);
@@ -392,13 +389,13 @@ const ContactManager: React.FC = () => {
 
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className={`${isMobile ? 'max-w-[95vw] w-[95vw]' : 'max-w-2xl'} max-h-[90vh] overflow-y-auto`}>
           <DialogHeader>
             <DialogTitle>お問い合わせ詳細</DialogTitle>
           </DialogHeader>
           {selectedContact && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-4`}>
                 <div>
                   <label className="text-sm font-medium text-gray-700">お名前</label>
                   <p className="text-sm text-gray-900">{selectedContact.name}</p>
@@ -440,24 +437,24 @@ const ContactManager: React.FC = () => {
                   {selectedContact.message}
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 pt-4">
-                                      <Button
+                            <div className={`flex ${isMobile ? 'flex-col' : 'flex-col sm:flex-row'} gap-2 pt-4`}>
+                <Button
                   className="flex-1"
-                                        onClick={() => window.open(`mailto:${selectedContact.email}`, '_blank')}
-                                      >
-                                        <Mail className="w-4 h-4 mr-2" />
-                                        メール送信
-                                      </Button>
-                                      {selectedContact.phone && (
-                                        <Button
-                                          variant="outline"
+                  onClick={() => window.open(`mailto:${selectedContact.email}`, '_blank')}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  メール送信
+                </Button>
+                {selectedContact.phone && (
+                  <Button
+                    variant="outline"
                     className="flex-1"
                     onClick={() => window.open(`tel:${selectedContact.phone}`, '_self')}
-                                        >
-                                          <Phone className="w-4 h-4 mr-2" />
-                                          電話をかける
-                                        </Button>
-                                      )}
+                  >
+                    <Phone className="w-4 h-4 mr-2" />
+                    電話をかける
+                  </Button>
+                )}
                                   </div>
                                 </div>
                               )}

@@ -94,7 +94,7 @@ const ContactSection: React.FC = () => {
         throw error;
       }
 
-      console.log("Contact form submitted successfully:", data);
+
       
       // 成功メッセージを表示
       toast({
@@ -112,7 +112,6 @@ const ContactSection: React.FC = () => {
       });
       
     } catch (error) {
-      console.error("Error submitting contact form:", error);
       
       toast({
         title: "エラーが発生しました",

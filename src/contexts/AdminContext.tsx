@@ -53,7 +53,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
     } catch (error) {
-      console.error('Failed to save session to localStorage:', error);
+      // Silently handle localStorage errors in production
     }
   };
 
@@ -79,7 +79,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       return sessionData;
     } catch (error) {
-      console.error('Failed to load session from localStorage:', error);
       localStorage.removeItem(SESSION_STORAGE_KEY);
       return null;
     }
@@ -152,7 +151,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         clearSessionStorage();
       }
     } catch (error) {
-      console.error('Session check failed:', error);
       setUser(null);
       setSession(null);
       clearSessionStorage();
@@ -181,10 +179,13 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
   }, [session, user]);
 
-  // 定期的なセッションチェック
+  // 初回マウント時のセッションチェック
   useEffect(() => {
     checkSession();
+  }, []);
 
+  // 定期的なセッションチェック
+  useEffect(() => {
     const interval = setInterval(() => {
       if (user?.isAuthenticated) {
         const storedSession = loadSessionFromStorage();
@@ -197,7 +198,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, 60000); // 1分ごと
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.isAuthenticated]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -205,13 +206,11 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       // 管理者メールアドレスのチェック
       if (!isAdminUser(email)) {
-        console.log('Invalid admin email:', email);
         return false;
       }
 
       // パスワードの簡易チェック
       if (password !== ADMIN_CREDENTIALS.password) {
-        console.log('Invalid password');
         return false;
       }
 
@@ -234,11 +233,9 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         expiresAt: now + SESSION_DURATION
       };
 
-      console.log('Login successful, creating session:', newSession);
       updateSession(newSession);
       return true;
     } catch (error) {
-      console.error('Login error:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -253,10 +250,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setUser(null);
       setSession(null);
       clearSessionStorage();
-      
-      console.log('Logout successful');
     } catch (error) {
-      console.error('Logout failed:', error);
+      // Silently handle logout errors
     } finally {
       setIsLoading(false);
     }

@@ -9,7 +9,7 @@ let supabaseInstance: any = null;
 let supabaseAdminInstance: any = null;
 
 // Regular client for public operations
-export const supabase = (() => {
+const createSupabaseClient = () => {
   if (!supabaseInstance) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -20,10 +20,12 @@ export const supabase = (() => {
     });
   }
   return supabaseInstance;
-})();
+};
+
+export const supabase = createSupabaseClient();
 
 // Admin client with service role key (bypasses RLS)
-export const supabaseAdmin = (() => {
+const createSupabaseAdminClient = () => {
   if (!supabaseAdminInstance) {
     supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
       auth: {
@@ -33,7 +35,9 @@ export const supabaseAdmin = (() => {
     });
   }
   return supabaseAdminInstance;
-})();
+};
+
+export const supabaseAdmin = createSupabaseAdminClient();
 
 // Types for the database
 export interface ChatbotConversation {
@@ -44,6 +48,7 @@ export interface ChatbotConversation {
   timestamp: string;
   user_ip?: string;
   user_agent?: string;
+  status?: 'pending' | 'reviewed' | 'flagged' | 'resolved';
   created_at: string;
   updated_at: string;
 }

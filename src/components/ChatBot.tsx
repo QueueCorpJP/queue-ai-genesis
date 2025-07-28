@@ -64,11 +64,6 @@ const ChatBot = () => {
     const MAX_RETRIES = 3;
     
     try {
-      console.log(`Attempting to save conversation to database (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, {
-        session_id: sessionId,
-        user_message: userMessage,
-        bot_response: botResponse
-      });
       
       const { data, error } = await supabase
         .from('chatbot_conversations')
@@ -82,29 +77,17 @@ const ChatBot = () => {
         });
       
       if (error) {
-        console.error('Database save error:', error);
-        
         // Retry logic for certain error types
         if (retryCount < MAX_RETRIES && (error.code === 'PGRST116' || error.code === 'PGRST301')) {
-          console.log(`Retrying database save... (${retryCount + 1}/${MAX_RETRIES})`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
           return saveConversationToDatabase(userMessage, botResponse, retryCount + 1);
         }
         
-        // Log specific error types for debugging
-        if (error.code === 'PGRST116') {
-          console.error('Table not found error - database migration may be required');
-        } else if (error.code === 'PGRST301') {
-          console.error('Database permission error - RLS policy may be blocking insert');
-        }
-        
         throw error;
       } else {
-        console.log('Conversation saved successfully to database:', data);
         return data;
       }
     } catch (dbError) {
-      console.error('Failed to save conversation to database:', dbError);
       
       // Show error to user only on final retry failure
       if (retryCount >= MAX_RETRIES) {
@@ -147,12 +130,16 @@ Queue株式会社について:
 `;
 
   useEffect(() => {
-    scrollToBottom();
+    // メッセージが追加された時のみスクロール
+    if (messages.length > 0) {
+      setTimeout(() => scrollToBottom(), 100);
+    }
   }, [messages]);
 
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && messageContainerRef.current) {
+      // コンテナの一番下にスクロール
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   };
 
@@ -165,7 +152,7 @@ Queue株式会社について:
     }
   }, [messages]);
 
-  const handleSend = useCallback(async (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
     const currentInput = input.trim();
@@ -202,8 +189,7 @@ Queue株式会社について:
         return;
       }
       
-      // Log user question to console for debugging
-      console.log('Sending request to Gemini API:', userMessage);
+      // Send request to Gemini API
 
       const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent', {
         method: 'POST',
@@ -259,7 +245,6 @@ Queue株式会社について:
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API Error:', errorData);
         throw new Error(`API returned ${response.status}: ${errorData?.error?.message || 'Unknown error'}`);
       }
 
@@ -267,7 +252,6 @@ Queue株式会社について:
       
       if (data.candidates && data.candidates[0]?.content?.parts) {
         const botReply = data.candidates[0].content.parts[0].text;
-        console.log('Bot reply:', botReply); // デバッグ用
         setMessages(prev => [...prev, { 
           role: 'assistant', 
           content: botReply, 
@@ -281,11 +265,9 @@ Queue株式会社について:
           // Error already handled in saveConversationToDatabase
         }
       } else {
-        console.error('Invalid response structure:', data);
         throw new Error('レスポンスデータの形式が正しくありません');
       }
     } catch (error) {
-      console.error('Error calling Gemini API:', error);
       toast({
         title: "エラーが発生しました",
         description: "メッセージの送信中に問題が発生しました。後でもう一度お試しください。",
@@ -298,24 +280,30 @@ Queue株式会社について:
       }]);
     } finally {
       setIsLoading(false);
+      // inputフィールドにフォーカスを戻す
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
     }
-  }, [input, isLoading, messages]);
+  };
 
   // Handle key down
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-  }, [handleSend]);
+  };
 
   // Handle input change
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-  }, []);
+  };
 
-  // Separate input component to prevent re-renders
-  const InputForm = React.memo(() => (
+  // Input form component
+  const InputForm = () => (
     <div className="p-3 border-t bg-white shrink-0">
       <form onSubmit={handleSend} className="flex gap-2 items-end">
         <div className="relative flex-1">
@@ -325,13 +313,14 @@ Queue株式会社について:
             onChange={handleInputChange}
             placeholder="メッセージを入力..." 
             onKeyDown={handleKeyDown}
-            className="resize-none min-h-[45px] max-h-[120px] text-sm border rounded-lg pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="resize-none min-h-[45px] max-h-[120px] border rounded-lg pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
             rows={1}
             style={{ 
               paddingLeft: '16px',
               lineHeight: '1.4',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              fontSize: '16px' // モバイルズーム防止
             }}
           />
           <Button 
@@ -345,10 +334,10 @@ Queue株式会社について:
         </div>
       </form>
     </div>
-  ));
+  );
 
   // Chat UI component to be reused in both Drawer and Sheet
-  const ChatUI = React.memo(() => (
+  const ChatUI = () => (
     <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Chat Header */}
       <div className="border-b bg-white px-4 py-3 shrink-0">
@@ -461,7 +450,7 @@ Queue株式会社について:
       
       <InputForm />
     </div>
-  ));
+  );
 
   // Chat bot trigger button
   const ChatBotTrigger = () => (
