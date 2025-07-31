@@ -230,8 +230,10 @@ const Blog: React.FC = () => {
   };
 
   const estimateReadingTime = (content: string) => {
-    const wordsPerMinute = 300; // 日本語の平均読書スピード
-    const characters = content.length;
+    const wordsPerMinute = 400; // 日本語の平均読書スピード
+    // HTMLタグを除去してテキストのみを取得
+    const textOnly = content.replace(/<[^>]*>/g, '');
+    const characters = textOnly.length;
     const minutes = Math.ceil(characters / wordsPerMinute);
     return Math.max(1, minutes);
   };
@@ -325,9 +327,13 @@ const Blog: React.FC = () => {
                           </h2>
                           
                           {/* 要約 */}
-                          <p className="text-gray-600 mb-4 line-clamp-3 flex-grow">
-                            {article.summary}
-                          </p>
+                          <div className="text-gray-600 mb-4 line-clamp-3 flex-grow blog-content">
+                            {article.summary.includes('<') ? (
+                              <div dangerouslySetInnerHTML={{ __html: article.summary }} />
+                            ) : (
+                              <p>{article.summary}</p>
+                            )}
+                          </div>
                           
                           {/* タグ */}
                           {article.tags.length > 0 && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Upload, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { X, Plus, Upload, Image as ImageIcon, ExternalLink, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+// @ts-ignore - react-quillのタイプ定義が存在しないため
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface NewsEditorProps {
   article?: any;
@@ -34,6 +37,40 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
   const [newTag, setNewTag] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const quillRef = useRef<any>(null);
+
+  // Quillカスタムツールバーの設定
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        [{ 'font': [] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'script': 'sub'}, { 'script': 'super' }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        [{ 'direction': 'rtl' }],
+        [{ 'align': [] }],
+        ['link', 'image', 'video'],
+        ['consultation-link'], // カスタムボタン
+        ['clean']
+      ],
+      handlers: {
+        'consultation-link': insertConsultationLink
+      }
+    }
+  }), []);
+
+  const formats = [
+    'header', 'font', 'size',
+    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'list', 'bullet', 'indent',
+    'link', 'image', 'video',
+    'color', 'background',
+    'align', 'script'
+  ];
 
   useEffect(() => {
     if (article) {
@@ -62,6 +99,51 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
       setImagePreview('');
     }
   }, [article]);
+
+  // 無料相談リンク挿入機能
+  function insertConsultationLink() {
+    const quill = quillRef.current?.getEditor();
+    if (quill) {
+      const range = quill.getSelection(true);
+      const link = '<a href="/consultation" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; margin: 16px 0; transition: all 0.3s ease;"><span style="margin-right: 8px;">💬</span>無料相談を申し込む</a>';
+      quill.clipboard.dangerouslyPasteHTML(range.index, link);
+      quill.setSelection(range.index + link.length);
+    }
+  }
+
+  // Quillエディタの初期化後にカスタムボタンを追加
+  useEffect(() => {
+    const addCustomButton = () => {
+      const toolbarContainer = document.querySelector('.ql-toolbar');
+      if (toolbarContainer && !document.querySelector('.ql-consultation-link')) {
+        const customButton = document.createElement('button');
+        customButton.className = 'ql-consultation-link';
+        customButton.innerHTML = '💬';
+        customButton.title = '無料相談リンクを挿入';
+        customButton.type = 'button';
+        customButton.style.background = '#3b82f6';
+        customButton.style.color = 'white';
+        customButton.style.border = 'none';
+        customButton.style.borderRadius = '4px';
+        customButton.style.padding = '6px 8px';
+        customButton.style.margin = '0 2px';
+        customButton.style.cursor = 'pointer';
+        
+        customButton.addEventListener('click', insertConsultationLink);
+        
+        // ツールバーの最後に追加
+        const cleanButton = toolbarContainer.querySelector('.ql-clean');
+        if (cleanButton && cleanButton.parentNode) {
+          cleanButton.parentNode.insertBefore(customButton, cleanButton);
+        }
+      }
+    };
+
+    if (open) {
+      // ダイアログが開いた後に少し遅延してボタンを追加
+      setTimeout(addCustomButton, 500);
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,13 +301,13 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {article ? '記事を編集' : '新規記事を作成'}
           </DialogTitle>
           <DialogDescription>
-            ブログ記事の作成・編集を行います。必要な情報を入力してください。
+            ブログ記事の作成・編集を行います。リッチテキストエディタで装飾やリンクの挿入が可能です。
           </DialogDescription>
         </DialogHeader>
         
@@ -355,15 +437,25 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content">本文 *</Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="記事の本文を入力（改行で段落を分けます）"
-              rows={10}
-              required
-            />
+            <Label>本文 *</Label>
+            <div className="border rounded-md">
+              <div className="bg-amber-50 border-b px-4 py-2 text-sm text-amber-800">
+                <div className="flex items-center space-x-2">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>💬ボタンで無料相談リンクを挿入できます | フォント・サイズ・色の変更が可能</span>
+                </div>
+              </div>
+              <ReactQuill
+                ref={quillRef}
+                theme="snow"
+                value={formData.content}
+                onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+                modules={modules}
+                formats={formats}
+                placeholder="記事の本文を入力してください。ツールバーから文字装飾や無料相談リンクの挿入ができます。"
+                style={{ minHeight: '300px' }}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -10,6 +10,7 @@ import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIc
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import NewsEditor from './NewsEditor';
+import NewsEditorForm from './NewsEditorForm';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NewsArticle {
@@ -34,6 +35,8 @@ const NewsManager: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -113,6 +116,17 @@ const NewsManager: React.FC = () => {
       console.error('Error:', error);
       toast.error('ステータスの更新に失敗しました');
     }
+  };
+
+  const handleEdit = (article: NewsArticle) => {
+    setEditingArticle(article);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSave = () => {
+    setIsEditDialogOpen(false);
+    setEditingArticle(null);
+    fetchArticles(); // 記事一覧を再取得
   };
 
   const getStatusBadge = (status: string) => {
@@ -210,6 +224,14 @@ const NewsManager: React.FC = () => {
               >
                 <Eye className="w-4 h-4 mr-1" />
                 詳細
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleEdit(article)}
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                編集
               </Button>
               <Button
                 size="sm"
@@ -385,6 +407,13 @@ const NewsManager: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
+                                onClick={() => handleEdit(article)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 onClick={() => toggleStatus(article.id, article.status)}
                               >
                                 <Calendar className="w-4 h-4" />
@@ -497,16 +526,21 @@ const NewsManager: React.FC = () => {
 
               <div>
                 <label className="text-sm font-medium text-gray-700">概要</label>
-                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md mt-1">
-                  {selectedArticle.summary}
-                </p>
+                <div className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md mt-1 blog-content">
+                  {selectedArticle.summary.includes('<') ? (
+                    <div dangerouslySetInnerHTML={{ __html: selectedArticle.summary }} />
+                  ) : (
+                    <p>{selectedArticle.summary}</p>
+                  )}
+                </div>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-gray-700">本文</label>
-                <div className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md mt-1 whitespace-pre-wrap">
-                  {selectedArticle.content}
-                </div>
+                <div 
+                  className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md mt-1 blog-content"
+                  dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+                />
               </div>
 
               {selectedArticle.tags && selectedArticle.tags.length > 0 && (
@@ -522,6 +556,25 @@ const NewsManager: React.FC = () => {
                 </div>
               )}
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 編集ダイアログ */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>記事を編集</DialogTitle>
+            <DialogDescription>
+              記事の内容を編集できます。リッチテキストエディターで文字装飾や無料相談リンクの挿入が可能です。
+            </DialogDescription>
+          </DialogHeader>
+          {editingArticle && (
+            <NewsEditorForm 
+              article={editingArticle}
+              onSave={handleEditSave}
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
           )}
         </DialogContent>
       </Dialog>

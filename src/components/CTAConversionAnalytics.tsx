@@ -7,13 +7,10 @@ import { Progress } from '@/components/ui/progress';
 import { 
   TrendingUp, 
   MousePointer, 
-  Users, 
   CheckCircle, 
   Calendar, 
-  ArrowRight,
   Target,
-  Zap,
-  Clock
+  Zap
 } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -23,7 +20,7 @@ interface CTAConversionData {
   ctaClicks: number;
   consultationRequests: number;
   conversionRate: number;
-  avgTimeToConvert: number; // 分単位
+  avgTimeToConvert: number;
 }
 
 interface ConversionStats {
@@ -33,15 +30,6 @@ interface ConversionStats {
   last30DaysConversionRate: number;
   bestPerformingDay: string;
   avgTimeToConvert: number;
-}
-
-interface IPBasedConversion {
-  ip_address: string;
-  cta_clicks_count: number;
-  consultation_submitted: boolean;
-  first_click_time: string;
-  consultation_time?: string;
-  time_to_convert?: number; // 分単位
 }
 
 const CTAConversionAnalytics: React.FC = () => {
@@ -54,7 +42,6 @@ const CTAConversionAnalytics: React.FC = () => {
     bestPerformingDay: '',
     avgTimeToConvert: 0,
   });
-  const [ipBasedConversions, setIpBasedConversions] = useState<IPBasedConversion[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -88,22 +75,11 @@ const CTAConversionAnalytics: React.FC = () => {
         console.warn('Conversion insights fetch error:', insightsError.message);
       }
 
-      // 4. IPベース分析データを取得（利用可能な場合）
-      const { data: ipBasedData, error: ipError } = await supabaseAdmin
-        .from('ip_based_conversion_tracking')
-        .select('*')
-        .limit(20);
-
-      if (ipError) {
-        console.warn('IP-based analysis not available:', ipError.message);
-      }
-
-      // 5. データ処理
+      // 4. データ処理
       await processConversionData(
         dailyStats || [], 
         conversionAnalysis || [], 
-        insights || [], 
-        ipBasedData || []
+        insights || []
       );
 
     } catch (error) {
@@ -115,8 +91,7 @@ const CTAConversionAnalytics: React.FC = () => {
   const processConversionData = async (
     dailyStats: any[], 
     conversionAnalysis: any[], 
-    insights: any[],
-    ipBasedData: any[]
+    insights: any[]
   ) => {
     // 日別統計データの処理
     const conversionArray: CTAConversionData[] = dailyStats.map(stat => ({
@@ -145,7 +120,6 @@ const CTAConversionAnalytics: React.FC = () => {
     const totalConsultations = insightMap.get('total_consultations') || 0;
     const overallConversionRate = insightMap.get('overall_conversion_rate') || 0;
     const avgDailyConversionRate = insightMap.get('avg_daily_conversion_rate') || 0;
-    const bestDailyConversionRate = insightMap.get('best_daily_conversion_rate') || 0;
 
     // 最高パフォーマンス日の特定
     const bestDay = sortedData.reduce((best, current) => 
@@ -161,11 +135,6 @@ const CTAConversionAnalytics: React.FC = () => {
       bestPerformingDay: bestDay?.period || '',
       avgTimeToConvert: 0,
     });
-
-    // IPベース分析データの設定
-    if (ipBasedData && ipBasedData.length > 0) {
-      setIpBasedConversions(ipBasedData.slice(0, 20)); // 上位20件のみ
-    }
   };
 
   const refreshAnalytics = async () => {

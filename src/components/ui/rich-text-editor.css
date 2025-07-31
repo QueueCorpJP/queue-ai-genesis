@@ -1,0 +1,99 @@
+/* Rich Text Editor Styles */
+.rich-text-editor .ql-container {
+  min-height: 300px;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 280px;
+  padding: 16px;
+  line-height: 1.6;
+}
+
+.rich-text-editor .ql-toolbar {
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-radius: 8px 8px 0 0;
+}
+
+.rich-text-editor .ql-container {
+  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-radius: 0 0 8px 8px;
+}
+
+/* 無料相談リンクのスタイル */
+.rich-text-editor .ql-editor a[href="/consultation"] {
+  display: inline-block !important;
+  background-color: #2563eb !important;
+  color: white !important;
+  font-weight: bold !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  margin: 0 8px !important;
+  transition: background-color 0.3s !important;
+}
+
+.rich-text-editor .ql-editor a[href="/consultation"]:hover {
+  background-color: #1d4ed8 !important;
+}
+
+/* フォントサイズクラス */
+.rich-text-editor .ql-editor.font-small {
+  font-size: 12px;
+}
+
+.rich-text-editor .ql-editor.font-normal {
+  font-size: 14px;
+}
+
+.rich-text-editor .ql-editor.font-large {
+  font-size: 16px;
+}
+
+.rich-text-editor .ql-editor.font-xlarge {
+  font-size: 18px;
+}
+
+/* フォントファミリークラス */
+.rich-text-editor .ql-editor.font-noto-sans {
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+.rich-text-editor .ql-editor.font-noto-serif {
+  font-family: "Noto Serif JP", serif;
+}
+
+.rich-text-editor .ql-editor.font-monospace {
+  font-family: monospace;
+}
+
+.rich-text-editor .ql-editor.font-cursive {
+  font-family: cursive;
+}
+
+/* Quillエディターのカスタマイズ */
+.rich-text-editor .ql-toolbar .ql-formats {
+  margin-right: 15px;
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.rich-text-editor .ql-toolbar button {
+  border-radius: 4px;
+  margin: 1px;
+}
+
+.rich-text-editor .ql-toolbar button:hover {
+  border-color: #2563eb;
+}
+
+.rich-text-editor .ql-toolbar button.ql-active {
+  color: #2563eb;
+  border-color: #2563eb;
+} 

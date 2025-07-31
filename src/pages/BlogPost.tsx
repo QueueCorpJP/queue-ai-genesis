@@ -6,7 +6,7 @@ import { Container } from '@/components/ui/container';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, ExternalLink, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { Calendar, Clock, ExternalLink, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ArticleCTA from '@/components/ArticleCTA';
@@ -295,6 +295,45 @@ const BlogPost: React.FC = () => {
     return content.split('\n').filter(paragraph => paragraph.trim() !== '');
   };
 
+  // HTMLタグを除去してテキストのみを取得
+  const stripHtmlTags = (html: string) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  };
+
+  // 読む時間を計算（日本語: 400文字/分）
+  const calculateReadTime = (content: string) => {
+    const textOnly = stripHtmlTags(content);
+    const wordsPerMinute = 400; // 日本語の平均読書速度
+    return Math.max(1, Math.ceil(textOnly.length / wordsPerMinute));
+  };
+
+  // HTMLコンテンツの改行処理を改善
+  const processContent = (content: string) => {
+    if (!content) return '';
+    
+    // 空の段落やdivタグを適切な改行に変換
+    let processedContent = content
+      // 空のpタグを改行に変換
+      .replace(/<p[^>]*><\/p>/g, '<br><br>')
+      // 空のdivタグを改行に変換
+      .replace(/<div[^>]*><\/div>/g, '<br>')
+      // 連続するbrタグを段落に変換
+      .replace(/(<br\s*\/?>){3,}/g, '</p><p>')
+      // 単独のbrタグ2つを段落分けに変換
+      .replace(/(<br\s*\/?>){2}/g, '</p><p>')
+      // 改行文字をbrタグに変換
+      .replace(/\n/g, '<br>');
+    
+    // pタグで囲まれていない場合は囲む
+    if (!processedContent.startsWith('<p') && !processedContent.startsWith('<div') && !processedContent.startsWith('<h')) {
+      processedContent = `<p>${processedContent}</p>`;
+    }
+    
+    return processedContent;
+  };
+
   // コンポーネントのクリーンアップ
   useEffect(() => {
     return () => {
@@ -409,9 +448,15 @@ const BlogPost: React.FC = () => {
 
                   <div className="p-6 md:p-8">
                     {/* Meta Info */}
-                    <div className="flex items-center mb-6 text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>{formatDate(article.published_at || article.created_at)}</span>
+                    <div className="flex items-center justify-between mb-6 text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>{formatDate(article.published_at || article.created_at)}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>{calculateReadTime(article.content)}分で読める</span>
+                      </div>
                     </div>
 
                     {/* Title */}
@@ -420,8 +465,12 @@ const BlogPost: React.FC = () => {
                     </h1>
 
                     {/* Summary */}
-                    <div className="text-xl text-gray-700 mb-8 leading-relaxed">
-                      {article.summary}
+                    <div className="text-xl text-gray-700 mb-8 leading-relaxed blog-content">
+                      {article.summary.includes('<') ? (
+                        <div dangerouslySetInnerHTML={{ __html: article.summary }} />
+                      ) : (
+                        <p>{article.summary}</p>
+                      )}
                     </div>
 
                     {/* Tags */}
@@ -437,26 +486,25 @@ const BlogPost: React.FC = () => {
 
                     {/* Content */}
                     <div className="prose prose-lg max-w-none mb-8">
-                      {formatContent(article.content).map((paragraph, idx) => {
-                        const isMiddle = idx === Math.floor(formatContent(article.content).length / 2);
-                        return (
-                          <div key={idx}>
-                            <p className="text-gray-700 leading-relaxed mb-4">
-                              {paragraph}
-                            </p>
-                            {/* 記事の中間地点にcompact CTAを挿入 */}
-                            {isMiddle && (
-                              <div className="my-8">
-                                <ArticleCTA 
-                                  articleId={article.id} 
-                                  variant="compact"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      <div 
+                        className="text-gray-700 leading-relaxed blog-content"
+                        dangerouslySetInnerHTML={{ __html: processContent(article.content) }}
+                        style={{
+                          fontSize: '16px',
+                          lineHeight: '1.8'
+                        }}
+                      />
+                      
+                      {/* 記事の中間地点にcompact CTAを挿入 */}
+                      <div className="my-8">
+                        <ArticleCTA 
+                          articleId={article.id} 
+                          variant="compact"
+                        />
+                      </div>
                     </div>
+
+
 
                     {/* Main CTA at the end of article */}
                     <div className="my-12">

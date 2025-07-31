@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import './pages/blog-content.css'
 
 // Suppress Chrome extension errors in development and production
 const suppressChromeExtensionErrors = () => {

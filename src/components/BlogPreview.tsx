@@ -49,7 +49,7 @@ export const BlogPreview: React.FC<BlogPreviewProps> = ({ post }) => {
           
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            {Math.ceil(post.content.length / 500)} min read
+            {Math.max(1, Math.ceil(post.content.replace(/<[^>]*>/g, '').length / 400))}分で読める
           </div>
           
           <Badge className={post.status === 'published' ? 'bg-green-500' : 'bg-amber-500'}>
@@ -73,7 +73,7 @@ export const BlogPreview: React.FC<BlogPreviewProps> = ({ post }) => {
       </div>
       
       {/* Article Content */}
-      <div className="prose prose-slate max-w-none">
+      <div className="prose prose-slate max-w-none blog-content">
         <ReactMarkdown>{post.content}</ReactMarkdown>
       </div>
     </div>
