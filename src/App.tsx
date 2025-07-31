@@ -12,6 +12,7 @@ import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import Consultation from "./pages/Consultation";
 import Blog from "./pages/News";
+import BlogPost from "./pages/BlogPost";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Admin from "./pages/Admin";
@@ -45,7 +46,9 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/consultation" element={<Consultation />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:id" element={<BlogPost />} />
             <Route path="/news" element={<Blog />} />
+            <Route path="/news/:id" element={<BlogPost />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/admin" element={<Admin />} />
