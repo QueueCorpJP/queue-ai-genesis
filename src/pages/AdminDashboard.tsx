@@ -52,7 +52,7 @@ interface RecentActivity {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { user, session, logout } = useAdmin();
+  const { user, session, logout, isLoading } = useAdmin();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [refreshing, setRefreshing] = useState(false);
@@ -70,13 +70,21 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // 認証チェック - 依存関係を明確にする
+  // 認証チェック（自動ログイン対応）
   useEffect(() => {
-    if (!user?.isAuthenticated) {
-      console.log('User not authenticated, redirecting to login');
-      navigate('/admin/login', { replace: true });
+    // ローディング中は認証チェックを待つ
+    if (isLoading) {
+      console.log('AdminDashboard: Waiting for authentication check...');
+      return;
     }
-  }, [user?.isAuthenticated, navigate]);
+    
+    if (!user?.isAuthenticated) {
+      console.log('AdminDashboard: User not authenticated, redirecting to login');
+      navigate('/admin/login', { replace: true });
+    } else {
+      console.log('AdminDashboard: User authenticated as', user.email);
+    }
+  }, [user?.isAuthenticated, isLoading, navigate]);
 
   // データフェッチ関数をuseCallbackでメモ化
   const fetchStats = useCallback(async () => {
@@ -402,7 +410,19 @@ const AdminDashboard: React.FC = () => {
     }
   ];
 
-  // ローディング中またはログイン状態確認中
+  // ローディング中またはログイン状態確認中（自動ログイン対応）
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h1 className="text-2xl font-bold text-navy-800 mb-4">管理者ダッシュボード</h1>
+          <p className="text-gray-600">自動ログイン処理中...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user?.isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }

@@ -20,9 +20,17 @@ const AdminLogin: React.FC = () => {
     password: ''
   });
 
-  const { login, isLoading } = useAdmin();
+  const { login, isLoading, user } = useAdmin();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // 既にログイン済みの場合はダッシュボードにリダイレクト
+  React.useEffect(() => {
+    if (user?.isAuthenticated) {
+      console.log('User already authenticated, redirecting to dashboard');
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [user?.isAuthenticated, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -8,14 +8,19 @@ const Admin = () => {
   const { user, isLoading } = useAdmin();
 
   useEffect(() => {
-    // ローディング中は何もしな
-    if (isLoading) return;
+    // ローディング中は何もしない（自動ログイン処理を待つ）
+    if (isLoading) {
+      console.log('Admin page: Waiting for auth state...');
+      return;
+    }
     
     // 管理者が認証済みの場合はダッシュボードにリダイレクト
     if (user?.isAuthenticated) {
+      console.log('Admin page: User authenticated, redirecting to dashboard');
       navigate('/admin/dashboard', { replace: true });
     } else {
       // 未認証の場合はログインページにリダイレクト
+      console.log('Admin page: User not authenticated, redirecting to login');
       navigate('/admin/login', { replace: true });
     }
   }, [user, isLoading, navigate]);
@@ -27,8 +32,13 @@ const Admin = () => {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <h1 className="text-2xl font-bold text-navy-800 mb-4">管理者ページ</h1>
         <p className="text-gray-600">
-          {isLoading ? '認証状態を確認中...' : 'リダイレクト中...'}
+          {isLoading ? 'セッション確認中（自動ログイン処理中）...' : 'リダイレクト中...'}
         </p>
+        {user?.isAuthenticated && (
+          <p className="text-green-600 text-sm mt-2">
+            ようこそ、{user.email} さん
+          </p>
+        )}
       </div>
     </div>
   );

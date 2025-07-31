@@ -261,22 +261,36 @@ const BlogPost: React.FC = () => {
     }
   };
 
-  // 記事閲覧数を記録する関数
+  // 記事閲覧数を記録する関数（同じIPから同じ記事への短時間の重複アクセスを制限）
   const trackArticleView = async (articleId: string) => {
     try {
       const ipResponse = await fetch('https://api.ipify.org?format=json');
       const ipData = await ipResponse.json();
+      const currentIp = ipData.ip || 'unknown';
+      
+      // ローカルストレージで同じ記事への最近のアクセスをチェック（1時間以内は重複記録しない）
+      const viewKey = `article_view_${articleId}_${currentIp}`;
+      const lastViewTime = localStorage.getItem(viewKey);
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      
+      if (lastViewTime && parseInt(lastViewTime) > oneHourAgo) {
+        // 1時間以内に同じIPから同じ記事を閲覧している場合はスキップ
+        return;
+      }
       
       const { error } = await supabase
         .from('news_article_views')
         .insert({
           article_id: articleId,
-          ip_address: ipData.ip || 'unknown',
+          ip_address: currentIp,
           user_agent: navigator.userAgent
         });
 
       if (error) {
         console.error('Error tracking view:', error);
+      } else {
+        // 成功した場合は最後の閲覧時間を記録
+        localStorage.setItem(viewKey, Date.now().toString());
       }
     } catch (error) {
       console.error('Error tracking view:', error);

@@ -123,29 +123,39 @@ const Analytics: React.FC = () => {
 
   const fetchArticleViewStats = async () => {
     try {
-      // 記事ごとの閲覧数を取得
-      const { data: viewStats, error } = await supabase
+      // 記事ごとの閲覧数を正確に集計
+      const { data: articles, error: articlesError } = await supabase
         .from('news_articles')
-        .select(`
-          id,
-          title,
-          published_at,
-          status,
-          news_article_views(count)
-        `)
+        .select('id, title, published_at, status')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
 
-      if (error) throw error;
+      if (articlesError) throw articlesError;
 
-      const articleStats: ArticleViewStats[] = viewStats?.map(article => ({
-        id: article.id,
-        title: article.title,
-        published_at: article.published_at,
-        status: article.status,
-        view_count: article.news_article_views?.length || 0
-      })) || [];
+      const articleStats: ArticleViewStats[] = [];
 
+      // 各記事の閲覧数を個別に取得
+      for (const article of articles || []) {
+        const { count: viewCount, error: countError } = await supabase
+          .from('news_article_views')
+          .select('*', { count: 'exact', head: true })
+          .eq('article_id', article.id);
+
+        if (countError) {
+          console.error(`Error counting views for article ${article.id}:`, countError);
+        }
+
+        articleStats.push({
+          id: article.id,
+          title: article.title,
+          published_at: article.published_at,
+          status: article.status,
+          view_count: viewCount || 0
+        });
+      }
+
+      // 閲覧数順でソート
+      articleStats.sort((a, b) => b.view_count - a.view_count);
       setArticleViews(articleStats);
     } catch (error) {
       console.error('Error fetching article view stats:', error);

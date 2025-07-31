@@ -25,25 +25,39 @@ CREATE POLICY "Admin can view all cta_clicks" ON cta_clicks
 CREATE POLICY "Admin can insert cta_clicks" ON cta_clicks
     FOR INSERT WITH CHECK (true);
 
--- CTAクリック統計用のビューを作成
+-- CTAクリック統計用のビューを作成（修正版）
 CREATE OR REPLACE VIEW cta_click_stats AS
 SELECT 
     na.id as article_id,
     na.title as article_title,
     na.published_at,
-    COUNT(cc.id) as total_clicks,
-    COUNT(DISTINCT cc.ip_address) as unique_clicks,
-    COUNT(CASE WHEN cc.cta_type = 'consultation' THEN 1 END) as consultation_clicks,
-    COUNT(av.id) as total_views,
+    COALESCE(cta_stats.total_clicks, 0) as total_clicks,
+    COALESCE(cta_stats.unique_clicks, 0) as unique_clicks,
+    COALESCE(cta_stats.consultation_clicks, 0) as consultation_clicks,
+    COALESCE(view_stats.total_views, 0) as total_views,
     CASE 
-        WHEN COUNT(av.id) > 0 THEN ROUND((COUNT(cc.id)::numeric / COUNT(av.id)::numeric) * 100, 2)
+        WHEN COALESCE(view_stats.total_views, 0) > 0 THEN 
+            ROUND((COALESCE(cta_stats.total_clicks, 0)::numeric / view_stats.total_views::numeric) * 100, 2)
         ELSE 0 
     END as click_rate_percentage
 FROM news_articles na
-LEFT JOIN cta_clicks cc ON na.id = cc.article_id
-LEFT JOIN news_article_views av ON na.id = av.article_id
+LEFT JOIN (
+    SELECT 
+        article_id,
+        COUNT(*) as total_clicks,
+        COUNT(DISTINCT ip_address) as unique_clicks,
+        COUNT(CASE WHEN cta_type = 'consultation' THEN 1 END) as consultation_clicks
+    FROM cta_clicks
+    GROUP BY article_id
+) cta_stats ON na.id = cta_stats.article_id
+LEFT JOIN (
+    SELECT 
+        article_id,
+        COUNT(*) as total_views
+    FROM news_article_views
+    GROUP BY article_id
+) view_stats ON na.id = view_stats.article_id
 WHERE na.status = 'published'
-GROUP BY na.id, na.title, na.published_at
 ORDER BY na.published_at DESC;
 
 -- コメント追加

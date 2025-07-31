@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface AdminUser {
   id: string;
@@ -33,8 +33,8 @@ const ADMIN_CREDENTIALS = {
 
 // セッション情報をローカルストレージに保存するためのキー
 const SESSION_STORAGE_KEY = 'queue_admin_session';
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24時間
-const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30分の無操作でタイムアウト
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7日間
+const ACTIVITY_TIMEOUT = 2 * 60 * 60 * 1000; // 2時間の無操作でタイムアウト
 
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -48,37 +48,74 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 Date.now().toString());
   };
 
-  // セッション情報をローカルストレージに保存
+  // セッション情報をローカルストレージに保存（確実に保存されるまで試行）
   const saveSessionToStorage = (sessionData: AdminSession) => {
     try {
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+      const dataToStore = {
+        ...sessionData,
+        savedAt: Date.now() // 保存時刻を記録
+      };
+      
+      // 複数回試行して確実に保存
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(dataToStore));
+          
+          // 保存されたかを即座に確認
+          const saved = localStorage.getItem(SESSION_STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.user && parsed.user.email === sessionData.user.email) {
+              console.log('Session successfully saved to localStorage:', dataToStore.user.email);
+              return; // 成功したら終了
+            }
+          }
+        } catch (saveError) {
+          console.warn(`Save attempt ${attempts + 1} failed:`, saveError);
+        }
+        attempts++;
+      }
+      
+      console.error('Failed to save session after', maxAttempts, 'attempts');
     } catch (error) {
-      // Silently handle localStorage errors in production
+      console.error('Failed to save session to localStorage:', error);
     }
   };
 
-  // ローカルストレージからセッション情報を取得
+  // ローカルストレージからセッション情報を取得（より寛容に）
   const loadSessionFromStorage = (): AdminSession | null => {
     try {
       const stored = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (!stored) return null;
+      if (!stored) {
+        console.log('No session found in localStorage');
+        return null;
+      }
 
-      const sessionData: AdminSession = JSON.parse(stored);
+      const sessionData: AdminSession & { savedAt?: number } = JSON.parse(stored);
+      console.log('Loading session from localStorage:', sessionData.user?.email);
       
-      // セッションの有効期限をチェック
+      // セッションの有効期限をチェック（より寛容に）
       if (Date.now() > sessionData.expiresAt) {
+        console.log('Session expired, removing from storage');
         localStorage.removeItem(SESSION_STORAGE_KEY);
         return null;
       }
 
-      // 最後の活動から一定時間経過している場合はタイムアウト
-      if (Date.now() - sessionData.user.lastActivity > ACTIVITY_TIMEOUT) {
+      // アクティビティタイムアウトチェック（より寛容に）
+      const timeSinceLastActivity = Date.now() - sessionData.user.lastActivity;
+      if (timeSinceLastActivity > ACTIVITY_TIMEOUT) {
+        console.log('Session timed out due to inactivity, removing from storage');
         localStorage.removeItem(SESSION_STORAGE_KEY);
         return null;
       }
 
+      console.log('Valid session found, time since last activity:', Math.floor(timeSinceLastActivity / 1000 / 60), 'minutes');
       return sessionData;
     } catch (error) {
+      console.error('Error loading session from localStorage:', error);
       localStorage.removeItem(SESSION_STORAGE_KEY);
       return null;
     }
@@ -86,6 +123,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // セッション情報をクリア
   const clearSessionStorage = () => {
+    console.log('Clearing session from localStorage');
     localStorage.removeItem(SESSION_STORAGE_KEY);
   };
 
@@ -94,12 +132,13 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return email === ADMIN_CREDENTIALS.email;
   };
 
-  // ユーザーアクティビティを更新
-  const updateUserActivity = () => {
+  // ユーザーアクティビティを更新（頻繁に保存）
+  const updateUserActivity = useCallback(() => {
     if (session && user) {
+      const now = Date.now();
       const updatedUser = {
         ...user,
-        lastActivity: Date.now()
+        lastActivity: now
       };
       const updatedSession = {
         ...session,
@@ -109,8 +148,11 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setUser(updatedUser);
       setSession(updatedSession);
       saveSessionToStorage(updatedSession);
+      
+      // デバッグ用ログ（本番では削除可能）
+      console.log('User activity updated at:', new Date(now).toLocaleString());
     }
-  };
+  }, [session, user]);
 
   // セッションの状態を更新
   const updateSession = (newSession: AdminSession | null) => {
@@ -125,14 +167,16 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // セッションチェック
-  const checkSession = async () => {
+  // セッションチェック（より積極的にセッションを保持）
+  const checkSession = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log('Checking session...');
       
       const storedSession = loadSessionFromStorage();
       
       if (storedSession && isAdminUser(storedSession.user.email)) {
+        console.log('Valid session found, updating activity');
         // 有効なセッションがある場合、アクティビティを更新
         const updatedUser = {
           ...storedSession.user,
@@ -145,24 +189,33 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         
         updateSession(updatedSession);
       } else {
+        console.log('No valid session found');
         // セッションが無効
         setUser(null);
         setSession(null);
         clearSessionStorage();
       }
     } catch (error) {
+      console.error('Error checking session:', error);
       setUser(null);
       setSession(null);
       clearSessionStorage();
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  // アクティビティ監視
+  // アクティビティ監視（スロットル付き）
   useEffect(() => {
+    let lastUpdate = 0;
+    const throttleTime = 10000; // 10秒に1回だけ更新
+    
     const handleUserActivity = () => {
-      updateUserActivity();
+      const now = Date.now();
+      if (now - lastUpdate > throttleTime) {
+        updateUserActivity();
+        lastUpdate = now;
+      }
     };
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
@@ -177,40 +230,142 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         document.removeEventListener(event, handleUserActivity, true);
       });
     };
-  }, [session, user]);
+  }, [updateUserActivity]);
 
-  // 初回マウント時のセッションチェック
+  // 初回マウント時の自動ログイン処理
   useEffect(() => {
-    checkSession();
+    console.log('AdminProvider mounted, checking for existing session for auto-login');
+    
+    const performAutoLogin = () => {
+      try {
+        // ローカルストレージから既存セッションをチェック
+        const existingSession = loadSessionFromStorage();
+        
+        if (existingSession && isAdminUser(existingSession.user.email)) {
+          console.log('🔐 Auto-login: Found valid session for', existingSession.user.email);
+          
+          // セッションの有効性を再確認
+          const now = Date.now();
+          const isExpired = now > existingSession.expiresAt;
+          const isTimedOut = now - existingSession.user.lastActivity > ACTIVITY_TIMEOUT;
+          
+          if (!isExpired && !isTimedOut) {
+            console.log('✅ Auto-login: Session is valid, logging in automatically');
+            
+            // アクティビティ時間を更新して自動ログイン
+            const updatedUser = {
+              ...existingSession.user,
+              lastActivity: now
+            };
+            const updatedSession = {
+              ...existingSession,
+              user: updatedUser
+            };
+            
+            // 状態を更新
+            setUser(updatedUser);
+            setSession(updatedSession);
+            saveSessionToStorage(updatedSession);
+            
+            console.log('🎉 Auto-login successful for:', updatedUser.email);
+            setIsLoading(false);
+          } else {
+            console.log('❌ Auto-login: Session expired or timed out, clearing storage');
+            clearSessionStorage();
+            setUser(null);
+            setSession(null);
+            setIsLoading(false);
+          }
+        } else {
+          console.log('❌ Auto-login: No valid session found');
+          setUser(null);
+          setSession(null);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('❌ Auto-login error:', error);
+        clearSessionStorage();
+        setUser(null);
+        setSession(null);
+        setIsLoading(false);
+      }
+    };
+    
+    // 少し遅延させてからチェック（DOM準備完了を待つ）
+    const timeoutId = setTimeout(performAutoLogin, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
-  // 定期的なセッションチェック
+  // 定期的なセッションチェック（より頻繁に）
   useEffect(() => {
     const interval = setInterval(() => {
       if (user?.isAuthenticated) {
+        console.log('Periodic session check...');
         const storedSession = loadSessionFromStorage();
         if (!storedSession) {
+          console.log('Session lost during periodic check');
           // セッションが無効になった場合
           setUser(null);
           setSession(null);
+        } else {
+          // セッションが有効な場合はアクティビティを更新
+          updateUserActivity();
         }
       }
-    }, 60000); // 1分ごと
+    }, 30000); // 30秒ごと
 
     return () => clearInterval(interval);
-  }, [user?.isAuthenticated]);
+  }, [user?.isAuthenticated, updateUserActivity]);
+
+  // ページのvisibilityが変更されたときのセッションチェック
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user?.isAuthenticated) {
+        // ページがアクティブになったときにセッションをチェック
+        checkSession();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user?.isAuthenticated, checkSession]);
+
+  // ページアンロード時にセッションを保存
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (session && user) {
+        // 最新のアクティビティ時間を保存
+        const updatedUser = {
+          ...user,
+          lastActivity: Date.now()
+        };
+        const updatedSession = {
+          ...session,
+          user: updatedUser
+        };
+        saveSessionToStorage(updatedSession);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [session, user]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
+      console.log('Login attempt for:', email);
       
       // 管理者メールアドレスのチェック
       if (!isAdminUser(email)) {
+        console.log('Invalid admin email');
         return false;
       }
 
       // パスワードの簡易チェック
       if (password !== ADMIN_CREDENTIALS.password) {
+        console.log('Invalid password');
         return false;
       }
 
@@ -233,9 +388,26 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         expiresAt: now + SESSION_DURATION
       };
 
-      updateSession(newSession);
+      console.log('Creating new session:', newSession);
+      
+      // セッションを状態に設定
+      setUser(newUser);
+      setSession(newSession);
+      
+      // ローカルストレージに確実に保存
+      saveSessionToStorage(newSession);
+      
+      // 保存されたかを即座に確認
+      const savedSession = loadSessionFromStorage();
+      if (savedSession) {
+        console.log('Session successfully saved and verified in localStorage');
+      } else {
+        console.error('Failed to save session to localStorage');
+      }
+      
       return true;
     } catch (error) {
+      console.error('Login error:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -245,13 +417,23 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const logout = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      console.log('Logging out user');
       
       // ローカル状態をクリア
       setUser(null);
       setSession(null);
       clearSessionStorage();
+      
+      // ローカルストレージから確実に削除されたかを確認
+      const remainingSession = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (remainingSession) {
+        console.warn('Session still exists in localStorage, forcing removal');
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+      } else {
+        console.log('Session successfully cleared from localStorage');
+      }
     } catch (error) {
-      // Silently handle logout errors
+      console.error('Logout error:', error);
     } finally {
       setIsLoading(false);
     }

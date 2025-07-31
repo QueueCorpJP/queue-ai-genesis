@@ -43,7 +43,9 @@ const CTAAnalytics: React.FC = () => {
 
   const fetchCTAStats = async () => {
     try {
-      // 記事ごとのCTAクリック統計を取得
+      console.log('Fetching CTA statistics...');
+      
+      // 記事ごとのCTAクリック統計を取得（修正されたビューから）
       const { data: stats, error: statsError } = await supabaseAdmin
         .from('cta_click_stats')
         .select('*')
@@ -55,29 +57,46 @@ const CTAAnalytics: React.FC = () => {
         return;
       }
 
+      console.log('CTA stats received:', stats);
       setCtaStats(stats || []);
 
-      // 全体統計の計算
+      // 全体統計の計算（より正確に）
       if (stats && stats.length > 0) {
         const totalClicks = stats.reduce((sum, stat) => sum + (stat.total_clicks || 0), 0);
         const totalViews = stats.reduce((sum, stat) => sum + (stat.total_views || 0), 0);
         const consultationClicks = stats.reduce((sum, stat) => sum + (stat.consultation_clicks || 0), 0);
         
-        // CTAタイプ別統計を取得
-        const { data: ctaTypeStats } = await supabaseAdmin
+        // CTAタイプ別統計を正確に取得
+        const { count: contactClicks } = await supabaseAdmin
           .from('cta_clicks')
-          .select('cta_type')
+          .select('*', { count: 'exact', head: true })
           .eq('cta_type', 'contact');
-
-        const contactClicks = ctaTypeStats?.length || 0;
         const averageClickRate = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
 
-        setOverallStats({
+        const calculatedStats = {
           totalClicks,
           totalViews,
           averageClickRate: Math.round(averageClickRate * 100) / 100,
           consultationClicks,
-          contactClicks,
+          contactClicks: contactClicks || 0,
+        };
+
+        console.log('Calculated overall stats:', calculatedStats);
+        setOverallStats(calculatedStats);
+
+        // デバッグ用：CTAクリック数と記事閲覧数の比較
+        console.log('Debug - Total clicks vs total views:', { totalClicks, totalViews });
+        if (totalClicks === totalViews && totalClicks > 0) {
+          console.warn('⚠️ CTAクリック数と記事閲覧数が同じです - データの確認が必要');
+        }
+      } else {
+        console.log('No CTA stats found');
+        setOverallStats({
+          totalClicks: 0,
+          totalViews: 0,
+          averageClickRate: 0,
+          consultationClicks: 0,
+          contactClicks: 0,
         });
       }
 
