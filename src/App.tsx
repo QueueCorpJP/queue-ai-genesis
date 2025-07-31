@@ -11,7 +11,7 @@ import Company from "./pages/Company";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import Consultation from "./pages/Consultation";
-import News from "./pages/News";
+import Blog from "./pages/News";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Admin from "./pages/Admin";
@@ -44,7 +44,8 @@ const App = () => (
             <Route path="/careers" element={<Careers />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/consultation" element={<Consultation />} />
-            <Route path="/news" element={<News />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/news" element={<Blog />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/admin" element={<Admin />} />

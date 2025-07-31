@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -224,6 +224,9 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
           <DialogTitle>
             {article ? '記事を編集' : '新規記事を作成'}
           </DialogTitle>
+          <DialogDescription>
+            ブログ記事の作成・編集を行います。必要な情報を入力してください。
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">

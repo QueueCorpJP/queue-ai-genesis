@@ -7,20 +7,42 @@ import './index.css'
 // Suppress Chrome extension errors in development
 if (import.meta.env.DEV) {
   window.addEventListener('error', (event) => {
+    // Chrome extension related errors
     if (event.message?.includes('Could not establish connection') ||
         event.message?.includes('Receiving end does not exist') ||
-        event.filename?.includes('service-worker-loader.js')) {
+        event.message?.includes('No tab with id') ||
+        event.message?.includes('Extension context invalidated') ||
+        event.filename?.includes('service-worker-loader.js') ||
+        event.filename?.includes('extension') ||
+        event.error?.stack?.includes('chrome-extension://')) {
       event.preventDefault();
       return false;
     }
   });
 
   window.addEventListener('unhandledrejection', (event) => {
+    // Chrome extension related promise rejections
     if (event.reason?.message?.includes('Could not establish connection') ||
-        event.reason?.message?.includes('Receiving end does not exist')) {
+        event.reason?.message?.includes('Receiving end does not exist') ||
+        event.reason?.message?.includes('No tab with id') ||
+        event.reason?.message?.includes('Extension context invalidated') ||
+        event.reason?.stack?.includes('chrome-extension://')) {
       event.preventDefault();
     }
   });
+
+  // Suppress console errors from Chrome extensions
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    const message = args[0]?.toString?.() || '';
+    if (message.includes('Could not establish connection') ||
+        message.includes('Receiving end does not exist') ||
+        message.includes('No tab with id') ||
+        message.includes('Extension context invalidated')) {
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
 }
 
 // Set global meta description for SEO

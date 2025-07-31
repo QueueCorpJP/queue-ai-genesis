@@ -9,8 +9,8 @@ import { Calendar, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 
-// ニュース記事のタイプ定義
-type NewsArticle = {
+// ブログ記事のタイプ定義
+type BlogArticle = {
   id: string;
   title: string;
   summary: string;
@@ -25,12 +25,12 @@ type NewsArticle = {
   updated_at: string;
 };
 
-const News: React.FC = () => {
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
+const Blog: React.FC = () => {
+  const [articles, setArticles] = useState<BlogArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "ニュース | Queue株式会社";
+    document.title = "ブログ | Queue株式会社";
     // Ensure page starts at the top
     window.scrollTo(0, 0);
     fetchArticles();
@@ -132,10 +132,11 @@ const News: React.FC = () => {
         <section className="bg-queue-gradient py-16 md:py-24">
           <Container>
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">ニュース</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">ブログ</h1>
               <p className="text-lg text-white/90 max-w-2xl mx-auto">
-                Queue株式会社の最新情報をお届けします。製品リリース、資金調達、
-                メディア掲載情報など、当社の成長を追うことができます。
+                Queue株式会社の技術記事やインサイトをお届けします。
+                AI・機械学習の最新動向、開発事例、技術的な知見など、
+                私たちの経験と学びを共有しています。
               </p>
             </div>
           </Container>
@@ -214,13 +215,16 @@ const News: React.FC = () => {
                         )}
                         
                         <div className="flex items-center justify-between border-t pt-4 mt-6">
-                          <div className="text-sm text-gray-500">
-                            出典: {article.source_name}
-                          </div>
+                          {article.source_name && (
+                            <div className="text-sm text-gray-500">
+                              参考: {article.source_name}
+                            </div>
+                          )}
+                          {!article.source_name && <div></div>}
                           {article.source_url && (
                             <Button variant="ghost" size="sm" asChild>
                               <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center">
-                                記事を読む <ExternalLink className="ml-2 h-4 w-4" />
+                                詳細を見る <ExternalLink className="ml-2 h-4 w-4" />
                               </a>
                             </Button>
                           )}
@@ -240,4 +244,4 @@ const News: React.FC = () => {
   );
 };
 
-export default News;
+export default Blog;

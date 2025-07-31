@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Calendar, Search, RefreshCw, Eye, Phone, Mail, MessageSquare, Filter, Download } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -387,6 +387,9 @@ const ConsultationManager: React.FC = () => {
         <DialogContent className={`${isMobile ? 'max-w-[95vw] w-[95vw]' : 'max-w-2xl'} max-h-[90vh] overflow-y-auto`}>
           <DialogHeader>
             <DialogTitle>相談申込詳細</DialogTitle>
+            <DialogDescription>
+              相談申込の詳細情報を確認できます。
+            </DialogDescription>
           </DialogHeader>
           {selectedConsultation && (
             <div className="space-y-4">

@@ -131,6 +131,50 @@ const Company = () => {
                 </div>
               </div>
             </div>
+
+            {/* Location Map */}
+            <div className="mb-20">
+              <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">アクセス</h2>
+              <div className="bg-white p-6 rounded-2xl shadow-lg border border-navy-100">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-navy-800 mb-2">THE HUB 銀座 OCT</h3>
+                  <p className="text-navy-600">
+                    〒104-0061 東京都中央区銀座8-17-5 THE HUB 銀座 OCT
+                  </p>
+                  <p className="text-sm text-navy-500 mt-2">
+                    東京メトロ銀座線・日比谷線・丸ノ内線「銀座駅」徒歩7分<br />
+                    JR「新橋駅」徒歩8分
+                  </p>
+                </div>
+                <div className="rounded-lg overflow-hidden shadow-md relative">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.0666!2d139.7644!3d35.6704!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzXCsDQwJzEzLjQiTiAxMznCsDQ1JzUxLjgiRQ!5e0!3m2!1sja!2sjp!4v1647933600000!5m2!1sja!2sjp"
+                    width="100%"
+                    height="400"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Queue株式会社 所在地"
+                    className="w-full h-96 md:h-[400px]"
+                  ></iframe>
+                  {/* Fallback link if map doesn't load */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 opacity-0 hover:opacity-95 transition-opacity duration-200">
+                    <a 
+                      href="https://maps.google.com/maps?q=東京都中央区銀座8-17-5+THE+HUB+銀座+OCT&hl=ja"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-navy-700 text-white px-6 py-3 rounded-lg hover:bg-navy-600 transition-colors flex items-center space-x-2"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Google Mapsで開く</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
             
             
             {/* Business Areas */}

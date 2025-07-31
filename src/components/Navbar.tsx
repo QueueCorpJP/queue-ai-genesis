@@ -63,6 +63,9 @@ const Navbar: React.FC = () => {
           <Link to="/case-studies" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
             Case Studies
           </Link>
+          <Link to="/blog" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
+            Blog
+          </Link>
           <Link to="/company" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
             Company
           </Link>
@@ -144,6 +147,13 @@ const Navbar: React.FC = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Case Studies
+            </Link>
+            <Link
+              to="/blog"
+              className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
             </Link>
             <Link
               to="/company"

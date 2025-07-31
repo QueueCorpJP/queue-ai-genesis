@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MessageSquare, Search, Filter, Download, Eye, Calendar, User, Clock } from 'lucide-react';
 import { supabase, supabaseAdmin, ChatbotConversation } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -518,6 +518,9 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>会話詳細</DialogTitle>
+            <DialogDescription>
+              チャットボットとの会話内容を確認できます。
+            </DialogDescription>
           </DialogHeader>
           {selectedConversation && (
             <div className="space-y-4">

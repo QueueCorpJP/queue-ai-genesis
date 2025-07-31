@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -237,7 +237,7 @@ const NewsManager: React.FC = () => {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-xl md:text-2xl font-bold">ニュース記事管理</h2>
+        <h2 className="text-xl md:text-2xl font-bold">ブログ記事管理</h2>
         <NewsEditor onSave={fetchArticles} />
       </div>
 
@@ -429,6 +429,9 @@ const NewsManager: React.FC = () => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>記事詳細</DialogTitle>
+            <DialogDescription>
+              ブログ記事の詳細情報を確認できます。
+            </DialogDescription>
           </DialogHeader>
           {selectedArticle && (
             <div className="space-y-4">

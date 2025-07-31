@@ -16,7 +16,7 @@ const CaseStudies: React.FC = () => {
   const caseStudies = [
     {
       id: 1,
-      client: "マネーフォワード社",
+      client: "大手金融テック企業",
       industry: "金融テック",
       title: "AIによる不正検知システムの構築",
       challenge: "増加する決済詐欺に対して、従来の規則ベースでは検知しきれない高度な不正取引への対応が課題でした。",
@@ -31,13 +31,13 @@ const CaseStudies: React.FC = () => {
       testimonial: {
         quote: "Queue社のAIソリューションは我々の期待を遥かに超える成果をもたらしました。特に、誤検知の大幅な削減により、お客様体験の向上にも繋がっています。",
         author: "取締役 CTO",
-        company: "マネーフォワード株式会社"
+        company: "大手金融テック企業"
       },
       imageUrl: "/images/fintech-case.jpg"
     },
     {
       id: 2,
-      client: "ZOZOテクノロジーズ社",
+      client: "大手ECプラットフォーム企業",
       industry: "小売業",
       title: "パーソナライズド商品推薦エンジンの開発",
       challenge: "数百万点の商品と数千万人のユーザーデータから、各顧客に最適な商品を推薦するシステムの構築が必要でした。",
@@ -52,13 +52,13 @@ const CaseStudies: React.FC = () => {
       testimonial: {
         quote: "Queue社のAIチームは技術力だけでなく、ビジネス課題への深い理解を持って開発に取り組んでくれました。その結果、数字に表れる成果を出すことができました。",
         author: "執行役員 AIソリューション部長",
-        company: "ZOZOテクノロジーズ株式会社"
+        company: "大手ECプラットフォーム企業"
       },
       imageUrl: "/images/retail-case.jpg"
     },
     {
       id: 3,
-      client: "医療法人 健心会",
+      client: "大手医療法人",
       industry: "ヘルスケア",
       title: "医療画像診断支援AIの開発",
       challenge: "放射線科医の不足と診断業務の負担増加に対して、診断精度を落とさずに業務効率化が求められていました。",
@@ -73,7 +73,7 @@ const CaseStudies: React.FC = () => {
       testimonial: {
         quote: "AI支援により、私たち医師はより複雑な症例に集中できるようになりました。何より患者さんへの診断結果を早く届けられることが大きな価値です。",
         author: "放射線科 部長",
-        company: "医療法人 健心会"
+        company: "大手医療法人"
       },
       imageUrl: "/images/healthcare-case.jpg"
     }

@@ -50,7 +50,7 @@ interface RecentActivity {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { user, session, logout, isLoading } = useAdmin();
+  const { user, session, logout } = useAdmin();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [refreshing, setRefreshing] = useState(false);
@@ -68,12 +68,13 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // 認証チェック - ローディング完了後に実行
+  // 認証チェック - 依存関係を明確にする
   useEffect(() => {
-    if (!isLoading && !user?.isAuthenticated) {
+    if (!user?.isAuthenticated) {
+      console.log('User not authenticated, redirecting to login');
       navigate('/admin/login', { replace: true });
     }
-  }, [user?.isAuthenticated, isLoading, navigate]);
+  }, [user?.isAuthenticated, navigate]);
 
   // データフェッチ関数をuseCallbackでメモ化
   const fetchStats = useCallback(async () => {
@@ -86,6 +87,8 @@ const AdminDashboard: React.FC = () => {
       thisMonth.setDate(1);
       thisMonth.setHours(0, 0, 0, 0);
       const monthStart = thisMonth.toISOString();
+
+      console.log('Fetching dashboard stats...');
 
       // 今日の件数
       const [
@@ -123,9 +126,21 @@ const AdminDashboard: React.FC = () => {
         publishedNews: publishedNews || 0
       };
 
+      console.log('Stats fetched:', newStats);
       setStats(newStats);
     } catch (error) {
+      console.error('Error fetching stats:', error);
       toast.error('統計データの取得に失敗しました');
+      // エラー時もデフォルト値を設定
+      setStats({
+        todayContacts: 0,
+        todayConsultations: 0,
+        pendingConsultations: 0,
+        pendingContacts: 0,
+        monthlyContacts: 0,
+        monthlyConsultations: 0,
+        publishedNews: 0
+      });
     }
   }, []);
 
@@ -133,26 +148,39 @@ const AdminDashboard: React.FC = () => {
     try {
       const activities: RecentActivity[] = [];
 
+      console.log('Fetching recent activities...');
+
       // 最新の相談申込を取得
-      const { data: consultations } = await supabase
+      const { data: consultations, error: consultationsError } = await supabase
         .from('consultation_requests')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5);
 
       // 最新のお問い合わせを取得
-      const { data: contacts } = await supabase
+      const { data: contacts, error: contactsError } = await supabase
         .from('contact_requests')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5);
 
-      // 最新のニュース記事を取得
-      const { data: news } = await supabase
+      // 最新のブログ記事を取得
+      const { data: news, error: newsError } = await supabase
         .from('news_articles')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5);
+
+      // エラーチェック
+      if (consultationsError) {
+        console.error('Error fetching consultations:', consultationsError);
+      }
+      if (contactsError) {
+        console.error('Error fetching contacts:', contactsError);
+      }
+      if (newsError) {
+        console.error('Error fetching news:', newsError);
+      }
 
       // 相談申込をアクティビティに変換
       consultations?.forEach(item => {
@@ -178,7 +206,7 @@ const AdminDashboard: React.FC = () => {
         });
       });
 
-      // ニュース記事をアクティビティに変換
+      // ブログ記事をアクティビティに変換
       news?.forEach(item => {
         activities.push({
           id: `news-${item.id}`,
@@ -193,51 +221,76 @@ const AdminDashboard: React.FC = () => {
       // 時間順でソート
       activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       
+      console.log('Activities fetched:', activities.length);
       setActivities(activities.slice(0, 10));
     } catch (error) {
+      console.error('Error fetching recent activities:', error);
       toast.error('アクティビティの取得に失敗しました');
+      setActivities([]);
     }
   }, []);
 
-  // データフェッチ関数をメモ化（モバイル最適化）
-  const fetchDashboardData = useCallback(async () => {
-    if (!user?.isAuthenticated) {
-      return;
-    }
+  // 初回データフェッチを管理
+  useEffect(() => {
+    let mounted = true;
 
-    try {
-      setLoading(true);
-      
-      // モバイルでは統計のみ、デスクトップでは全データを取得
-      if (isMobile) {
-        await fetchStats();
-      } else {
+    const loadDashboardData = async () => {
+      if (!user?.isAuthenticated) {
+        console.log('User not authenticated, skipping data fetch');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        console.log('Loading dashboard data...');
+        
         await Promise.all([
           fetchStats(),
           fetchRecentActivities()
         ]);
+        
+        if (mounted) {
+          console.log('Dashboard data loaded successfully');
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        if (mounted) {
+          toast.error('ダッシュボードデータの読み込みに失敗しました');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      toast.error('ダッシュボードデータの読み込みに失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.isAuthenticated, fetchStats, fetchRecentActivities, isMobile]);
+    };
 
-  // 初回データフェッチ - 依存関係を明確にする
-  useEffect(() => {
-    if (user?.isAuthenticated && !loading) {
-      fetchDashboardData();
+    if (user?.isAuthenticated) {
+      loadDashboardData();
     }
-  }, [user?.isAuthenticated]); // fetchDashboardDataは依存関係から除外
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.isAuthenticated, fetchStats, fetchRecentActivities]);
 
   // データリフレッシュ
   const refreshData = useCallback(async () => {
+    if (!user?.isAuthenticated) return;
+    
     setRefreshing(true);
-    await fetchDashboardData();
-    setRefreshing(false);
-    toast.success('データを更新しました');
-  }, [fetchDashboardData]);
+    try {
+      await Promise.all([
+        fetchStats(),
+        fetchRecentActivities()
+      ]);
+      toast.success('データを更新しました');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error('データの更新に失敗しました');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user?.isAuthenticated, fetchStats, fetchRecentActivities]);
 
   const handleLogout = async () => {
     try {
@@ -245,6 +298,7 @@ const AdminDashboard: React.FC = () => {
       toast.success('ログアウトしました');
       navigate('/admin/login');
     } catch (error) {
+      console.error('Logout error:', error);
       toast.error('ログアウトに失敗しました');
     }
   };
@@ -339,26 +393,14 @@ const AdminDashboard: React.FC = () => {
       color: "text-blue-600"
     },
     {
-      title: "公開済みニュース記事",
+      title: "公開済みブログ記事",
       value: stats.publishedNews,
       icon: Newspaper,
       color: "text-purple-600"
     }
   ];
 
-  // 認証状態確認中はローディング表示
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">認証状態を確認中...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 認証されていない場合はログインページにリダイレクト
+  // ローディング中またはログイン状態確認中
   if (!user?.isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
@@ -472,7 +514,7 @@ const AdminDashboard: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="news" className="flex items-center space-x-2">
                 <Newspaper className="w-4 h-4" />
-                <span>ニュース</span>
+                <span>ブログ</span>
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center space-x-2">
                 <Settings className="w-4 h-4" />
@@ -503,7 +545,7 @@ const AdminDashboard: React.FC = () => {
                   { value: 'consultations', icon: MessageSquare, label: '相談申込' },
                   { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
                   { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
-                  { value: 'news', icon: Newspaper, label: 'ニュース' },
+                  { value: 'news', icon: Newspaper, label: 'ブログ' },
                   { value: 'settings', icon: Settings, label: '設定' }
                 ].map((tab) => (
                   <button
@@ -544,8 +586,7 @@ const AdminDashboard: React.FC = () => {
               ))}
             </div>
 
-            {/* 最近のアクティビティ - モバイルでは非表示 */}
-            {!isMobile && (
+            {/* 最近のアクティビティ */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center text-lg md:text-xl">
@@ -587,7 +628,6 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            )}
           </TabsContent>
 
           <TabsContent value="analytics">
@@ -686,7 +726,7 @@ const getTabLabel = (tab: string) => {
     consultations: '相談申込',
     contacts: 'お問い合わせ',
     chatbot: 'チャットボット',
-    news: 'ニュース',
+    news: 'ブログ',
     settings: '設定'
   };
   return labels[tab as keyof typeof labels] || '概要';

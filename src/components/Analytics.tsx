@@ -101,7 +101,7 @@ const Analytics: React.FC = () => {
       .select('*', { count: 'exact', head: true })
       .gte('created_at', monthStart.toISOString());
 
-    // 今月公開されたニュース記事数
+    // 今月公開されたブログ記事数
     const { count: monthlyNewsPublished } = await supabase
       .from('news_articles')
       .select('*', { count: 'exact', head: true })
@@ -125,7 +125,7 @@ const Analytics: React.FC = () => {
     try {
       // 記事ごとの閲覧数を取得
       const { data: viewStats, error } = await supabase
-        .from('news_articles')
+        .from('blog_articles')
         .select(`
           id,
           title,
@@ -237,7 +237,7 @@ const Analytics: React.FC = () => {
       icon: Newspaper,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
-      description: "今月公開されたニュース記事"
+      description: "今月公開されたブログ記事"
     },
     {
       title: "総記事閲覧数",

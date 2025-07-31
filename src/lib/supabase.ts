@@ -4,20 +4,40 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Singleton pattern to prevent multiple client instances
+// Singleton pattern to prevent multiple client instances with better instance management
 let supabaseInstance: any = null;
 let supabaseAdminInstance: any = null;
 
+// Global symbol to ensure single instance
+const SUPABASE_INSTANCE_KEY = Symbol.for('supabase_instance');
+const SUPABASE_ADMIN_INSTANCE_KEY = Symbol.for('supabase_admin_instance');
+
 // Regular client for public operations
 const createSupabaseClient = () => {
+  // Check for existing instance in global scope
+  if ((globalThis as any)[SUPABASE_INSTANCE_KEY]) {
+    return (globalThis as any)[SUPABASE_INSTANCE_KEY];
+  }
+
   if (!supabaseInstance) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        storageKey: 'queue-supabase-auth-token',
+        storage: window?.localStorage
+      },
+      db: {
+        schema: 'public'
+      },
+      global: {
+        headers: { 'x-application-name': 'queue-lp' }
       }
     });
+
+    // Store in global scope to prevent multiple instances
+    (globalThis as any)[SUPABASE_INSTANCE_KEY] = supabaseInstance;
   }
   return supabaseInstance;
 };
@@ -26,13 +46,28 @@ export const supabase = createSupabaseClient();
 
 // Admin client with service role key (bypasses RLS)
 const createSupabaseAdminClient = () => {
+  // Check for existing admin instance in global scope
+  if ((globalThis as any)[SUPABASE_ADMIN_INSTANCE_KEY]) {
+    return (globalThis as any)[SUPABASE_ADMIN_INSTANCE_KEY];
+  }
+
   if (!supabaseAdminInstance) {
     supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
+        persistSession: false,
+        storageKey: 'queue-supabase-admin-auth-token'
+      },
+      db: {
+        schema: 'public'
+      },
+      global: {
+        headers: { 'x-application-name': 'queue-lp-admin' }
       }
     });
+
+    // Store in global scope to prevent multiple instances
+    (globalThis as any)[SUPABASE_ADMIN_INSTANCE_KEY] = supabaseAdminInstance;
   }
   return supabaseAdminInstance;
 };
@@ -135,7 +170,7 @@ export interface Database {
           title: string
           summary: string
           content: string
-          source_name: string
+          source_name: string | null
           source_url: string | null
           image_url: string | null
           tags: string[]
@@ -149,7 +184,7 @@ export interface Database {
           title: string
           summary: string
           content: string
-          source_name: string
+          source_name?: string | null
           source_url?: string | null
           image_url?: string | null
           tags?: string[]
@@ -163,7 +198,7 @@ export interface Database {
           title?: string
           summary?: string
           content?: string
-          source_name?: string
+          source_name?: string | null
           source_url?: string | null
           image_url?: string | null
           tags?: string[]
