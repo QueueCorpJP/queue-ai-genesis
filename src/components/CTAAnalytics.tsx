@@ -4,9 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, MousePointer, Users, BarChart3, Calendar, ExternalLink } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrendingUp, MousePointer, Users, BarChart3, Calendar, ExternalLink, Target } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
+import CTAConversionAnalytics from '@/components/CTAConversionAnalytics';
 
 interface CTAClickStat {
   article_id: string;
@@ -142,8 +144,8 @@ const CTAAnalytics: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">CTAクリック分析</h2>
-          <p className="text-gray-600">記事内のCTAクリック率とコンバージョンを分析</p>
+          <h2 className="text-2xl font-bold text-gray-900">CTA分析ダッシュボード</h2>
+          <p className="text-gray-600">記事内のCTAクリック率とコンバージョンを総合分析</p>
         </div>
         <Button 
           onClick={refreshStats} 
@@ -153,6 +155,21 @@ const CTAAnalytics: React.FC = () => {
           {refreshing ? '更新中...' : '統計を更新'}
         </Button>
       </div>
+
+      {/* Tabs for different analysis views */}
+      <Tabs defaultValue="click-analysis" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="click-analysis" className="flex items-center space-x-2">
+            <BarChart3 className="w-4 h-4" />
+            <span>クリック分析</span>
+          </TabsTrigger>
+          <TabsTrigger value="conversion-analysis" className="flex items-center space-x-2">
+            <Target className="w-4 h-4" />
+            <span>コンバージョン分析</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="click-analysis" className="space-y-6">
 
       {/* Overall Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -319,6 +336,12 @@ const CTAAnalytics: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="conversion-analysis">
+          <CTAConversionAnalytics />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
