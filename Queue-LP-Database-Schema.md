@@ -3,6 +3,10 @@
 ## 概要
 Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブル構造の詳細です。
 
+**プロジェクトID**: `vrpdhzbfnwljdsretjld`  
+**データベースバージョン**: PostgreSQL 17.4.1.054  
+**最終更新**: 2025年1月（MCPを使用して実データベースから取得）
+
 ## テーブル一覧
 
 ### 1. consultation_requests（相談依頼）
@@ -56,7 +60,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 | title | text | NO | - | 記事タイトル |
 | summary | text | NO | - | 記事概要 |
 | content | text | NO | - | 記事本文 |
-| source_name | text | YES | - | 情報源名（任意） |
+| source_name | text | YES | - | 情報源名（任意）※ |
 | source_url | text | YES | - | 情報源URL |
 | image_url | text | YES | - | 画像URL |
 | tags | text[] | YES | ARRAY[]::text[] | タグ配列 |
@@ -67,6 +71,9 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **制約条件**:
 - status: 'draft', 'published', 'archived' のいずれか
+
+**注釈**:
+- ※ source_name: "Source name (optional) - can be null if no specific source" とコメント追記済み
 
 ---
 
@@ -113,22 +120,59 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 news_articles (1) ----< (many) news_article_views
     ↑                              ↓
    id                        article_id
+    
+news_articles (1) ----< (many) cta_clicks
+    ↑                              ↓
+   id                        article_id
 ```
+
+---
+
+### 6. cta_clicks（CTAクリック履歴）
+**目的**: 記事内のCTAボタンのクリックを追跡
+
+| カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
+|---------|---------|---------|-------------|------|
+| id | uuid | NO | gen_random_uuid() | 主キー（自動生成） |
+| article_id | uuid | NO | - | 記事ID（外部キー） |
+| cta_type | text | NO | 'consultation' | CTAタイプ |
+| ip_address | text | NO | - | クリックしたユーザーのIPアドレス |
+| user_agent | text | YES | - | ユーザーエージェント情報 |
+| referrer_url | text | YES | - | リファラーURL |
+| clicked_at | timestamptz | NO | now() | CTAクリック日時 |
+| created_at | timestamptz | NO | now() | 作成日時 |
+
+**制約条件**:
+- cta_type: 'consultation', 'contact', 'other' のいずれか（デフォルト: 'consultation'）
+
+**外部キー制約**:
+- article_id → news_articles.id
+
+**RLS（行レベルセキュリティ）**: 有効
+
+---
 
 ## 統計情報
 
 | テーブル名 | サイズ | 推定行数 |
 |-----------|--------|----------|
-| consultation_requests | 32 kB | 5行 |
-| contact_requests | 48 kB | 6行 |
-| news_articles | 32 kB | 0行（削除済み8行） |
-| news_article_views | 80 kB | 0行（削除済み3行） |
-| chatbot_conversations | 112 kB | 31行 |
+| consultation_requests | 32 kB | 6行 |
+| contact_requests | 48 kB | 8行 |
+| news_articles | 32 kB | 0行（削除済み4行） |
+| news_article_views | 80 kB | 0行（削除済み33行） |
+| chatbot_conversations | 136 kB | 39行 |
+| cta_clicks | 80 kB | 0行（削除済み2行） |
 
 ## セキュリティ設定
 
-- **RLS有効テーブル**: `news_article_views`, `chatbot_conversations`
+- **RLS有効テーブル**: `news_article_views`, `chatbot_conversations`, `cta_clicks`
 - **RLS無効テーブル**: `consultation_requests`, `contact_requests`, `news_articles`
+
+## マイグレーション履歴
+
+| バージョン | 名前 | 内容 |
+|-----------|------|------|
+| 20250726080725 | make_source_name_optional | news_articles.source_nameをオプショナルに変更 |
 
 ## 注意事項
 
@@ -136,7 +180,9 @@ news_articles (1) ----< (many) news_article_views
 2. **UUID**: 主キーは全て UUID 形式で自動生成
 3. **ステータス管理**: 問い合わせ系テーブルは共通のステータス値を使用
 4. **国際化対応**: 全テーブルで `timestamptz` を使用し、タイムゾーンに対応
+5. **CTAトラッキング**: `cta_clicks`テーブルで記事内CTAクリック率を詳細分析
+6. **統計ビュー**: `cta_click_stats`ビューで記事別クリック率統計を提供
 
 ---
 
-*最終更新: 2025年1月* 
+*最終更新: 2025年1月31日（Supabase MCPで実データベースから取得・更新）* 

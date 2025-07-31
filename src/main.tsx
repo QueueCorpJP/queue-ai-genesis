@@ -4,46 +4,69 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Suppress Chrome extension errors in development
-if (import.meta.env.DEV) {
+// Suppress Chrome extension errors in development and production
+const suppressChromeExtensionErrors = () => {
   window.addEventListener('error', (event) => {
     // Chrome extension related errors
-    if (event.message?.includes('Could not establish connection') ||
-        event.message?.includes('Receiving end does not exist') ||
-        event.message?.includes('No tab with id') ||
-        event.message?.includes('Extension context invalidated') ||
-        event.filename?.includes('service-worker-loader.js') ||
-        event.filename?.includes('extension') ||
-        event.error?.stack?.includes('chrome-extension://')) {
+    const errorMessage = event.message || '';
+    const errorSource = event.filename || '';
+    const errorStack = event.error?.stack || '';
+    
+    if (errorMessage.includes('Could not establish connection') ||
+        errorMessage.includes('Receiving end does not exist') ||
+        errorMessage.includes('No tab with id') ||
+        errorMessage.includes('Extension context invalidated') ||
+        errorMessage.includes('runtime.lastError') ||
+        errorSource.includes('service-worker-loader.js') ||
+        errorSource.includes('extension') ||
+        errorSource.includes('chrome-extension://') ||
+        errorStack.includes('chrome-extension://') ||
+        errorStack.includes('service-worker') ||
+        errorStack.includes('content_script')) {
       event.preventDefault();
+      event.stopPropagation();
       return false;
     }
-  });
+  }, true);
 
   window.addEventListener('unhandledrejection', (event) => {
     // Chrome extension related promise rejections
-    if (event.reason?.message?.includes('Could not establish connection') ||
-        event.reason?.message?.includes('Receiving end does not exist') ||
-        event.reason?.message?.includes('No tab with id') ||
-        event.reason?.message?.includes('Extension context invalidated') ||
-        event.reason?.stack?.includes('chrome-extension://')) {
+    const reason = event.reason;
+    const message = reason?.message || reason?.toString?.() || '';
+    const stack = reason?.stack || '';
+    
+    if (message.includes('Could not establish connection') ||
+        message.includes('Receiving end does not exist') ||
+        message.includes('No tab with id') ||
+        message.includes('Extension context invalidated') ||
+        message.includes('runtime.lastError') ||
+        stack.includes('chrome-extension://') ||
+        stack.includes('service-worker') ||
+        stack.includes('content_script')) {
       event.preventDefault();
+      event.stopPropagation();
     }
-  });
+  }, true);
 
   // Suppress console errors from Chrome extensions
   const originalConsoleError = console.error;
   console.error = (...args) => {
-    const message = args[0]?.toString?.() || '';
+    const message = args.join(' ').toString();
     if (message.includes('Could not establish connection') ||
         message.includes('Receiving end does not exist') ||
         message.includes('No tab with id') ||
-        message.includes('Extension context invalidated')) {
+        message.includes('Extension context invalidated') ||
+        message.includes('runtime.lastError') ||
+        message.includes('chrome-extension://') ||
+        message.includes('service-worker-loader.js')) {
       return;
     }
     originalConsoleError.apply(console, args);
   };
-}
+};
+
+// Apply error suppression
+suppressChromeExtensionErrors();
 
 // Set global meta description for SEO
 const setMetaDescription = () => {

@@ -125,7 +125,7 @@ const Analytics: React.FC = () => {
     try {
       // 記事ごとの閲覧数を取得
       const { data: viewStats, error } = await supabase
-        .from('blog_articles')
+        .from('news_articles')
         .select(`
           id,
           title,
