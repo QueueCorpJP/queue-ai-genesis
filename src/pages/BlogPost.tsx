@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, ExternalLink, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import ArticleCTA from '@/components/ArticleCTA';
 
 // ブログ記事のタイプ定義
 type BlogArticle = {
@@ -436,11 +437,30 @@ const BlogPost: React.FC = () => {
 
                     {/* Content */}
                     <div className="prose prose-lg max-w-none mb-8">
-                      {formatContent(article.content).map((paragraph, idx) => (
-                        <p key={idx} className="text-gray-700 leading-relaxed mb-4">
-                          {paragraph}
-                        </p>
-                      ))}
+                      {formatContent(article.content).map((paragraph, idx) => {
+                        const isMiddle = idx === Math.floor(formatContent(article.content).length / 2);
+                        return (
+                          <div key={idx}>
+                            <p className="text-gray-700 leading-relaxed mb-4">
+                              {paragraph}
+                            </p>
+                            {/* 記事の中間地点にcompact CTAを挿入 */}
+                            {isMiddle && (
+                              <div className="my-8">
+                                <ArticleCTA 
+                                  articleId={article.id} 
+                                  variant="compact"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Main CTA at the end of article */}
+                    <div className="my-12">
+                      <ArticleCTA articleId={article.id} />
                     </div>
 
                     {/* Source */}

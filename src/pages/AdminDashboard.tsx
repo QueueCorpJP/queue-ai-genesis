@@ -17,7 +17,8 @@ import {
   RefreshCw,
   LogOut,
   Menu,
-  X
+  X,
+  MousePointer
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ import ContactManager from '@/components/ContactManager';
 import NewsManager from '@/components/NewsManager';
 import Analytics from '@/components/Analytics';
 import ChatbotManager from '@/components/ChatbotManager';
+import CTAAnalytics from '@/components/CTAAnalytics';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -491,7 +493,7 @@ const AdminDashboard: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           {/* Desktop Tabs */}
           <div className="hidden md:block">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="overview" className="flex items-center space-x-2">
                 <Home className="w-4 h-4" />
                 <span>概要</span>
@@ -499,6 +501,10 @@ const AdminDashboard: React.FC = () => {
               <TabsTrigger value="analytics" className="flex items-center space-x-2">
                 <BarChart3 className="w-4 h-4" />
                 <span>分析</span>
+              </TabsTrigger>
+              <TabsTrigger value="cta-analytics" className="flex items-center space-x-2">
+                <MousePointer className="w-4 h-4" />
+                <span>CTA分析</span>
               </TabsTrigger>
               <TabsTrigger value="consultations" className="flex items-center space-x-2">
                 <MessageSquare className="w-4 h-4" />
@@ -542,6 +548,7 @@ const AdminDashboard: React.FC = () => {
                 {[
                   { value: 'overview', icon: Home, label: '概要' },
                   { value: 'analytics', icon: BarChart3, label: '分析' },
+                  { value: 'cta-analytics', icon: MousePointer, label: 'CTA分析' },
                   { value: 'consultations', icon: MessageSquare, label: '相談申込' },
                   { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
                   { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
@@ -634,6 +641,10 @@ const AdminDashboard: React.FC = () => {
             <Analytics />
           </TabsContent>
 
+          <TabsContent value="cta-analytics">
+            <CTAAnalytics />
+          </TabsContent>
+
           <TabsContent value="consultations">
             <ConsultationManager />
           </TabsContent>
@@ -710,6 +721,7 @@ const getTabIcon = (tab: string) => {
   const icons = {
     overview: <Home className="w-4 h-4" />,
     analytics: <BarChart3 className="w-4 h-4" />,
+    'cta-analytics': <MousePointer className="w-4 h-4" />,
     consultations: <MessageSquare className="w-4 h-4" />,
     contacts: <Phone className="w-4 h-4" />,
     chatbot: <MessageSquare className="w-4 h-4" />,
@@ -723,6 +735,7 @@ const getTabLabel = (tab: string) => {
   const labels = {
     overview: '概要',
     analytics: '分析',
+    'cta-analytics': 'CTA分析',
     consultations: '相談申込',
     contacts: 'お問い合わせ',
     chatbot: 'チャットボット',
