@@ -3,6 +3,24 @@
   word-wrap: break-word; /* 長い単語の改行を許可 */
 }
 
+/* 概要欄専用のスタイル調整 */
+.blog-content.summary-content {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.blog-content.summary-content p {
+  margin: 0.5rem 0;
+}
+
+.blog-content.summary-content p:first-child {
+  margin-top: 0;
+}
+
+.blog-content.summary-content p:last-child {
+  margin-bottom: 0;
+}
+
 .blog-content h1, .blog-content h2, .blog-content h3, .blog-content h4, .blog-content h5, .blog-content h6 {
   margin: 1.5rem 0 1rem 0;
   font-weight: bold;

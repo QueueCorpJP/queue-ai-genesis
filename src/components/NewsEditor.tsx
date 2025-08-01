@@ -38,9 +38,10 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const quillRef = useRef<any>(null);
+  const summaryQuillRef = useRef<any>(null);
 
-  // Quillカスタムツールバーの設定
-  const modules = useMemo(() => ({
+  // 本文用Quillツールバーの設定
+  const contentModules = useMemo(() => ({
     toolbar: {
       container: [
         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
@@ -60,6 +61,30 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
       handlers: {
         'consultation-link': insertConsultationLink
       }
+    },
+    history: {
+      delay: 1000,
+      maxStack: 50,
+      userOnly: true
+    }
+  }), []);
+
+  // 概要用Quillツールバーの設定（シンプル版）
+  const summaryModules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'font': [] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'align': [] }],
+        ['clean']
+      ]
+    },
+    history: {
+      delay: 1000,
+      maxStack: 50,
+      userOnly: true
     }
   }), []);
 
@@ -340,14 +365,24 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
 
           <div className="space-y-2">
             <Label htmlFor="summary">概要 *</Label>
-            <Textarea
-              id="summary"
-              value={formData.summary}
-              onChange={(e) => setFormData(prev => ({ ...prev, summary: e.target.value }))}
-              placeholder="記事の概要を入力"
-              rows={2}
-              required
-            />
+            <div className="border rounded-md">
+              <div className="bg-blue-50 border-b px-4 py-2 text-sm text-blue-800">
+                <div className="flex items-center space-x-2">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>フォント・サイズ・色・斜体の変更が可能 | 元に戻す機能付き</span>
+                </div>
+              </div>
+              <ReactQuill
+                ref={summaryQuillRef}
+                theme="snow"
+                value={formData.summary}
+                onChange={(summary) => setFormData(prev => ({ ...prev, summary }))}
+                modules={summaryModules}
+                formats={formats}
+                placeholder="記事の概要を入力してください。文字装飾やスタイル設定が可能です。"
+                style={{ minHeight: '120px' }}
+              />
+            </div>
           </div>
 
           {/* 画像アップロード */}
@@ -450,7 +485,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
                 theme="snow"
                 value={formData.content}
                 onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-                modules={modules}
+                modules={contentModules}
                 formats={formats}
                 placeholder="記事の本文を入力してください。ツールバーから文字装飾や無料相談リンクの挿入ができます。"
                 style={{ minHeight: '300px' }}

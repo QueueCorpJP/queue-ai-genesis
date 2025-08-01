@@ -479,7 +479,7 @@ const BlogPost: React.FC = () => {
                     </h1>
 
                     {/* Summary */}
-                    <div className="text-xl text-gray-700 mb-8 leading-relaxed blog-content">
+                    <div className="text-xl text-gray-700 mb-8 leading-relaxed blog-content summary-content">
                       {article.summary.includes('<') ? (
                         <div dangerouslySetInnerHTML={{ __html: article.summary }} />
                       ) : (

@@ -339,7 +339,7 @@ const Blog: React.FC = () => {
                           </h2>
                           
                           {/* 要約 */}
-                          <div className="text-gray-600 mb-4 line-clamp-3 flex-grow blog-content">
+                          <div className="text-gray-600 mb-4 line-clamp-3 flex-grow blog-content summary-content">
                             {article.summary.includes('<') ? (
                               <div dangerouslySetInnerHTML={{ __html: article.summary }} />
                             ) : (

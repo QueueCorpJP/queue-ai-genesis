@@ -36,9 +36,16 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const quillRef = useRef<any>(null);
+  const summaryQuillRef = useRef<any>(null);
+  
+  // 元に戻す機能用の履歴管理
+  const [contentHistory, setContentHistory] = useState<string[]>([]);
+  const [summaryHistory, setSummaryHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [summaryHistoryIndex, setSummaryHistoryIndex] = useState(-1);
 
-  // Quillカスタムツールバーの設定
-  const modules = useMemo(() => ({
+  // 本文用Quillツールバーの設定
+  const contentModules = useMemo(() => ({
     toolbar: {
       container: [
         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
@@ -53,11 +60,43 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         [{ 'align': [] }],
         ['link', 'image', 'video'],
         ['consultation-link'], // カスタムボタン
+        ['undo', 'redo'], // 元に戻す・やり直し
         ['clean']
       ],
       handlers: {
-        'consultation-link': insertConsultationLink
+        'consultation-link': insertConsultationLink,
+        'undo': handleContentUndo,
+        'redo': handleContentRedo
       }
+    },
+    history: {
+      delay: 1000,
+      maxStack: 50,
+      userOnly: true
+    }
+  }), []);
+
+  // 概要用Quillツールバーの設定（シンプル版）
+  const summaryModules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'font': [] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'align': [] }],
+        ['undo', 'redo'], // 元に戻す・やり直し
+        ['clean']
+      ],
+      handlers: {
+        'undo': handleSummaryUndo,
+        'redo': handleSummaryRedo
+      }
+    },
+    history: {
+      delay: 1000,
+      maxStack: 50,
+      userOnly: true
     }
   }), []);
 
@@ -108,6 +147,36 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
       quill.setSelection(range.index + link.length);
     }
   }
+
+  // 本文の元に戻す機能
+  const handleContentUndo = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.undo();
+    }
+  };
+
+  const handleContentRedo = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.redo();
+    }
+  };
+
+  // 概要の元に戻す機能
+  const handleSummaryUndo = () => {
+    const quill = summaryQuillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.undo();
+    }
+  };
+
+  const handleSummaryRedo = () => {
+    const quill = summaryQuillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.redo();
+    }
+  };
 
   // Quillエディタの初期化後にカスタムボタンを追加
   useEffect(() => {
@@ -317,14 +386,24 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
 
       <div className="space-y-2">
         <Label htmlFor="summary">概要 *</Label>
-        <Textarea
-          id="summary"
-          value={formData.summary}
-          onChange={(e) => setFormData(prev => ({ ...prev, summary: e.target.value }))}
-          placeholder="記事の概要を入力"
-          rows={2}
-          required
-        />
+        <div className="border rounded-md">
+          <div className="bg-blue-50 border-b px-4 py-2 text-sm text-blue-800">
+            <div className="flex items-center space-x-2">
+              <MessageCircle className="h-4 w-4" />
+              <span>フォント・サイズ・色・斜体の変更が可能 | 元に戻す機能付き</span>
+            </div>
+          </div>
+          <ReactQuill
+            ref={summaryQuillRef}
+            theme="snow"
+            value={formData.summary}
+            onChange={(summary) => setFormData(prev => ({ ...prev, summary }))}
+            modules={summaryModules}
+            formats={formats}
+            placeholder="記事の概要を入力してください。文字装飾やスタイル設定が可能です。"
+            style={{ minHeight: '120px' }}
+          />
+        </div>
       </div>
 
       {/* 画像アップロード */}
@@ -427,7 +506,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
             theme="snow"
             value={formData.content}
             onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-            modules={modules}
+            modules={contentModules}
             formats={formats}
             placeholder="記事の本文を入力してください。ツールバーから文字装飾や無料相談リンクの挿入ができます。"
             style={{ minHeight: '300px' }}

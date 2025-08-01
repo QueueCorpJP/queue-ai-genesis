@@ -68,8 +68,12 @@ export const BlogPreview: React.FC<BlogPreviewProps> = ({ post }) => {
       </div>
       
       {/* Article Excerpt */}
-      <div className="bg-gray-50 border-l-4 border-navy-800 p-4 italic text-muted-foreground">
-        {post.excerpt}
+      <div className="bg-gray-50 border-l-4 border-navy-800 p-4 italic text-muted-foreground blog-content">
+        {post.excerpt.includes('<') ? (
+          <div dangerouslySetInnerHTML={{ __html: post.excerpt }} />
+        ) : (
+          <div>{post.excerpt}</div>
+        )}
       </div>
       
       {/* Article Content */}
