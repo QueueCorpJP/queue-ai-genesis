@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import bcrypt from 'bcryptjs';
 
 export interface AdminUser {
   id: string;
@@ -108,24 +107,49 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // データベースからユーザー認証
   const authenticateUser = async (email: string, password: string) => {
     try {
-      // メンバーテーブルから認証情報を取得
-      const { data: member, error } = await supabase
+      console.log('🔐 認証開始:', { email: email.trim().toLowerCase() });
+      
+      // まず、membersテーブルから直接認証を試行（より確実な方法）
+      const { data: hashedPasswordData, error: hashError } = await supabase.rpc('hash_password', {
+        plain_password: password
+      });
+
+      if (hashError) {
+        console.error('Hash password error:', hashError);
+        return null;
+      }
+
+      const { data: member, error: memberError } = await supabase
         .from('members')
-        .select('id, email, name, password_hash, role, is_active')
+        .select('id, email, name, role, department, position, is_active, login_count')
         .eq('email', email.trim().toLowerCase())
+        .eq('password_hash', hashedPasswordData)
         .eq('is_active', true)
         .single();
 
-      if (error || !member) {
+      console.log('🔐 認証レスポンス:', { member, error: memberError });
+
+      if (memberError || !member) {
+        console.log('🔐 認証失敗: ユーザーが見つからない、またはパスワードが間違っています');
         return null;
       }
 
-      // パスワードを検証
-      const passwordMatch = await bcrypt.compare(password, member.password_hash);
-      if (!passwordMatch) {
-        return null;
+      // ログイン回数と最終ログイン時刻を更新
+      const { error: updateError } = await supabase
+        .from('members')
+        .update({
+          login_count: member.login_count ? member.login_count + 1 : 1,
+          last_login_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', member.id);
+
+      if (updateError) {
+        console.warn('Login update error:', updateError);
       }
 
+      console.log('🔐 認証成功:', { member });
+      
       return {
         id: member.id,
         email: member.email,
