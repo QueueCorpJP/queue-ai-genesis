@@ -240,7 +240,16 @@ const PayrollManager: React.FC = () => {
         .eq('year_month', yearMonth)
         .order('total_pay', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        // RLSエラーの場合は詳細なログを出力
+        if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+          console.warn('RLS permission denied for monthly_payroll, setting empty array');
+          setMonthlyPayroll([]);
+          return;
+        }
+        throw error;
+      }
+      
       console.log('Monthly payroll data:', data);
       
       // 詳細デバッグ：各レコードの内容を確認
@@ -258,10 +267,21 @@ const PayrollManager: React.FC = () => {
       }
       
       setMonthlyPayroll(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching monthly payroll:', error);
-      toast.error('月次人件費データの取得に失敗しました');
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      
       setMonthlyPayroll([]);
+      
+      // ユーザーには軽微なメッセージのみ表示
+      if (!error.message?.includes('permission denied') && !error.message?.includes('row-level security')) {
+        toast.error('月次人件費データの取得に失敗しました');
+      }
     }
   };
 
@@ -273,7 +293,24 @@ const PayrollManager: React.FC = () => {
       const { data, error } = await supabase
         .rpc('get_monthly_payroll_summary', { target_year_month: yearMonth });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching payroll summary:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // RLSが原因でない場合のみエラーメッセージを表示
+        if (!error.message?.includes('permission denied') && !error.message?.includes('row-level security')) {
+          toast.error('人件費サマリーの取得に失敗しました');
+        }
+        
+        setPayrollSummary(null);
+        return;
+      }
+      
       console.log('Payroll summary data:', data);
       
       if (data && data.length > 0) {
@@ -281,9 +318,8 @@ const PayrollManager: React.FC = () => {
       } else {
         setPayrollSummary(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching payroll summary:', error);
-      toast.error('人件費サマリーの取得に失敗しました');
       setPayrollSummary(null);
     }
   };

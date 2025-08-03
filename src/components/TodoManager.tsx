@@ -135,7 +135,7 @@ const TodoManager: React.FC = () => {
     if (!user?.email) return;
     
     try {
-      const { data, error } = await getSupabaseAdmin()
+      const { data, error } = await supabase
         .from('members')
         .select('id')
         .eq('email', user.email)

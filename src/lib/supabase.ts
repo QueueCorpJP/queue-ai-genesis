@@ -29,7 +29,7 @@ const getSupabaseInstance = () => {
 
   // 新しいインスタンスを作成
   if (typeof window !== 'undefined') {
-    console.log('Creating new Supabase client instance');
+    console.log('🔗 Creating new Supabase client instance');
     _supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
@@ -70,11 +70,12 @@ const getSupabaseAdminInstance = () => {
 
   // Service Role Keyが設定されている場合のみ管理者クライアントを作成
   if (typeof window !== 'undefined' && supabaseServiceRoleKey && supabaseServiceRoleKey !== supabaseAnonKey) {
-    console.log('Creating new Supabase admin client instance');
+    console.log('🔗 Creating new Supabase admin client instance');
     _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
+        detectSessionInUrl: false,
         storageKey: 'queue-supabase-admin-auth-token',
         storage: window.localStorage
       },
