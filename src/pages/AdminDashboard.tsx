@@ -210,16 +210,9 @@ const AdminDashboard: React.FC = () => {
         .from('todos')
         .select('*');
 
-      // TodoManagerと同じロジック：selectedMemberIdがある場合はそれを使用、なければ全取得（役員）または自分のみ（一般）
-      if (isExecutive) {
-        console.log('🏠 Fetching all member todos (executive mode)');
-        // 役員は全メンバーのTodoを取得
-        todosQuery = todosQuery.order('created_at', { ascending: false });
-      } else {
-        console.log('🏠 Fetching personal todos:', currentMemberId);
-        // 一般メンバーは自分のTodoのみ
-        todosQuery = todosQuery.eq('member_id', currentMemberId).order('created_at', { ascending: false });
-      }
+      // 「今日やること」では役員も一般メンバーも自分のタスクのみを表示
+      console.log('🏠 Fetching personal todos for today:', currentMemberId);
+      todosQuery = todosQuery.eq('member_id', currentMemberId).order('created_at', { ascending: false });
 
       const { data: todosData, error: todosError } = await todosQuery;
       
@@ -281,32 +274,11 @@ const AdminDashboard: React.FC = () => {
         days_until: t.days_until_due
       })));
 
-      // 上位5件を今日やることとして設定（TodoManagerと同じロジック）
+      // 上位5件を今日やることとして設定
       const topTasks = sortedTasks.slice(0, 5);
 
-      // メンバー情報を取得（役員の場合のみ）
-      let membersData = [];
-      if (isExecutive && topTasks.length > 0) {
-        const { data: members, error: membersError } = await supabase
-          .from('members')
-          .select('id, name, email, role, department')
-          .eq('is_active', true);
-        
-        if (!membersError) {
-          membersData = members || [];
-        }
-      }
-
-      // 最終的なフォーマット
-      const formattedTodos = topTasks.map(todo => {
-        const member = membersData.find(m => m.id === todo.member_id);
-        
-        return {
-          ...todo,
-          member_name: member?.name || undefined,
-          member_email: member?.email || undefined
-        };
-      });
+      // 自分のタスクのみなので、メンバー情報の取得は不要
+      const formattedTodos = topTasks;
       
       console.log('🏠 Final today todos:', formattedTodos.length, 'tasks');
       console.log('🏠 Today todos details:', formattedTodos.map(t => ({
@@ -1158,9 +1130,6 @@ const AdminDashboard: React.FC = () => {
                             <h4 className="font-medium text-gray-900 mb-1">{todo.title}</h4>
                             {todo.description && (
                               <p className="text-sm text-gray-600 mb-2 line-clamp-2">{todo.description}</p>
-                            )}
-                            {todo.member_name && (
-                              <p className="text-xs text-gray-500 mb-2">担当: {todo.member_name}</p>
                             )}
                             <div className="flex items-center space-x-4 text-xs text-gray-500">
                               {todo.due_date && (
