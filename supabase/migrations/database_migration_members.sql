@@ -159,14 +159,14 @@ $$ LANGUAGE plpgsql;
 INSERT INTO members (email, password_hash, name, role, department, position, is_active)
 VALUES (
     'queue@queue-tech.jp',
-    hash_password('Taichi00610'),
+    hash_password('Ace00124'),
     'システム管理者',
     'executive',
     '経営陣',
     'CEO',
     true
 ) ON CONFLICT (email) DO UPDATE SET
-    password_hash = hash_password('Taichi00610'),
+    password_hash = hash_password('Ace00124'),
     role = 'executive',
     updated_at = NOW();
 

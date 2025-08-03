@@ -39,7 +39,7 @@ export const useAdmin = () => {
 
 const ADMIN_CREDENTIALS = {
   email: 'queue@queue-tech.jp',
-  password: 'Taichi00610'
+  password: 'Ace00124'
 } as const;
 
 const SESSION_STORAGE_KEY = 'queue_admin_session';
