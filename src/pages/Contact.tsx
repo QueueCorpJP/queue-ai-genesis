@@ -24,7 +24,7 @@ const Contact = () => {
       "mainEntity": {
         "@type": "Organization",
         "name": "Queue株式会社",
-        "telephone": "03-6687-0550",
+        "telephone": "03-5324-2678",
         "email": "queue@queue-tech.jp"
       }
     });
