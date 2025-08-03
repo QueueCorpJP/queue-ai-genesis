@@ -2,15 +2,44 @@
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import { Container } from '@/components/ui/container';
 
 const Services = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "AI開発サービス",
+    "provider": {
+      "@type": "Organization",
+      "name": "Queue株式会社",
+      "url": "https://queue-tech.jp"
+    },
+    "description": "AI駆動開発、プロンプトエンジニアリング、プロトタイプ制作を通じてビジネスを革新",
+    "serviceType": [
+      "AI受託開発",
+      "プロンプトエンジニアリング", 
+      "高速プロトタイピング",
+      "生成AIソリューション",
+      "DX支援"
+    ],
+    "areaServed": "JP"
+  };
+
   useEffect(() => {
     document.title = "サービス | Queue株式会社";
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="AI開発サービス | Queue株式会社 - プロンプトエンジニアリング・プロトタイプ制作"
+        description="キュー株式会社のAI開発サービス。AI受託開発、プロンプトエンジニアリング、高速プロトタイピング、生成AIソリューションで企業のDXを支援します。"
+        keywords="AI開発サービス,AI受託開発,プロンプトエンジニアリング,プロトタイプ制作,生成AI,DX支援,Queue株式会社,キュー株式会社,AI駆動開発"
+        canonicalUrl="/services"
+        structuredData={structuredData}
+      />
+      
       <Navbar />
       
       <main className="flex-1 pt-24">

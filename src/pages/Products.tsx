@@ -3,16 +3,47 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 
 const Products = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "AI製品・ソリューション",
+    "manufacturer": {
+      "@type": "Organization",
+      "name": "Queue株式会社",
+      "url": "https://queue-tech.jp"
+    },
+    "description": "Prompty・Workmateなど、Queue株式会社が開発するAI製品とソリューション",
+    "category": "AI Software",
+    "offers": {
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "priceValidUntil": "2025-12-31",
+      "seller": {
+        "@type": "Organization",
+        "name": "Queue株式会社"
+      }
+    }
+  };
+
   useEffect(() => {
     document.title = "製品一覧 | Queue株式会社";
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="AI製品・ソリューション | Queue株式会社 - Prompty・Workmate"
+        description="キュー株式会社が開発するAI製品・ソリューション。Prompty、Workmateなど革新的なAI技術を活用した製品をご紹介します。"
+        keywords="AI製品,AIソリューション,Prompty,Workmate,Queue株式会社,キュー株式会社,AI技術,生成AI,プロンプトエンジニアリング,AI開発ツール"
+        canonicalUrl="/products"
+        structuredData={structuredData}
+      />
+      
       <Navbar />
       
       <main className="flex-1 pt-24">

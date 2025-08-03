@@ -52,25 +52,25 @@ const Navbar: React.FC = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
           <Link to="/services" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
-            Services
+            AI開発サービス
           </Link>
           <Link to="/why-queue" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
-            Why Queue?
+            Queue選択の理由
           </Link>
           <Link to="/products" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
-            Products
+            AI製品・ソリューション
           </Link>
           <Link to="/case-studies" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
-            Case Studies
+            事例・実績
           </Link>
-          <Link to="/blog" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
-            Blog
+          <Link to="/news" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
+            ニュース・ブログ
           </Link>
           <Link to="/company" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
-            Company
+            会社概要
           </Link>
           <Link to="/contact" className="text-navy-700 hover:text-navy-900 transition-colors text-sm lg:text-base">
-            Contact
+            お問い合わせ
           </Link>
         </nav>
 
@@ -125,49 +125,49 @@ const Navbar: React.FC = () => {
               className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Services
+              AI開発サービス
             </Link>
             <Link
               to="/why-queue"
               className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Why Queue?
+              Queue選択の理由
             </Link>
             <Link
               to="/products"
               className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Products
+              AI製品・ソリューション
             </Link>
             <Link
               to="/case-studies"
               className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Case Studies
+              事例・実績
             </Link>
             <Link
-              to="/blog"
+              to="/news"
               className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Blog
+              ニュース・ブログ
             </Link>
             <Link
               to="/company"
               className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Company
+              会社概要
             </Link>
             <Link
               to="/contact"
               className="text-navy-800 text-2xl font-semibold hover:text-navy-600 hover:bg-gray-50 transition-colors p-4 rounded-lg bg-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Contact
+              お問い合わせ
             </Link>
 
             <div className="pt-6 bg-white">

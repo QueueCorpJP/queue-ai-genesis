@@ -3,12 +3,33 @@ import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ContactSection from '@/components/ContactSection';
+import SEOHead from '@/components/SEOHead';
 import { Container } from '@/components/ui/container';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Contact = () => {
   const isMobile = useIsMobile();
   
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "お問い合わせ",
+    "description": "Queue株式会社へのお問い合わせ・ご相談はこちら",
+    "url": "https://queue-tech.jp/contact",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Queue株式会社",
+      "alternateName": ["キュー株式会社", "キュー", "Queue"],
+      "url": "https://queue-tech.jp",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "availableLanguage": ["Japanese", "English"],
+        "url": "https://queue-tech.jp/contact"
+      }
+    }
+  };
+
   useEffect(() => {
     document.title = "お問い合わせ | Queue株式会社";
     
@@ -37,6 +58,14 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="お問い合わせ | Queue株式会社 - AI開発・プロンプトエンジニアリングのご相談"
+        description="キュー株式会社へのお問い合わせ・ご相談はこちら。AI開発、プロンプトエンジニアリング、プロトタイプ制作のご相談を承ります。無料相談も実施中です。"
+        keywords="お問い合わせ,相談,Queue株式会社,キュー株式会社,AI開発相談,プロンプトエンジニアリング相談,無料相談,AI導入支援"
+        canonicalUrl="/contact"
+        structuredData={structuredData}
+      />
+      
       <Navbar />
       
       <main className="flex-1 pt-16 md:pt-0">

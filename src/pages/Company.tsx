@@ -3,11 +3,39 @@ import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import MissionSection from '@/components/MissionSection';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent } from '@/components/ui/card';
 import { Building, Link, Mail, Phone, Users, Star, Flag, Book, CheckCircle } from 'lucide-react';
 
 const Company = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Queue株式会社",
+    "alternateName": ["キュー株式会社", "キュー", "Queue"],
+    "url": "https://queue-tech.jp",
+    "logo": "https://queue-tech.jp/Queue.png",
+    "description": "AI駆動開発でビジネスを革新するテクノロジー企業",
+    "foundingDate": "2020",
+    "industry": "人工知能・ソフトウェア開発",
+    "numberOfEmployees": "10-50",
+    "areaServed": "JP",
+    "serviceType": ["AI開発", "プロンプトエンジニアリング", "プロトタイプ制作", "DX支援"],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "availableLanguage": ["Japanese", "English"],
+      "url": "https://queue-tech.jp/contact"
+    },
+    "sameAs": ["https://github.com/QueueCorpJP"],
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "JP",
+      "addressRegion": "東京都"
+    }
+  };
+
   useEffect(() => {
     document.title = "会社概要 | Queue株式会社 - AI駆動で、圧倒的スピードと品質を";
     
@@ -20,6 +48,14 @@ const Company = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      <SEOHead
+        title="会社概要 | Queue株式会社 - AI駆動開発のテクノロジー企業"
+        description="キュー株式会社の会社概要。AI駆動開発でビジネスを革新するテクノロジー企業として、ミッション・ビジョン・バリューと共に企業情報をご紹介します。"
+        keywords="会社概要,Queue株式会社,キュー株式会社,企業情報,AI企業,テクノロジー企業,AI駆動開発,会社案内,企業理念,ミッション,ビジョン"
+        canonicalUrl="/company"
+        structuredData={structuredData}
+      />
+      
       <Navbar />
       
       <main className="flex-1">

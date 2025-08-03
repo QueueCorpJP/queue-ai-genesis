@@ -42,27 +42,27 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">サービス</h3>
+            <h3 className="text-lg font-semibold mb-4">AI開発サービス</h3>
             <ul className="space-y-2">
               <li>
-                <a href="/#services" className="text-navy-300 hover:text-white transition-colors">
+                <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
                   AI受託開発
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#services" className="text-navy-300 hover:text-white transition-colors">
+                <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
                   プロンプトエンジニアリング
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#services" className="text-navy-300 hover:text-white transition-colors">
-                  プロトタイプ開発
-                </a>
+                <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
+                  高速プロトタイピング
+                </Link>
               </li>
               <li>
-                <a href="/#services" className="text-navy-300 hover:text-white transition-colors">
-                  技術コンサルティング
-                </a>
+                <Link to="/products" className="text-navy-300 hover:text-white transition-colors">
+                  AI製品・ソリューション
+                </Link>
               </li>
             </ul>
           </div>
@@ -71,23 +71,23 @@ const Footer: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">企業情報</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/about" className="text-navy-300 hover:text-white transition-colors">
+                <Link to="/company" className="text-navy-300 hover:text-white transition-colors">
                   会社概要
                 </Link>
               </li>
               <li>
-                <Link to="/company" className="text-navy-300 hover:text-white transition-colors">
-                  企業情報
+                <Link to="/why-queue" className="text-navy-300 hover:text-white transition-colors">
+                  Queue選択の理由
                 </Link>
               </li>
               <li>
-                <Link to="/careers" className="text-navy-300 hover:text-white transition-colors">
-                  採用情報
+                <Link to="/case-studies" className="text-navy-300 hover:text-white transition-colors">
+                  事例・実績
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-navy-300 hover:text-white transition-colors">
-                  ブログ
+                <Link to="/news" className="text-navy-300 hover:text-white transition-colors">
+                  ニュース・ブログ
                 </Link>
               </li>
             </ul>
