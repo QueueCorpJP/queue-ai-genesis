@@ -123,8 +123,8 @@ const Company = () => {
                     <Phone className="w-5 h-5 text-navy-200 mr-3" />
                     <div>
                       <p className="font-medium text-navy-100 mb-1">電話</p>
-                      <a href="tel:0366870550" className="text-navy-200 hover:text-white transition-colors">
-                        03-6687-0550
+                      <a href="tel:0353242678" className="text-navy-200 hover:text-white transition-colors">
+                        03-5324-2678
                       </a>
                     </div>
                   </div>
