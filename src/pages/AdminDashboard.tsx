@@ -28,7 +28,7 @@ import {
   PlayCircle,
   PauseCircle,
   AlertTriangle,
-  CalendarDays,
+  FileText,
   DollarSign,
   User,
   Building
@@ -59,6 +59,7 @@ import ScheduleManager from '@/components/ScheduleManager';
 import ScheduleWidget from '@/components/ScheduleWidget';
 import ExpenseManager from '@/components/ExpenseManager';
 import KPIManager from '@/components/KPIManager';
+import MemoManager from '@/components/MemoManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -1005,7 +1006,7 @@ const AdminDashboard: React.FC = () => {
                     value="attendance" 
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
                   >
-                    <CalendarDays className="w-4 h-4" />
+                    <Calendar className="w-4 h-4" />
                     <span>勤怠</span>
                   </TabsTrigger>
                   <TabsTrigger 
@@ -1032,6 +1033,16 @@ const AdminDashboard: React.FC = () => {
                     >
                       <Target className="w-4 h-4" />
                       <span>KPI/KGI</span>
+                    </TabsTrigger>
+                  ) : null}
+                  {(user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+                   (user?.role && ['member', 'employee'].includes(user.role)) ? (
+                    <TabsTrigger 
+                      value="memos" 
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>マイメモ</span>
                     </TabsTrigger>
                   ) : null}
                   {user?.email === 'queue@queue-tech.jp' && (
@@ -1253,7 +1264,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="border-t border-gray-100">
                   <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">勤怠・スケジュール・財務</div>
                   {[
-                    { value: 'attendance', icon: CalendarDays, label: '勤怠管理' },
+                    { value: 'attendance', icon: Calendar, label: '勤怠管理' },
                     { value: 'schedule', icon: Calendar, label: 'スケジュール' },
                     ...(user?.role && ['executive', 'ceo', 'admin'].includes(user.role) ? [{ value: 'expenses', icon: DollarSign, label: '販管費管理' }] : []),
                     ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : [])
@@ -1297,6 +1308,32 @@ const AdminDashboard: React.FC = () => {
                     </button>
                   ))}
                 </div>
+
+                {/* KPI & Personal Management */}
+                {((user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+                  (user?.role && ['member', 'employee'].includes(user.role))) && (
+                  <div className="border-t border-gray-100">
+                    <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">個人・目標管理</div>
+                    {[
+                      { value: 'kpi', icon: Target, label: 'KPI/KGI' },
+                      { value: 'memos', icon: FileText, label: 'マイメモ' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.value}
+                        onClick={() => {
+                          setActiveTab(tab.value);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
+                          activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        <tab.icon className="w-4 h-4" />
+                        <span>{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1329,6 +1366,13 @@ const AdminDashboard: React.FC = () => {
               <KPIManager />
             </TabsContent>
           )}
+
+          {(user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+           (user?.role && ['member', 'employee'].includes(user.role)) ? (
+            <TabsContent value="memos">
+              <MemoManager />
+            </TabsContent>
+          ) : null}
 
           {user?.email === 'queue@queue-tech.jp' && (
             <TabsContent value="payroll">
@@ -1664,7 +1708,7 @@ const getTabIcon = (tab: string) => {
     overview: <Home className="w-4 h-4" />,
     todos: <Target className="w-4 h-4" />,
     'todo-progress': <ClipboardList className="w-4 h-4" />,
-    attendance: <CalendarDays className="w-4 h-4" />,
+    attendance: <Calendar className="w-4 h-4" />,
     schedule: <Calendar className="w-4 h-4" />,
     expenses: <DollarSign className="w-4 h-4" />,
     kpi: <Target className="w-4 h-4" />,
@@ -1677,7 +1721,8 @@ const getTabIcon = (tab: string) => {
     chatbot: <MessageSquare className="w-4 h-4" />,
     news: <Newspaper className="w-4 h-4" />,
     members: <Users className="w-4 h-4" />,
-    settings: <Settings className="w-4 h-4" />
+    settings: <Settings className="w-4 h-4" />,
+    memos: <FileText className="w-4 h-4" />
   };
   return icons[tab as keyof typeof icons] || <Home className="w-4 h-4" />;
 };
@@ -1700,7 +1745,8 @@ const getTabLabel = (tab: string) => {
     chatbot: 'チャットボット',
     news: 'ブログ',
     members: 'メンバー',
-    settings: '設定'
+    settings: '設定',
+    memos: 'マイメモ'
   };
   return labels[tab as keyof typeof labels] || '概要';
 };
