@@ -482,56 +482,88 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-          {/* Desktop Tabs */}
-          <div className="hidden md:block">
-            <TabsList className={`grid w-full ${user?.email === 'queue@queue-tech.jp' ? 'grid-cols-9' : 'grid-cols-8'}`}>
-              <TabsTrigger value="overview" className="flex items-center space-x-2">
-                <Home className="w-4 h-4" />
-                <span>概要</span>
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center space-x-2">
-                <BarChart3 className="w-4 h-4" />
-                <span>分析</span>
-              </TabsTrigger>
-              <TabsTrigger value="cta-analytics" className="flex items-center space-x-2">
-                <MousePointer className="w-4 h-4" />
-                <span>CTA分析</span>
-              </TabsTrigger>
-              <TabsTrigger value="reading-analytics" className="flex items-center space-x-2">
-                <Clock className="w-4 h-4" />
-                <span>閲覧時間分析</span>
-              </TabsTrigger>
-              <TabsTrigger value="consultations" className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4" />
-                <span>相談申込</span>
-              </TabsTrigger>
-              <TabsTrigger value="contacts" className="flex items-center space-x-2">
-                <Phone className="w-4 h-4" />
-                <span>お問い合わせ</span>
-              </TabsTrigger>
-              <TabsTrigger value="chatbot" className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4" />
-                <span>チャットボット</span>
-              </TabsTrigger>
-              <TabsTrigger value="news" className="flex items-center space-x-2">
-                <Newspaper className="w-4 h-4" />
-                <span>ブログ</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center space-x-2">
-                <Settings className="w-4 h-4" />
-                <span>設定</span>
-              </TabsTrigger>
-              {user?.email === 'queue@queue-tech.jp' && (
-                <TabsTrigger value="members" className="flex items-center space-x-2">
-                  <Users className="w-4 h-4" />
-                  <span>メンバー作成</span>
+          {/* Desktop & Tablet Tabs */}
+          <div className="hidden sm:block">
+            <TabsList className="bg-white border border-gray-200 rounded-lg p-1 overflow-x-auto h-auto flex justify-start w-full">
+              <div className="flex space-x-1 min-w-max">
+                <TabsTrigger 
+                  value="overview" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <Home className="w-4 h-4" />
+                  <span>概要</span>
                 </TabsTrigger>
-              )}
+                <TabsTrigger 
+                  value="analytics" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  <span>分析</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="cta-analytics" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <MousePointer className="w-4 h-4" />
+                  <span>CTA分析</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="reading-analytics" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <Clock className="w-4 h-4" />
+                  <span>閲覧時間分析</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="consultations" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>相談申込</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="contacts" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span>お問い合わせ</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="chatbot" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>チャットボット</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="news" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <Newspaper className="w-4 h-4" />
+                  <span>ブログ</span>
+                </TabsTrigger>
+                {user?.email === 'queue@queue-tech.jp' && (
+                  <TabsTrigger 
+                    value="members" 
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>メンバー作成</span>
+                  </TabsTrigger>
+                )}
+                <TabsTrigger 
+                  value="settings" 
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>設定</span>
+                </TabsTrigger>
+              </div>
             </TabsList>
           </div>
 
           {/* Mobile Tab Selector */}
-          <div className="md:hidden">
+          <div className="sm:hidden">
             <Button
               variant="outline"
               className="w-full justify-between"

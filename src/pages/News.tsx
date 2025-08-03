@@ -162,7 +162,7 @@ const Blog: React.FC = () => {
     });
   };
 
-  // HTMLタグを除去してテキストのみを取得
+    // HTMLタグを除去してテキストのみを取得
   const stripHtmlTags = (html: string) => {
     const div = document.createElement('div');
     div.innerHTML = html;
@@ -205,14 +205,14 @@ const Blog: React.FC = () => {
                   </h1>
                   <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
                     AI・機械学習の最新動向、開発事例、技術的な知見など、<br className="hidden md:block" />
-                    私たちの経験と学びを共有しています。
-                  </p>
+                私たちの経験と学びを共有しています。
+              </p>
                 </header>
               </div>
             </div>
           </Container>
         </section>
-
+        
         {/* Articles List */}
         <section className="py-8 md:py-16">
           <Container>
@@ -241,16 +241,16 @@ const Blog: React.FC = () => {
 
                           {/* 画像 */}
                           <div className="relative h-40 sm:h-44 md:h-48 bg-navy-50">
-                            {article.image_url ? (
-                              <img
-                                src={article.image_url}
-                                alt={article.title}
+                        {article.image_url ? (
+                            <img
+                              src={article.image_url}
+                              alt={article.title}
                                 className="w-full h-full object-cover"
                                 loading="lazy"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  target.parentElement!.innerHTML = `
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.parentElement!.innerHTML = `
                                     <div class="flex items-center justify-center h-full bg-navy-50 text-navy-300">
                                       <div class="text-center">
                                         <div class="w-10 h-10 mx-auto mb-2 bg-navy-600 rounded-lg flex items-center justify-center">
@@ -258,10 +258,10 @@ const Blog: React.FC = () => {
                                         </div>
                                         <p class="text-xs font-medium text-navy-600">Queue株式会社</p>
                                       </div>
-                                    </div>
-                                  `;
-                                }}
-                              />
+                                  </div>
+                                `;
+                              }}
+                            />
                             ) : (
                               <div className="flex items-center justify-center h-full bg-navy-50 text-navy-300">
                                 <div className="text-center">
@@ -270,30 +270,30 @@ const Blog: React.FC = () => {
                                   </div>
                                   <p className="text-xs font-medium text-navy-600">Queue株式会社</p>
                                 </div>
-                              </div>
+                          </div>
                             )}
                           </div>
-
+                        
                           {/* コンテンツ */}
                           <div className="p-3 sm:p-4">
-                            {/* メタ情報 */}
+                          {/* メタ情報 */}
                             <div className="flex items-center justify-between mb-2 sm:mb-3 text-xs text-gray-500">
-                              <div className="flex items-center">
+                            <div className="flex items-center">
                                 <Calendar className="h-3 w-3 mr-1" />
                                 <time dateTime={article.published_at || article.created_at}>
                                   {formatDate(article.published_at || article.created_at)}
                                 </time>
-                              </div>
                             </div>
-
-                            {/* タイトル */}
+                          </div>
+                          
+                          {/* タイトル */}
                             <h3 className="font-bold text-gray-900 mb-2 leading-tight line-clamp-2">
-                              <Link 
+                            <Link 
                                 to={`/news/${article.id}`}
                                 className="hover:text-navy-600 transition-colors duration-200 text-sm sm:text-base"
-                              >
-                                {article.title}
-                              </Link>
+                            >
+                              {article.title}
+                            </Link>
                             </h3>
 
                             {/* 概要 */}
@@ -302,21 +302,21 @@ const Blog: React.FC = () => {
                             </p>
 
                             {/* タグ（最大2個） */}
-                            {article.tags.length > 0 && (
+                          {article.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mb-3">
                                 {article.tags.slice(0, 2).map((tag) => (
                                   <Badge key={tag} variant="outline" className="bg-navy-50 text-navy-700 border-navy-200 text-xs px-2 py-0.5">
-                                    {tag}
-                                  </Badge>
-                                ))}
+                                  {tag}
+                                </Badge>
+                              ))}
                                 {article.tags.length > 2 && (
                                   <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs px-2 py-0.5">
                                     +{article.tags.length - 2}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                          
                             {/* 読了時間と読むボタン */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center text-xs text-gray-500">
@@ -331,10 +331,10 @@ const Blog: React.FC = () => {
                                 <Link to={`/news/${article.id}`}>
                                   読む
                                   <ArrowRight className="ml-1 h-3 w-3" />
-                                </Link>
-                              </Button>
-                            </div>
+                              </Link>
+                            </Button>
                           </div>
+                        </div>
                         </article>
                       </CardContent>
                     </Card>
