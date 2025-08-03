@@ -67,6 +67,26 @@ interface DashboardOverview {
 const ExpenseManager: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAdmin();
+
+  // 役員権限チェック
+  if (!user?.role || !['executive', 'ceo', 'admin'].includes(user.role)) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+              <DollarSign className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">アクセス権限がありません</h3>
+            <p className="text-gray-600 max-w-md">
+              販管費管理機能は役員アカウントのみご利用いただけます。<br />
+              アクセスが必要な場合は、役員アカウントでログインしてください。
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   const [expenses, setExpenses] = useState<MonthlyExpense[]>([]);
   const [summaries, setSummaries] = useState<ExpenseSummary[]>([]);
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -271,6 +291,9 @@ const ExpenseManager: React.FC = () => {
     const budgetedAmount = parseFloat(formData.budgeted_amount);
     const actualAmount = parseFloat(formData.actual_amount) || budgetedAmount;
     
+    // 最大値制限 (decimal(12,2) = 9,999,999,999.99)
+    const MAX_AMOUNT = 9999999999.99;
+    
     if (isNaN(budgetedAmount) || budgetedAmount < 0) {
       toast({
         title: 'エラー',
@@ -280,10 +303,28 @@ const ExpenseManager: React.FC = () => {
       return;
     }
 
+    if (budgetedAmount > MAX_AMOUNT) {
+      toast({
+        title: 'エラー',
+        description: '予算額は99億円以下で入力してください。',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (isNaN(actualAmount) || actualAmount < 0) {
       toast({
         title: 'エラー',
         description: '実際金額は0以上の数値を入力してください。',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (actualAmount > MAX_AMOUNT) {
+      toast({
+        title: 'エラー',
+        description: '実際金額は99億円以下で入力してください。',
         variant: 'destructive',
       });
       return;
@@ -358,6 +399,10 @@ const ExpenseManager: React.FC = () => {
         errorMessage = '入力値が制約に違反しています。費目カテゴリや支払いステータスを確認してください。';
       } else if (error?.code === '22P02') {
         errorMessage = 'ユーザーID形式が正しくありません。ページを再読み込みしてください。';
+      } else if (error?.code === '22003') {
+        errorMessage = '入力された金額が大きすぎます。99億円以下で入力してください。';
+      } else if (error?.code === '42501') {
+        errorMessage = 'アクセス権限がありません。役員アカウントでログインしてください。';
       } else if (error?.message) {
         errorMessage = `エラー: ${error.message}`;
       }
@@ -544,20 +589,28 @@ const ExpenseManager: React.FC = () => {
                     <Input
                       id="budgeted_amount"
                       type="number"
+                      min="0"
+                      max="9999999999.99"
+                      step="0.01"
                       value={formData.budgeted_amount}
                       onChange={(e) => setFormData({ ...formData, budgeted_amount: e.target.value })}
                       placeholder="0"
                     />
+                    <p className="text-xs text-gray-500 mt-1">最大99億円まで</p>
                   </div>
                   <div>
                     <Label htmlFor="actual_amount">実際金額</Label>
                     <Input
                       id="actual_amount"
                       type="number"
+                      min="0"
+                      max="9999999999.99"
+                      step="0.01"
                       value={formData.actual_amount}
                       onChange={(e) => setFormData({ ...formData, actual_amount: e.target.value })}
                       placeholder="0"
                     />
+                    <p className="text-xs text-gray-500 mt-1">最大99億円まで（空白時は予算額を使用）</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
