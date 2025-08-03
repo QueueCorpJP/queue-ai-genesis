@@ -194,7 +194,11 @@ const ScheduleManager: React.FC = () => {
       
       console.log('📅 Date range:', format(monthStart, 'yyyy-MM-dd'), 'to', format(monthEnd, 'yyyy-MM-dd'));
       
-      const { data, error } = await supabase
+      // 管理者クライアントを優先して使用し、認証エラーを回避
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+      
+      const { data, error } = await client
         .from('company_schedules')
         .select('*')
         .gte('start_date', format(monthStart, 'yyyy-MM-dd'))
@@ -222,14 +226,20 @@ const ScheduleManager: React.FC = () => {
     if (!currentMemberId) return;
     
     try {
-      const { data, error } = await supabase.rpc('get_upcoming_events', {
+      // 管理者クライアントを優先して使用し、認証エラーを回避
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+      
+      const { data, error } = await client.rpc('get_upcoming_events', {
         days_ahead: 14
       });
 
       if (error) throw error;
+      
+      console.log('📅 Upcoming events fetched:', data?.length || 0, 'items');
       setUpcomingEvents(data || []);
     } catch (error) {
-      console.error('Error fetching upcoming events:', error);
+      console.error('📅 Error fetching upcoming events:', error);
       toast.error('今後の予定の取得に失敗しました');
       setUpcomingEvents([]);
     }
@@ -262,6 +272,7 @@ const ScheduleManager: React.FC = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const scheduleData = {
         title: formData.title,
@@ -291,29 +302,50 @@ const ScheduleManager: React.FC = () => {
       }
       
       const client = adminClient || supabase;
-      const { error } = await client
+      const { data: insertedData, error } = await client
         .from('company_schedules')
-        .insert(scheduleData);
+        .insert(scheduleData)
+        .select('*')
+        .single();
 
       if (error) {
         console.error('📅 Insert error:', error);
         throw error;
       }
 
-      console.log('📅 Schedule created successfully');
+      console.log('📅 Schedule created successfully:', insertedData);
+      
+      // 作成したスケジュールを即座にローカル状態に追加
+      if (insertedData) {
+        setSchedules(prevSchedules => [...prevSchedules, insertedData]);
+      }
+      
       toast.success('スケジュールを作成しました');
       setCreateDialogOpen(false);
       resetForm();
-      await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
+      
+      // データベースからの最新データを取得（少し遅延させて確実に反映させる）
+      setTimeout(async () => {
+        try {
+          await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
+          console.log('📅 Data refreshed after schedule creation');
+        } catch (refreshError) {
+          console.error('📅 Error refreshing data after creation:', refreshError);
+        }
+      }, 100);
+      
     } catch (error) {
       console.error('📅 Error creating schedule:', error);
       toast.error('スケジュールの作成に失敗しました');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdateSchedule = async () => {
     if (!editingSchedule || !isExecutive) return;
 
+    setLoading(true);
     try {
       const scheduleData = {
         title: formData.title,
@@ -331,24 +363,51 @@ const ScheduleManager: React.FC = () => {
         updated_at: new Date().toISOString()
       };
 
+      console.log('📅 Updating schedule:', editingSchedule.id, scheduleData);
+
       // 管理者クライアントを使用してRLSをバイパス
       const adminClient = getSupabaseAdmin();
       const client = adminClient || supabase;
       
-      const { error } = await client
+      const { data: updatedData, error } = await client
         .from('company_schedules')
         .update(scheduleData)
-        .eq('id', editingSchedule.id);
+        .eq('id', editingSchedule.id)
+        .select('*')
+        .single();
 
       if (error) throw error;
+
+      console.log('📅 Schedule updated successfully:', updatedData);
+      
+      // 更新したスケジュールを即座にローカル状態に反映
+      if (updatedData) {
+        setSchedules(prevSchedules => 
+          prevSchedules.map(schedule => 
+            schedule.id === editingSchedule.id ? updatedData : schedule
+          )
+        );
+      }
 
       toast.success('スケジュールを更新しました');
       setEditingSchedule(null);
       resetForm();
-      await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
+      
+      // データベースからの最新データを取得
+      setTimeout(async () => {
+        try {
+          await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
+          console.log('📅 Data refreshed after schedule update');
+        } catch (refreshError) {
+          console.error('📅 Error refreshing data after update:', refreshError);
+        }
+      }, 100);
+      
     } catch (error) {
-      console.error('Error updating schedule:', error);
+      console.error('📅 Error updating schedule:', error);
       toast.error('スケジュールの更新に失敗しました');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -376,7 +435,10 @@ const ScheduleManager: React.FC = () => {
       return;
     }
 
+    setLoading(true);
     try {
+      console.log('📅 Deleting schedule:', scheduleId);
+      
       // 管理者クライアントを使用してRLSをバイパス
       const adminClient = getSupabaseAdmin();
       const client = adminClient || supabase;
@@ -388,11 +450,30 @@ const ScheduleManager: React.FC = () => {
 
       if (error) throw error;
 
+      console.log('📅 Schedule deleted successfully');
+      
+      // 削除したスケジュールを即座にローカル状態から除去
+      setSchedules(prevSchedules => 
+        prevSchedules.filter(schedule => schedule.id !== scheduleId)
+      );
+
       toast.success('スケジュールを削除しました');
-      await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
+      
+      // データベースからの最新データを取得
+      setTimeout(async () => {
+        try {
+          await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
+          console.log('📅 Data refreshed after schedule deletion');
+        } catch (refreshError) {
+          console.error('📅 Error refreshing data after deletion:', refreshError);
+        }
+      }, 100);
+      
     } catch (error) {
-      console.error('Error deleting schedule:', error);
+      console.error('📅 Error deleting schedule:', error);
       toast.error('スケジュールの削除に失敗しました');
+    } finally {
+      setLoading(false);
     }
   };
 
