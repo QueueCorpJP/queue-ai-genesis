@@ -232,41 +232,108 @@ const ExpenseManager: React.FC = () => {
       return;
     }
 
+    // ユーザーIDの確認と取得
+    let userId = user?.id;
+    
+    if (!userId || userId === '1') {
+      // AdminContextからのIDが正しくない場合、データベースから取得
+      try {
+        const { data: memberData } = await supabase
+          .from('members')
+          .select('id')
+          .eq('email', user?.email || 'queue@queue-tech.jp')
+          .eq('is_active', true)
+          .single();
+        
+        if (memberData?.id) {
+          userId = memberData.id;
+          console.log('💰 Retrieved user ID from database:', userId);
+        } else {
+          toast({
+            title: 'エラー',
+            description: 'ユーザー情報が取得できません。再ログインしてください。',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('💰 Failed to get user ID:', error);
+        toast({
+          title: 'エラー',
+          description: 'ユーザー情報の取得に失敗しました。再ログインしてください。',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    // 数値の検証
+    const budgetedAmount = parseFloat(formData.budgeted_amount);
+    const actualAmount = parseFloat(formData.actual_amount) || budgetedAmount;
+    
+    if (isNaN(budgetedAmount) || budgetedAmount < 0) {
+      toast({
+        title: 'エラー',
+        description: '予算額は0以上の数値を入力してください。',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (isNaN(actualAmount) || actualAmount < 0) {
+      toast({
+        title: 'エラー',
+        description: '実際金額は0以上の数値を入力してください。',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const expenseData = {
         year_month: selectedMonth,
         expense_category: formData.expense_category,
-        expense_name: formData.expense_name,
+        expense_name: formData.expense_name.trim(),
         expense_type: formData.expense_type,
-        budgeted_amount: parseFloat(formData.budgeted_amount),
-        actual_amount: parseFloat(formData.actual_amount) || parseFloat(formData.budgeted_amount),
+        budgeted_amount: budgetedAmount,
+        actual_amount: actualAmount,
         payment_status: formData.payment_status,
         payment_due_date: formData.payment_due_date || null,
         payment_date: formData.payment_date || null,
-        vendor_name: formData.vendor_name || null,
-        description: formData.description || null,
-        receipt_url: formData.receipt_url || null,
+        vendor_name: formData.vendor_name?.trim() || null,
+        description: formData.description?.trim() || null,
+        receipt_url: formData.receipt_url?.trim() || null,
         is_recurring: formData.is_recurring,
-        created_by: user?.id,
-        updated_by: user?.id,
+        created_by: userId,
+        updated_by: userId,
       };
 
-      let error;
+      console.log('💰 Saving expense data:', expenseData);
+
+      let result;
       if (editingExpense) {
-        const { error: updateError } = await supabase
+        // 更新時はcreated_byを除外し、updated_byには正しいuserIdを使用
+        const { created_by, ...updateData } = expenseData;
+        updateData.updated_by = userId;
+        result = await supabase
           .from('monthly_expenses')
-          .update(expenseData)
-          .eq('id', editingExpense.id);
-        error = updateError;
+          .update(updateData)
+          .eq('id', editingExpense.id)
+          .select();
       } else {
-        const { error: insertError } = await supabase
+        result = await supabase
           .from('monthly_expenses')
-          .insert([expenseData]);
-        error = insertError;
+          .insert([expenseData])
+          .select();
       }
 
-      if (error) throw error;
+      if (result.error) {
+        console.error('💰 Database error:', result.error);
+        throw result.error;
+      }
+
+      console.log('💰 Save successful:', result.data);
 
       toast({
         title: '成功',
@@ -278,11 +345,26 @@ const ExpenseManager: React.FC = () => {
       fetchExpenses();
       fetchSummaries();
       fetchOverview();
-    } catch (error) {
-      console.error('Error saving expense:', error);
+    } catch (error: any) {
+      console.error('💰 Error saving expense:', error);
+      
+      let errorMessage = '販管費の保存に失敗しました。';
+      
+      if (error?.code === '23505') {
+        errorMessage = 'この年月・カテゴリ・費目名の組み合わせは既に存在します。';
+      } else if (error?.code === '23503') {
+        errorMessage = 'ユーザー情報が正しくありません。再ログインしてください。';
+      } else if (error?.code === '23514') {
+        errorMessage = '入力値が制約に違反しています。費目カテゴリや支払いステータスを確認してください。';
+      } else if (error?.code === '22P02') {
+        errorMessage = 'ユーザーID形式が正しくありません。ページを再読み込みしてください。';
+      } else if (error?.message) {
+        errorMessage = `エラー: ${error.message}`;
+      }
+      
       toast({
         title: 'エラー',
-        description: '販管費の保存に失敗しました。',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

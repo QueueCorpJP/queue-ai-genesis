@@ -289,8 +289,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       // 既存の管理者認証（後方互換性）
       if (normalizedEmail === expectedEmail && normalizedPassword === expectedPassword) {
+        // データベースからqueue@queue-tech.jpのIDを取得
+        let adminId = '1'; // デフォルト値
+        try {
+          const { data: adminMember } = await supabase
+            .from('members')
+            .select('id')
+            .eq('email', normalizedEmail)
+            .eq('is_active', true)
+            .single();
+          
+          if (adminMember?.id) {
+            adminId = adminMember.id;
+            console.log('🔐 管理者のデータベースID取得成功:', adminId);
+          }
+        } catch (error) {
+          console.warn('🔐 管理者IDの取得に失敗、デフォルトIDを使用:', error);
+        }
+        
         authenticatedUser = {
-          id: '1',
+          id: adminId,
           email: ADMIN_CREDENTIALS.email,
           name: 'システム管理者',
           role: 'executive',
