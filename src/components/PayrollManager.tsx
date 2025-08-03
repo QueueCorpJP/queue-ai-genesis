@@ -37,7 +37,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
 import { format } from 'date-fns';
@@ -234,20 +234,31 @@ const PayrollManager: React.FC = () => {
       const yearMonth = format(selectedMonth, 'yyyy-MM');
       console.log('Fetching payroll for:', yearMonth);
       
-      const { data, error } = await supabase
+      // 管理者権限が必要な場合はadminクライアントを使用
+      const client = isExecutive ? getSupabaseAdmin() : supabase;
+      
+      const { data, error } = await client
         .from('monthly_payroll')
         .select('*')
         .eq('year_month', yearMonth)
         .order('total_pay', { ascending: false });
 
       if (error) {
-        // RLSエラーの場合は詳細なログを出力
-        if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
-          console.warn('RLS permission denied for monthly_payroll, setting empty array');
-          setMonthlyPayroll([]);
-          return;
+        console.error('Error fetching monthly payroll:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        setMonthlyPayroll([]);
+        
+        // ユーザーには軽微なメッセージのみ表示
+        if (!error.message?.includes('permission denied') && !error.message?.includes('row-level security')) {
+          toast.error('月次人件費データの取得に失敗しました');
         }
-        throw error;
+        return;
       }
       
       console.log('Monthly payroll data:', data);
@@ -269,19 +280,7 @@ const PayrollManager: React.FC = () => {
       setMonthlyPayroll(data || []);
     } catch (error: any) {
       console.error('Error fetching monthly payroll:', error);
-      console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
-      
       setMonthlyPayroll([]);
-      
-      // ユーザーには軽微なメッセージのみ表示
-      if (!error.message?.includes('permission denied') && !error.message?.includes('row-level security')) {
-        toast.error('月次人件費データの取得に失敗しました');
-      }
     }
   };
 
@@ -290,7 +289,10 @@ const PayrollManager: React.FC = () => {
       const yearMonth = format(selectedMonth, 'yyyy-MM');
       console.log('Fetching payroll summary for:', yearMonth);
       
-      const { data, error } = await supabase
+      // 管理者権限が必要な場合はadminクライアントを使用
+      const client = isExecutive ? getSupabaseAdmin() : supabase;
+      
+      const { data, error } = await client
         .rpc('get_monthly_payroll_summary', { target_year_month: yearMonth });
 
       if (error) {

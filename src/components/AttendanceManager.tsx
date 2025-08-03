@@ -44,7 +44,7 @@ import {
   RotateCcw,
   Trash2
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
@@ -202,7 +202,10 @@ const AttendanceManager: React.FC = () => {
     try {
       const yearMonth = format(selectedMonth, 'yyyy-MM');
       
-      const { data, error } = await supabase
+      // 管理者権限がある場合はadminクライアントを使用
+      const client = isExecutive ? getSupabaseAdmin() : supabase;
+      
+      const { data, error } = await client
         .from('monthly_attendance_stats')
         .select('*')
         .eq('member_id', currentMemberId)
@@ -210,36 +213,45 @@ const AttendanceManager: React.FC = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        // RLSエラーの場合は詳細なログを出力
-        if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
-          console.warn('RLS permission denied for monthly_attendance_stats, using default values');
-          setMonthlyStats({
-            member_id: currentMemberId,
-            member_name: '',
-            member_email: user?.email || '',
-            department: '',
-            position: '',
-            year: selectedMonth.getFullYear(),
-            month: selectedMonth.getMonth() + 1,
-            year_month: yearMonth,
-            total_days: 0,
-            present_days: 0,
-            absent_days: 0,
-            late_days: 0,
-            actual_late_days: 0,
-            early_leave_days: 0,
-            total_work_hours: 0,
-            total_overtime_hours: 0,
-            total_hours: 0,
-            avg_work_hours_per_day: 0,
-            remote_days: 0,
-            business_trip_days: 0,
-            sick_leave_days: 0,
-            vacation_days: 0
-          });
-          return;
+        console.error('Error fetching monthly stats:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // デフォルト値を設定
+        setMonthlyStats({
+          member_id: currentMemberId,
+          member_name: '',
+          member_email: user?.email || '',
+          department: '',
+          position: '',
+          year: selectedMonth.getFullYear(),
+          month: selectedMonth.getMonth() + 1,
+          year_month: yearMonth,
+          total_days: 0,
+          present_days: 0,
+          absent_days: 0,
+          late_days: 0,
+          actual_late_days: 0,
+          early_leave_days: 0,
+          total_work_hours: 0,
+          total_overtime_hours: 0,
+          total_hours: 0,
+          avg_work_hours_per_day: 0,
+          remote_days: 0,
+          business_trip_days: 0,
+          sick_leave_days: 0,
+          vacation_days: 0
+        });
+        
+        // ユーザーには軽微なメッセージのみ表示
+        if (!error.message?.includes('permission denied') && !error.message?.includes('row-level security')) {
+          toast.error('月次統計の取得に失敗しました');
         }
-        throw error;
+        return;
       }
       
       setMonthlyStats(data || {
@@ -268,13 +280,6 @@ const AttendanceManager: React.FC = () => {
       });
     } catch (error: any) {
       console.error('Error fetching monthly stats:', error);
-      // エラーの詳細をログに出力
-      console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
       
       // デフォルト値を設定してエラーを隠す
       setMonthlyStats({
@@ -301,11 +306,6 @@ const AttendanceManager: React.FC = () => {
         sick_leave_days: 0,
         vacation_days: 0
       });
-      
-      // ユーザーには軽微なメッセージのみ表示
-      if (!error.message?.includes('permission denied') && !error.message?.includes('row-level security')) {
-        toast.error('月次統計の取得に失敗しました');
-      }
     }
   };
 
