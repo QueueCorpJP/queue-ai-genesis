@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Progress } from './ui/progress';
 import { useToast } from './ui/use-toast';
@@ -596,6 +596,9 @@ const KPIManager: React.FC = () => {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>新しいKPI/KGI指標を作成</DialogTitle>
+                <DialogDescription>
+                  個人KPI、チームKPI、またはKGI指標を新規作成します。
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -902,6 +905,9 @@ const KPIManager: React.FC = () => {
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>個人KPI目標を設定</DialogTitle>
+                    <DialogDescription>
+                      作成済みの個人KPI指標に対して具体的な目標値と期限を設定します。
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -1069,8 +1075,8 @@ const KPIManager: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
-                            <span key="icon">{getPerformanceIcon(target.performance_status)}</span>
-                            <span key="text">{target.performance_status}</span>
+                            {getPerformanceIcon(target.performance_status)}
+                            <span>{target.performance_status}</span>
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -1082,10 +1088,10 @@ const KPIManager: React.FC = () => {
                           <div className="text-sm">
                             <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
                             {target.timeline_status === 'overdue' && (
-                              <Badge key="overdue-badge" variant="destructive" className="text-xs">期限切れ</Badge>
+                              <Badge variant="destructive" className="text-xs">期限切れ</Badge>
                             )}
                             {target.timeline_status === 'due_soon' && (
-                              <Badge key="due-soon-badge" variant="outline" className="text-xs">期限間近</Badge>
+                              <Badge variant="outline" className="text-xs">期限間近</Badge>
                             )}
                           </div>
                         </TableCell>
@@ -1107,7 +1113,7 @@ const KPIManager: React.FC = () => {
                       </TableRow>
                     ))}
                   {targets.filter(t => t.indicator_type === 'personal_kpi').length === 0 && (
-                    <TableRow key="personal-kpi-empty">
+                    <TableRow>
                       <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                         個人KPIが設定されていません
                       </TableCell>
@@ -1164,8 +1170,8 @@ const KPIManager: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
-                            <span key="team-icon">{getPerformanceIcon(target.performance_status)}</span>
-                            <span key="team-text">{target.performance_status}</span>
+                            {getPerformanceIcon(target.performance_status)}
+                            <span>{target.performance_status}</span>
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -1177,10 +1183,10 @@ const KPIManager: React.FC = () => {
                           <div className="text-sm">
                             <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
                             {target.timeline_status === 'overdue' && (
-                              <Badge key="team-overdue-badge" variant="destructive" className="text-xs">期限切れ</Badge>
+                              <Badge variant="destructive" className="text-xs">期限切れ</Badge>
                             )}
                             {target.timeline_status === 'due_soon' && (
-                              <Badge key="team-due-soon-badge" variant="outline" className="text-xs">期限間近</Badge>
+                              <Badge variant="outline" className="text-xs">期限間近</Badge>
                             )}
                           </div>
                         </TableCell>
@@ -1200,7 +1206,7 @@ const KPIManager: React.FC = () => {
                       </TableRow>
                     ))}
                   {targets.filter(t => t.indicator_type === 'team_kpi').length === 0 && (
-                    <TableRow key="team-kpi-empty">
+                    <TableRow>
                       <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                         チームKPIが設定されていません
                       </TableCell>
@@ -1258,8 +1264,8 @@ const KPIManager: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
-                              <span key="kgi-icon">{getPerformanceIcon(target.performance_status)}</span>
-                              <span key="kgi-text">{target.performance_status}</span>
+                              {getPerformanceIcon(target.performance_status)}
+                              <span>{target.performance_status}</span>
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -1271,10 +1277,10 @@ const KPIManager: React.FC = () => {
                             <div className="text-sm">
                               <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
                               {target.timeline_status === 'overdue' && (
-                                <Badge key="kgi-overdue-badge" variant="destructive" className="text-xs">期限切れ</Badge>
+                                <Badge variant="destructive" className="text-xs">期限切れ</Badge>
                               )}
                               {target.timeline_status === 'due_soon' && (
-                                <Badge key="kgi-due-soon-badge" variant="outline" className="text-xs">期限間近</Badge>
+                                <Badge variant="outline" className="text-xs">期限間近</Badge>
                               )}
                             </div>
                           </TableCell>
@@ -1294,7 +1300,7 @@ const KPIManager: React.FC = () => {
                         </TableRow>
                       ))}
                     {targets.filter(t => t.indicator_type === 'kgi').length === 0 && (
-                      <TableRow key="kgi-empty">
+                      <TableRow>
                         <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                           KGIが設定されていません
                         </TableCell>
@@ -1313,6 +1319,9 @@ const KPIManager: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>進捗記録</DialogTitle>
+            <DialogDescription>
+              KPI目標に対する最新の実績値を記録して進捗を更新します。
+            </DialogDescription>
           </DialogHeader>
           {selectedTargetForProgress && (
             <div className="space-y-4">
