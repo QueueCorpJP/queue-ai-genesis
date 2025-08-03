@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 export interface AdminUser {
   id: string;
   email: string;
+  name?: string;
+  role?: 'employee' | 'executive';
   isAuthenticated: boolean;
   lastActivity: number;
 }
@@ -187,11 +189,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const expectedEmail = ADMIN_CREDENTIALS.email.trim().toLowerCase();
       const expectedPassword = ADMIN_CREDENTIALS.password.trim();
       
+      // 既存の管理者認証（後方互換性）
       if (normalizedEmail === expectedEmail && normalizedPassword === expectedPassword) {
         const now = Date.now();
         const adminUser: AdminUser = {
           id: '1',
           email: ADMIN_CREDENTIALS.email,
+          name: 'システム管理者',
+          role: 'executive',
           isAuthenticated: true,
           lastActivity: now
         };

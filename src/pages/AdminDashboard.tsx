@@ -18,7 +18,8 @@ import {
   LogOut,
   Menu,
   X,
-  MousePointer
+  MousePointer,
+  Users
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -31,6 +32,7 @@ import Analytics from '@/components/Analytics';
 import ChatbotManager from '@/components/ChatbotManager';
 import CTAAnalytics from '@/components/CTAAnalytics';
 import ReadingTimeAnalytics from '@/components/ReadingTimeAnalytics';
+import MemberManager from '@/components/MemberManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -482,7 +484,7 @@ const AdminDashboard: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           {/* Desktop Tabs */}
           <div className="hidden md:block">
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className={`grid w-full ${user?.email === 'queue@queue-tech.jp' ? 'grid-cols-9' : 'grid-cols-8'}`}>
               <TabsTrigger value="overview" className="flex items-center space-x-2">
                 <Home className="w-4 h-4" />
                 <span>概要</span>
@@ -519,6 +521,12 @@ const AdminDashboard: React.FC = () => {
                 <Settings className="w-4 h-4" />
                 <span>設定</span>
               </TabsTrigger>
+              {user?.email === 'queue@queue-tech.jp' && (
+                <TabsTrigger value="members" className="flex items-center space-x-2">
+                  <Users className="w-4 h-4" />
+                  <span>メンバー作成</span>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -542,10 +550,12 @@ const AdminDashboard: React.FC = () => {
                   { value: 'overview', icon: Home, label: '概要' },
                   { value: 'analytics', icon: BarChart3, label: '分析' },
                   { value: 'cta-analytics', icon: MousePointer, label: 'CTA分析' },
+                  { value: 'reading-analytics', icon: Clock, label: '閲覧時間分析' },
                   { value: 'consultations', icon: MessageSquare, label: '相談申込' },
                   { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
                   { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
                   { value: 'news', icon: Newspaper, label: 'ブログ' },
+                  ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'members', icon: Users, label: 'メンバー作成' }] : []),
                   { value: 'settings', icon: Settings, label: '設定' }
                 ].map((tab) => (
                   <button
@@ -658,6 +668,12 @@ const AdminDashboard: React.FC = () => {
             <NewsManager />
           </TabsContent>
 
+          {user?.email === 'queue@queue-tech.jp' && (
+            <TabsContent value="members">
+              <MemberManager />
+            </TabsContent>
+          )}
+
           <TabsContent value="settings">
             <Card>
               <CardHeader>
@@ -719,10 +735,12 @@ const getTabIcon = (tab: string) => {
     overview: <Home className="w-4 h-4" />,
     analytics: <BarChart3 className="w-4 h-4" />,
     'cta-analytics': <MousePointer className="w-4 h-4" />,
+    'reading-analytics': <Clock className="w-4 h-4" />,
     consultations: <MessageSquare className="w-4 h-4" />,
     contacts: <Phone className="w-4 h-4" />,
     chatbot: <MessageSquare className="w-4 h-4" />,
     news: <Newspaper className="w-4 h-4" />,
+    members: <Users className="w-4 h-4" />,
     settings: <Settings className="w-4 h-4" />
   };
   return icons[tab as keyof typeof icons] || <Home className="w-4 h-4" />;
@@ -733,10 +751,12 @@ const getTabLabel = (tab: string) => {
     overview: '概要',
     analytics: '分析',
     'cta-analytics': 'CTA分析',
+    'reading-analytics': '閲覧時間分析',
     consultations: '相談申込',
     contacts: 'お問い合わせ',
     chatbot: 'チャットボット',
     news: 'ブログ',
+    members: 'メンバー作成',
     settings: '設定'
   };
   return labels[tab as keyof typeof labels] || '概要';
