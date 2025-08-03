@@ -5,20 +5,21 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **プロジェクトID**: `vrpdhzbfnwljdsretjld`  
 **データベースバージョン**: PostgreSQL 17.4.1.054  
-**最終更新**: 2025年2月8日（KPI/KGI管理システム実装完了・個人KPI・チームKPI・KGI管理・進捗追跡・達成率分析・可視化機能完全実装）  
+**最終更新**: 2025年2月8日（マイメモ機能実装完了・個人KPI・チームKPI・KGI管理・進捗追跡・達成率分析・可視化機能・個人メモ管理完全実装）  
 **Supabaseリージョン**: US East (N. Virginia)  
 **認証システム**: 有効（Row Level Security対応・社員アカウントログイン対応）  
 **実装ステータス**: Todo管理システム完全実装済み、勤怠管理システム完全実装済み、社員認証システム完全実装済み、会社スケジュール管理システム完全実装済み
 
 ## テーブル一覧
 
-**実装済みテーブル数**: 15個（基本4個 + Todo管理2個 + メンバー管理1個 + 勤怠管理2個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理4個）  
+**実装済みテーブル数**: 16個（基本4個 + Todo管理2個 + メンバー管理1個 + 勤怠管理2個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理4個 + マイメモ管理1個）  
 **勤怠管理テーブル**: 2個（完全実装済み）  
 **販管費管理テーブル**: 1個（完全実装済み）  
 **KPI/KGI管理テーブル**: 4個（完全実装済み）  
-**ビュー数**: 28個（基本8個 + Todo管理3個 + 閲覧時間3個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個）  
-**ファンクション数**: 18個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個）  
-**トリガー数**: 16個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個）
+**マイメモ管理テーブル**: 1個（完全実装済み）  
+**ビュー数**: 30個（基本8個 + Todo管理3個 + 閲覧時間3個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個）  
+**ファンクション数**: 20個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個）  
+**トリガー数**: 17個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個）
 
 ### 1. consultation_requests（相談依頼）
 **目的**: お客様からの相談・問い合わせ依頼を管理
@@ -731,6 +732,54 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - 支払いステータスは「未払い」で初期化
 - 月末を支払い期限に自動設定
 
+### 33. personal_memo_stats（マイメモ統計ビュー）
+**目的**: メンバー別のメモ活動統計と分析データを提供
+
+**取得データ**:
+- member_id, member_name, member_email, department: メンバー基本情報
+- total_memos: 総メモ数
+- ideas_count, learning_count, reflection_count, project_count: カテゴリ別メモ数
+- favorite_count: お気に入りメモ数
+- active_count: アクティブ（非アーカイブ）メモ数
+- this_week_count, this_month_count: 期間別メモ作成数
+- last_memo_at: 最終メモ作成日時
+- avg_priority_score: 平均優先度スコア
+
+### 34. memo_search_view（メモ検索ビュー）
+**目的**: 高度なメモ検索とフィルタリング機能を提供
+
+**取得データ**:
+- 基本メモ情報（id, title, content, category, priority, tags等）
+- author_name, author_department: 作成者情報
+- search_vector: 日本語全文検索用ベクトル
+- category_display, priority_display: 日本語表示名
+- アーカイブされていないメモのみ表示
+
+### 35. search_personal_memos()（メモ検索ファンクション）
+**目的**: 高度な検索条件でメモを検索・取得
+**パラメータ**: 
+- p_member_id（メンバーID）
+- p_search_term（検索語句、デフォルト空）
+- p_category（カテゴリフィルター、デフォルト空）
+- p_priority（優先度フィルター、デフォルト空）
+- p_is_favorite（お気に入りフィルター、デフォルトNULL）
+- p_limit（取得件数、デフォルト50）
+- p_offset（オフセット、デフォルト0）
+**戻り値**: 
+- メモ基本情報と関連性スコア
+- 日本語全文検索による関連度順・作成日時順でソート
+
+### 36. get_memo_insights()（メモ分析ファンクション）
+**目的**: メンバーのメモ活動に関する詳細な分析データを取得
+**パラメータ**: p_member_id（対象メンバーID）
+**戻り値**: 
+- total_memos: 総メモ数
+- categories_breakdown: カテゴリ別内訳（JSON形式）
+- weekly_activity: 7日間の日別活動（JSON形式）
+- priority_distribution: 優先度別分布（JSON形式）
+- favorite_count: お気に入り数
+- recent_activity: 最近7日間の活動数
+
 ---
 
 ## 実装状況レポート（2025年8月6日現在）
@@ -760,6 +809,19 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
    - **ファンクション**: `get_expense_insights`, `copy_recurring_expenses` 実装完了
    - **RLSポリシー**: 役員限定アクセス制御実装完了
    - **フロントエンド**: ExpenseManager.tsx、ダッシュボード統合 実装完了
+10. **KPI/KGI管理システム**: 完全動作中
+   - **テーブル**: `kpi_indicators`, `kpi_targets`, `kpi_progress_logs`, `kpi_target_members` 実装完了
+   - **ビュー**: `kpi_management_view`, `dashboard_kpi_overview`, `kpi_progress_stats`, `monthly_kpi_summary` 実装完了
+   - **ファンクション**: `get_kpi_insights`, `get_member_kpi_progress` 実装完了
+   - **RLSポリシー**: 役員・メンバー権限分離実装完了
+   - **フロントエンド**: KPIManager.tsx、ダッシュボード統合 実装完了
+11. **マイメモ管理システム**: 完全動作中
+   - **テーブル**: `personal_memos` 実装完了
+   - **ビュー**: `personal_memo_stats`, `memo_search_view` 実装完了
+   - **ファンクション**: `search_personal_memos`, `get_memo_insights` 実装完了
+   - **検索機能**: 日本語全文検索（GINインデックス）実装完了
+   - **RLSポリシー**: 個人専用アクセス制御実装完了
+   - **フロントエンド**: MemoManager.tsx、ダッシュボード統合 実装完了
 
 ### 技術的改善点 ✅
 - **外部キー関係**: 全テーブル間の整合性確保完了
@@ -853,6 +915,54 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 ---
 
+### 13. personal_memos（マイメモ）
+**目的**: 各メンバーの日々の気づき・アイデア・業務メモを個人専用で管理  
+**実装ステータス**: ✅ 完全実装済み
+
+| カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
+|---------|---------|---------|-------------|------|
+| id | uuid | NO | gen_random_uuid() | 主キー（自動生成） |
+| member_id | uuid | NO | - | メンバーID（外部キー） |
+| title | varchar(200) | NO | - | メモタイトル |
+| content | text | NO | - | メモ内容 |
+| category | varchar(50) | NO | 'general' | カテゴリ |
+| priority | varchar(10) | NO | 'medium' | 優先度 |
+| tags | text[] | NO | '{}' | タグ配列 |
+| is_favorite | boolean | NO | false | お気に入りフラグ |
+| is_archived | boolean | NO | false | アーカイブフラグ |
+| reminder_date | timestamptz | YES | - | リマインダー日時 |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+**制約条件**:
+- category: 'general', 'ideas', 'meeting', 'project', 'learning', 'goal', 'reflection', 'task', 'inspiration', 'other' のいずれか
+- priority: 'low', 'medium', 'high', 'urgent' のいずれか
+- タイトル・内容は空文字不可
+
+**外部キー制約**:
+- member_id → members.id（削除カスケード）
+
+**インデックス**:
+- idx_personal_memos_member_id: member_id列
+- idx_personal_memos_category: category列
+- idx_personal_memos_priority: priority列
+- idx_personal_memos_tags: tags列（GINインデックス）
+- idx_personal_memos_created_at: created_at列（降順）
+- idx_personal_memos_is_favorite: is_favorite列
+- idx_personal_memos_is_archived: is_archived列
+- idx_personal_memos_reminder_date: reminder_date列
+- idx_personal_memos_member_created: (member_id, created_at DESC)
+- idx_personal_memos_member_category: (member_id, category)
+- idx_memo_search_vector: 全文検索用GINインデックス
+
+**自動更新トリガー**: updated_atが更新時に自動設定
+
+**RLS（行レベルセキュリティ）**: 有効
+- メンバー: 自分のメモのみCRUD操作可能（完全個人専用）
+- 役員: 全メンバーのメモ閲覧可能（プライバシー配慮で通常は制限）
+
+---
+
 ## テーブル関係図
 
 ```
@@ -917,6 +1027,18 @@ company_schedules ----< upcoming events >---- upcoming_schedule_view
 company_schedules ----< holiday filtering >---- holiday_schedule_view
     ↑                                                ↑
  is_holiday=true                           company_holidays
+
+members (1) ----< (many) personal_memos
+    ↑                           ↓
+   id                     member_id
+
+personal_memos ----< search & categorization >---- memo_search_view
+    ↑                                                    ↑
+ content+tags+title                           japanese_fulltext_search
+
+personal_memos ----< statistics & insights >---- personal_memo_stats
+    ↑                                                ↑
+ memo_activities                            member_memo_analytics
 ```
 
 ---
@@ -933,6 +1055,9 @@ company_schedules ----< holiday filtering >---- holiday_schedule_view
 - **member_hourly_rates**: 時給設定の保護（役員のみアクセス可能、メンバーは完全に閲覧不可）
 - **company_schedules**: スケジュール管理の保護（役員は全操作可能、社員は有効スケジュールの閲覧のみ）
 - **monthly_expenses**: 販管費管理の保護（役員のみアクセス可能、メンバーは完全に閲覧不可）
+- **kpi_targets**: KPI目標管理の保護（役員は全操作可能、メンバーは自分のKPIのみ）
+- **kpi_progress_logs**: KPI進捗ログの保護（対応するKPIへのアクセス権に基づく）
+- **personal_memos**: マイメモの保護（メンバーは自分のメモのみ、完全個人専用）
 
 ### RLS無効テーブル
 - **consultation_requests**: 管理者による直接管理
@@ -1112,6 +1237,30 @@ company_schedules ----< holiday filtering >---- holiday_schedule_view
 
 ## 変更履歴
 
+### 2025年2月8日 - マイメモ機能実装完了・個人生産性向上・日本語全文検索・統計分析機能完全実装
+- **マイメモ機能のフルスタック実装**
+  - personal_memosテーブルの作成（カテゴリ・優先度・タグ・お気に入り機能）
+  - 10種類のメモカテゴリ（一般・アイデア・会議・プロジェクト・学習・目標・振り返り・タスク・インスピレーション・その他）
+  - 4段階の優先度管理（低・中・高・緊急）
+  - 日本語全文検索機能（GINインデックス）実装
+  - MemoManagerコンポーネントの実装（CRUD・検索・フィルタリング）
+  - 個人専用アクセス制御（RLS）とプライバシー保護
+  - リマインダー機能とアーカイブ機能
+  
+- **統計・分析機能**
+  - personal_memo_statsビューによる活動統計
+  - memo_search_viewビューによる高度検索
+  - get_memo_insights()ファンクションによる分析データ
+  - search_personal_memos()ファンクションによる検索API
+  - カテゴリ別・優先度別・期間別の統計表示
+  
+- **UI/UX改善**
+  - ダッシュボードにマイメモタブを追加（全メンバーアクセス可能）
+  - デスクトップ・モバイル両対応のナビゲーション統合
+  - 直感的なカテゴリアイコンと色分け表示
+  - レスポンシブ対応のカード形式メモ表示
+  - 高度な検索・フィルタリング・ソート機能
+
 ### 2025年8月7日 - ダッシュボード改善・販管費管理機能強化・管理者パスワード更新
 - **管理ダッシュボード「今日やること」セクション修正**
   - 役員アカウントでも自分のタスクのみを表示するように変更
@@ -1140,6 +1289,6 @@ company_schedules ----< holiday filtering >---- holiday_schedule_view
 
 ---
 
-*最終更新: 2025年8月7日（全システム実装完了・販管費管理システム追加・ダッシュボード改善・販管費管理機能強化）*  
-*実装完了: 勤怠管理システム・会社スケジュール管理システム・販管費管理システム・全ビュー・ファンクション・RLSポリシー完全対応*  
-*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張* 
+*最終更新: 2025年2月8日（マイメモ機能実装完了・個人生産性向上・日本語全文検索・統計分析機能完全実装）*  
+*実装完了: 勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
+*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・個人生産性分析強化* 
