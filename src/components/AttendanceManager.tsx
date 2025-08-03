@@ -41,13 +41,15 @@ import {
   Coffee,
   BarChart3,
   CalendarDays,
-  RotateCcw
+  RotateCcw,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface AttendanceRecord {
   id: string;
@@ -106,6 +108,9 @@ const AttendanceManager: React.FC = () => {
   
   // 現在のユーザーのメンバーID
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  
+  // 役員権限チェック
+  const [isExecutive, setIsExecutive] = useState(false);
 
   // 複数日付選択機能のstate
   const [dateSelectionMode, setDateSelectionMode] = useState<DateSelectionMode>('single');
@@ -143,7 +148,7 @@ const AttendanceManager: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('members')
-        .select('id')
+        .select('id, role')
         .eq('email', user.email)
         .eq('is_active', true)
         .single();
@@ -156,6 +161,7 @@ const AttendanceManager: React.FC = () => {
 
       if (data) {
         setCurrentMemberId(data.id);
+        setIsExecutive(data.role === 'executive');
       }
     } catch (error) {
       console.error('Error fetching member ID:', error);
@@ -390,6 +396,23 @@ const AttendanceManager: React.FC = () => {
       attendance_type: record.attendance_type,
       notes: record.notes
     });
+  };
+
+  const handleDeleteRecord = async (recordId: string) => {
+    try {
+      const { error } = await supabase
+        .from('attendance_records')
+        .delete()
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      toast.success('勤怠記録を削除しました');
+      await Promise.all([fetchAttendance(), fetchMonthlyStats()]);
+    } catch (error) {
+      console.error('Error deleting attendance record:', error);
+      toast.error('勤怠記録の削除に失敗しました');
+    }
   };
 
   const getStatusBadge = (status: AttendanceRecord['status']) => {
@@ -833,14 +856,48 @@ const AttendanceManager: React.FC = () => {
                     </TableCell>
                     <TableCell>{getStatusBadge(record.status)}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditDialog(record)}
-                        disabled={record.status === 'present'}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(record)}
+                          disabled={record.status === 'present'}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        
+                        {isExecutive && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>勤怠記録を削除しますか？</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {format(new Date(record.date), 'yyyy年MM月dd日 (E)', { locale: ja })}の勤怠記録を削除します。
+                                  この操作は取り消すことができません。
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteRecord(record.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  削除
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
