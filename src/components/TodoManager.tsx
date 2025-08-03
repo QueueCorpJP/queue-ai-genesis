@@ -56,7 +56,7 @@ import {
   TrendingUp,
   ListTodo
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
 import { format } from 'date-fns';
@@ -135,7 +135,7 @@ const TodoManager: React.FC = () => {
     if (!user?.email) return;
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseAdmin()
         .from('members')
         .select('id')
         .eq('email', user.email)
@@ -148,7 +148,7 @@ const TodoManager: React.FC = () => {
         // エラー時：開発環境での queue@queue-tech.jp の場合、初期役員アカウントのIDを取得を試行
         if (user.email === 'queue@queue-tech.jp') {
           try {
-            const { data: adminMember, error: adminError } = await supabase
+            const { data: adminMember, error: adminError } = await getSupabaseAdmin()
               .from('members')
               .select('id')
               .eq('email', 'queue@queue-tech.jp')
@@ -197,8 +197,8 @@ const TodoManager: React.FC = () => {
     if (!currentMemberId) return;
     
     try {
-      // todosテーブルから現在のメンバーのデータを取得
-      const { data, error } = await supabase
+      // todosテーブルから現在のメンバーのデータを取得（admin client使用）
+      const { data, error } = await getSupabaseAdmin()
         .from('todos')
         .select('*')
         .eq('member_id', currentMemberId)
@@ -229,8 +229,8 @@ const TodoManager: React.FC = () => {
     if (!currentMemberId) return;
     
     try {
-      // 直接todosテーブルから統計を計算
-      const { data, error } = await supabase
+      // 直接todosテーブルから統計を計算（admin client使用）
+      const { data, error } = await getSupabaseAdmin()
         .from('todos')
         .select('*')
         .eq('member_id', currentMemberId);
@@ -286,7 +286,7 @@ const TodoManager: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await getSupabaseAdmin()
         .from('todos')
         .insert({
           member_id: currentMemberId,
@@ -315,7 +315,7 @@ const TodoManager: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await getSupabaseAdmin()
         .from('todos')
         .update({
           title: formData.title,
@@ -339,16 +339,16 @@ const TodoManager: React.FC = () => {
 
   const handleStatusChange = async (todo: Todo, newStatus: Todo['status']) => {
     try {
-      // ステータス更新
-      const { error: updateError } = await supabase
+      // ステータス更新（admin client使用）
+      const { error: updateError } = await getSupabaseAdmin()
         .from('todos')
         .update({ status: newStatus })
         .eq('id', todo.id);
 
       if (updateError) throw updateError;
 
-      // 進捗ログ記録
-      const { error: logError } = await supabase
+      // 進捗ログ記録（admin client使用）
+      const { error: logError } = await getSupabaseAdmin()
         .from('todo_progress_logs')
         .insert({
           todo_id: todo.id,
@@ -369,7 +369,7 @@ const TodoManager: React.FC = () => {
 
   const handleDeleteTodo = async (todo: Todo) => {
     try {
-      const { error } = await supabase
+      const { error } = await getSupabaseAdmin()
         .from('todos')
         .delete()
         .eq('id', todo.id);

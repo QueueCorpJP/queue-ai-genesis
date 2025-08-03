@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, MousePointer, Users, BarChart3, Calendar, ExternalLink, Target } from 'lucide-react';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 import CTAConversionAnalytics from '@/components/CTAConversionAnalytics';
 
@@ -45,7 +45,7 @@ const CTAAnalytics: React.FC = () => {
     try {
       
       // 記事ごとのCTAクリック統計を取得（修正されたビューから）
-      const { data: stats, error: statsError } = await supabaseAdmin
+      const { data: stats, error: statsError } = await getSupabaseAdmin()
         .from('cta_click_stats')
         .select('*')
         .order('published_at', { ascending: false });
@@ -65,7 +65,7 @@ const CTAAnalytics: React.FC = () => {
         const consultationClicks = stats.reduce((sum, stat) => sum + (stat.consultation_clicks || 0), 0);
         
         // CTAタイプ別統計を正確に取得
-        const { count: contactClicks } = await supabaseAdmin
+        const { count: contactClicks } = await getSupabaseAdmin()
           .from('cta_clicks')
           .select('*', { count: 'exact', head: true })
           .eq('cta_type', 'contact');
@@ -110,7 +110,7 @@ const CTAAnalytics: React.FC = () => {
         setLoading(true);
         
         // CTA統計を取得
-        const { data: stats, error } = await supabaseAdmin
+        const { data: stats, error } = await getSupabaseAdmin()
           .from('cta_click_stats')
           .select('*')
           .order('published_at', { ascending: false });

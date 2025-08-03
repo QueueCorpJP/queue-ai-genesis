@@ -24,7 +24,12 @@ import {
   TrendingUp,
   UserCheck,
   Target,
-  ClipboardList
+  ClipboardList,
+  PlayCircle,
+  PauseCircle,
+  AlertTriangle,
+  CalendarDays,
+  DollarSign
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -46,6 +51,8 @@ import ReadingTimeAnalytics from '@/components/ReadingTimeAnalytics';
 import MemberManager from '@/components/MemberManager';
 import TodoManager from '@/components/TodoManager';
 import TodoProgress from '@/components/TodoProgress';
+import AttendanceManager from '@/components/AttendanceManager';
+import PayrollManager from '@/components/PayrollManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -67,6 +74,18 @@ interface RecentActivity {
   status: string;
 }
 
+interface TodayTodo {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  due_date: string | null;
+  created_at: string;
+  is_overdue: boolean;
+  is_due_soon: boolean;
+}
+
 const AdminDashboard: React.FC = () => {
   const { user, session, logout, isLoading } = useAdmin();
   const navigate = useNavigate();
@@ -86,6 +105,11 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // 今日やることTodo関連の状態
+  const [todayTodos, setTodayTodos] = useState<TodayTodo[]>([]);
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [todosLoading, setTodosLoading] = useState(true);
+
   // 認証チェック（自動ログイン対応）
   useEffect(() => {
     if (isLoading) {
@@ -99,6 +123,111 @@ const AdminDashboard: React.FC = () => {
 
     loadDashboardData();
   }, [user?.isAuthenticated, isLoading, navigate]);
+
+  // メンバーID取得
+  useEffect(() => {
+    if (user?.email) {
+      fetchMemberId();
+    }
+  }, [user?.email]);
+
+  // 今日のTodo取得
+  useEffect(() => {
+    if (currentMemberId) {
+      fetchTodayTodos();
+    }
+  }, [currentMemberId]);
+
+  // メールアドレスからメンバーIDを取得
+  const fetchMemberId = async () => {
+    if (!user?.email) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id')
+        .eq('email', user.email)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching member ID:', error);
+        
+        // エラー時：開発環境での queue@queue-tech.jp の場合、初期役員アカウントのIDを取得を試行
+        if (user.email === 'queue@queue-tech.jp') {
+          try {
+            const { data: adminMember, error: adminError } = await supabase
+              .from('members')
+              .select('id')
+              .eq('email', 'queue@queue-tech.jp')
+              .single();
+            
+            if (adminMember && !adminError) {
+              setCurrentMemberId(adminMember.id);
+              return;
+            }
+          } catch (adminErr) {
+            console.error('Error fetching admin member:', adminErr);
+          }
+        }
+        return;
+      }
+
+      if (data) {
+        setCurrentMemberId(data.id);
+      }
+    } catch (error) {
+      console.error('Error fetching member ID:', error);
+    }
+  };
+
+  // 今日やることTodoを取得
+  const fetchTodayTodos = async () => {
+    if (!currentMemberId) return;
+    
+    setTodosLoading(true);
+    try {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // 今日の終わりまで
+      const todayString = today.toISOString().split('T')[0];
+      
+      const { data, error } = await supabase
+        .from('todos')
+        .select('*')
+        .eq('member_id', currentMemberId)
+        .in('status', ['pending', 'in_progress'])
+        .or(`due_date.lte.${todayString},due_date.is.null`)
+        .order('due_date', { ascending: true, nullsLast: true });
+
+      if (error) throw error;
+      
+      // データを適切な形式に変換し、今日やるべきTodoのみをフィルタリング
+      const now = new Date();
+      const formattedTodos = (data || []).map(todo => ({
+        ...todo,
+        is_overdue: todo.due_date ? new Date(todo.due_date) < now && todo.status !== 'completed' : false,
+        is_due_soon: todo.due_date ? 
+          new Date(todo.due_date) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && 
+          todo.status !== 'completed' : false
+      }))
+      // 期限が今日以前か、期限なしで重要度が高いもの、または進行中のものを表示
+      .filter(todo => {
+        if (todo.due_date) {
+          return new Date(todo.due_date) <= today;
+        }
+        // 期限なしの場合は、高優先度か進行中のもののみ表示
+        return todo.priority === 'high' || todo.status === 'in_progress';
+      })
+      .slice(0, 5); // 最大5件まで
+      
+      setTodayTodos(formattedTodos);
+    } catch (error) {
+      console.error('Error fetching today todos:', error);
+      setTodayTodos([]);
+    } finally {
+      setTodosLoading(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -273,10 +402,17 @@ const AdminDashboard: React.FC = () => {
     
     setRefreshing(true);
     try {
-      await Promise.all([
+      const promises = [
         fetchStats(),
         fetchRecentActivities()
-      ]);
+      ];
+      
+      // 今日のTodoも更新（メンバーIDが存在する場合）
+      if (currentMemberId) {
+        promises.push(fetchTodayTodos());
+      }
+      
+      await Promise.all(promises);
       toast.success('データを更新しました');
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -284,7 +420,7 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setRefreshing(false);
     }
-  }, [user?.isAuthenticated, fetchStats, fetchRecentActivities]);
+  }, [user?.isAuthenticated, currentMemberId]);
 
   const handleLogout = async () => {
     try {
@@ -515,6 +651,22 @@ const AdminDashboard: React.FC = () => {
                     <span>Todo</span>
                   </TabsTrigger>
                   <TabsTrigger 
+                    value="attendance" 
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    <span>勤怠</span>
+                  </TabsTrigger>
+                  {user?.email === 'queue@queue-tech.jp' && (
+                    <TabsTrigger 
+                      value="payroll" 
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      <span>人件費</span>
+                    </TabsTrigger>
+                  )}
+                  <TabsTrigger 
                     value="news" 
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
                   >
@@ -685,6 +837,8 @@ const AdminDashboard: React.FC = () => {
                 <div className="border-t border-gray-100">
                   {[
                     { value: 'todos', icon: Target, label: 'Todo' },
+                    { value: 'attendance', icon: CalendarDays, label: '勤怠管理' },
+                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : []),
                     { value: 'news', icon: Newspaper, label: 'ブログ管理' },
                     ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
                     { value: 'settings', icon: Settings, label: '設定' }
@@ -716,6 +870,16 @@ const AdminDashboard: React.FC = () => {
             <TodoProgress />
           </TabsContent>
 
+          <TabsContent value="attendance">
+            <AttendanceManager />
+          </TabsContent>
+
+          {user?.email === 'queue@queue-tech.jp' && (
+            <TabsContent value="payroll">
+              <PayrollManager />
+            </TabsContent>
+          )}
+
           <TabsContent value="overview" className="space-y-4 md:space-y-6">
             {/* 統計カード */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -736,46 +900,112 @@ const AdminDashboard: React.FC = () => {
               ))}
             </div>
 
-            {/* 最近のアクティビティ */}
+            {/* 今日やること */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center text-lg md:text-xl">
-                  <Clock className="w-5 h-5 mr-2" />
-                  最近のアクティビティ
+                  <Target className="w-5 h-5 mr-2" />
+                  今日やること
                 </CardTitle>
                 <CardDescription>
-                  直近の申込み・問い合わせ状況
+                  期限が今日かそれ以前の未完了タスク
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {loading ? (
+                <div className="space-y-3">
+                  {todosLoading ? (
                     <div className="text-center py-8">
                       <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
                     </div>
-                  ) : activities.length === 0 ? (
+                  ) : todayTodos.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">アクティビティがありません</p>
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                      <p className="text-gray-500 font-medium">今日やることはありません</p>
+                      <p className="text-sm text-gray-400">すべてのタスクが完了済みです！</p>
                     </div>
                   ) : (
-                    activities.map((activity, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div className={`w-2 h-2 rounded-full mt-2 ${
-                          activity.type === 'consultation' ? 'bg-blue-500' : 'bg-green-500'
-                        }`}></div>
+                    todayTodos.map((todo) => (
+                      <div key={todo.id} className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                        todo.is_overdue ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="mt-1">
+                          {todo.status === 'pending' ? (
+                            <PauseCircle className="w-5 h-5 text-gray-500" />
+                          ) : (
+                            <PlayCircle className="w-5 h-5 text-blue-500" />
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {activity.name} ({activity.company})
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {activity.type === 'consultation' ? '無料相談申込' : 'お問い合わせ'} • {activity.date}
-                          </p>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {todo.title}
+                              </p>
+                              {todo.description && (
+                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                  {todo.description}
+                                </p>
+                              )}
+                              <div className="flex items-center space-x-2 mt-2">
+                                {/* 優先度バッジ */}
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${
+                                    todo.priority === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
+                                    todo.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                    'bg-blue-100 text-blue-800 border-blue-200'
+                                  }`}
+                                >
+                                  {todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}
+                                </Badge>
+                                
+                                {/* 期限表示 */}
+                                {todo.due_date && (
+                                  <div className={`flex items-center text-xs ${
+                                    todo.is_overdue ? 'text-red-600' : 'text-gray-500'
+                                  }`}>
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {todo.is_overdue ? '期限切れ' : '今日まで'}
+                                  </div>
+                                )}
+                                
+                                {/* ステータス */}
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${
+                                    todo.status === 'pending' ? 'bg-gray-100 text-gray-800' :
+                                    'bg-blue-100 text-blue-800 border-blue-200'
+                                  }`}
+                                >
+                                  {todo.status === 'pending' ? '未開始' : '進行中'}
+                                </Badge>
+                              </div>
+                            </div>
+                            {todo.is_overdue && (
+                              <AlertTriangle className="w-4 h-4 text-red-500 mt-1 flex-shrink-0" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
+                
+                {/* Todo管理ページへのリンク */}
+                {todayTodos.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab('todos')}
+                      className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <Target className="w-4 h-4 mr-2" />
+                      全てのTodoを管理
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -875,6 +1105,8 @@ const getTabIcon = (tab: string) => {
     overview: <Home className="w-4 h-4" />,
     todos: <Target className="w-4 h-4" />,
     'todo-progress': <ClipboardList className="w-4 h-4" />,
+    attendance: <CalendarDays className="w-4 h-4" />,
+    payroll: <DollarSign className="w-4 h-4" />,
     analytics: <BarChart3 className="w-4 h-4" />,
     'cta-analytics': <MousePointer className="w-4 h-4" />,
     'reading-analytics': <Clock className="w-4 h-4" />,
@@ -893,6 +1125,8 @@ const getTabLabel = (tab: string) => {
     overview: '概要',
     todos: 'Todo',
     'todo-progress': 'Todo進捗',
+    attendance: '勤怠管理',
+    payroll: '人件費管理',
     analytics: '基本分析',
     'cta-analytics': 'CTA分析',
     'reading-analytics': '閲覧時間分析',

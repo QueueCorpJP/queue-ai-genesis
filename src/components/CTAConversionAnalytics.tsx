@@ -12,7 +12,7 @@ import {
   Target,
   Zap
 } from 'lucide-react';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface CTAConversionData {
@@ -48,7 +48,7 @@ const CTAConversionAnalytics: React.FC = () => {
   const fetchConversionAnalytics = async () => {
     try {
       // 1. 日別コンバージョン統計を取得
-      const { data: dailyStats, error: dailyStatsError } = await supabaseAdmin
+      const { data: dailyStats, error: dailyStatsError } = await getSupabaseAdmin()
         .from('daily_conversion_stats')
         .select('*')
         .limit(30);
@@ -60,7 +60,7 @@ const CTAConversionAnalytics: React.FC = () => {
       }
 
       // 2. コンバージョン分析ファンクションを実行
-      const { data: conversionAnalysis, error: conversionError } = await supabaseAdmin
+      const { data: conversionAnalysis, error: conversionError } = await getSupabaseAdmin()
         .rpc('analyze_cta_conversions');
 
       if (conversionError) {
@@ -68,7 +68,7 @@ const CTAConversionAnalytics: React.FC = () => {
       }
 
       // 3. コンバージョンインサイトを取得
-      const { data: insights, error: insightsError } = await supabaseAdmin
+      const { data: insights, error: insightsError } = await getSupabaseAdmin()
         .rpc('get_conversion_insights');
 
       if (insightsError) {

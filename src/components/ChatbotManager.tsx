@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MessageSquare, Search, Filter, Download, Eye, Calendar, User, Clock } from 'lucide-react';
-import { supabase, supabaseAdmin, ChatbotConversation } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin, ChatbotConversation } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
@@ -37,7 +37,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
   // Status update function
   const updateStatus = async (conversationId: string, newStatus: string) => {
     try {
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('chatbot_conversations')
         .update({ 
           status: newStatus as 'pending' | 'reviewed' | 'flagged' | 'resolved',
@@ -110,7 +110,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
       setLoading(true);
       
       // Use admin client to bypass RLS
-      const { data: tableData, error: tableError, count } = await supabaseAdmin
+      const { data: tableData, error: tableError, count } = await getSupabaseAdmin()
         .from('chatbot_conversations')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
@@ -163,7 +163,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
 
   const fetchStats = async () => {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await getSupabaseAdmin()
         .from('chatbot_conversations')
         .select('created_at, session_id');
 
@@ -208,7 +208,7 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
         user_agent: "Test Agent"
       };
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await getSupabaseAdmin()
         .from('chatbot_conversations')
         .insert(testConversation);
       
