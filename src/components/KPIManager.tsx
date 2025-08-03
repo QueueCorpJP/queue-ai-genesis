@@ -1107,7 +1107,7 @@ const KPIManager: React.FC = () => {
                       </TableRow>
                     ))}
                   {targets.filter(t => t.indicator_type === 'personal_kpi').length === 0 && (
-                    <TableRow>
+                    <TableRow key="personal-kpi-empty">
                       <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                         個人KPIが設定されていません
                       </TableCell>
@@ -1200,7 +1200,7 @@ const KPIManager: React.FC = () => {
                       </TableRow>
                     ))}
                   {targets.filter(t => t.indicator_type === 'team_kpi').length === 0 && (
-                    <TableRow>
+                    <TableRow key="team-kpi-empty">
                       <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                         チームKPIが設定されていません
                       </TableCell>
@@ -1294,7 +1294,7 @@ const KPIManager: React.FC = () => {
                         </TableRow>
                       ))}
                     {targets.filter(t => t.indicator_type === 'kgi').length === 0 && (
-                      <TableRow>
+                      <TableRow key="kgi-empty">
                         <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                           KGIが設定されていません
                         </TableCell>
