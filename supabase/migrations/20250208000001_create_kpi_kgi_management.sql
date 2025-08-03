@@ -225,7 +225,7 @@ SELECT
         WHEN t.end_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due_soon'
         ELSE 'on_schedule'
     END as timeline_status,
-    EXTRACT(epoch FROM (t.end_date - CURRENT_DATE))/86400 as days_remaining,
+    EXTRACT(epoch FROM (t.end_date::timestamp - CURRENT_DATE::timestamp))/86400 as days_remaining,
     cb.name as created_by_name,
     cb.role as created_by_role,
     t.created_at,
