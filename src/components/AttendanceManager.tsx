@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { 
   Dialog, 
   DialogContent, 
@@ -38,49 +39,61 @@ import {
   Plane,
   Heart,
   Coffee,
-  BarChart3
+  BarChart3,
+  CalendarDays,
+  RotateCcw
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
 interface AttendanceRecord {
   id: string;
+  member_id: string;
   date: string;
-  start_time: string | null;
-  end_time: string | null;
+  start_time: string;
+  end_time: string;
   break_time_minutes: number;
-  work_hours: number | null;
-  overtime_hours: number | null;
+  work_hours: number;
+  overtime_hours: number;
   status: 'scheduled' | 'present' | 'absent' | 'late' | 'early_leave';
   attendance_type: 'regular' | 'remote' | 'business_trip' | 'sick_leave' | 'vacation';
   notes: string;
-  submitted_at: string | null;
+  submitted_at: string;
+  approved_by: string;
+  approved_at: string;
   created_at: string;
   updated_at: string;
 }
 
 interface MonthlyStats {
+  member_id: string;
+  member_name: string;
+  member_email: string;
+  department: string;
+  position: string;
+  year: number;
+  month: number;
+  year_month: string;
   total_days: number;
   present_days: number;
   absent_days: number;
   late_days: number;
+  actual_late_days: number;
+  early_leave_days: number;
   total_work_hours: number;
   total_overtime_hours: number;
+  total_hours: number;
+  avg_work_hours_per_day: number;
   remote_days: number;
+  business_trip_days: number;
+  sick_leave_days: number;
   vacation_days: number;
 }
 
-interface AttendanceForm {
-  date: Date;
-  start_time: string;
-  end_time: string;
-  break_time_minutes: number;
-  attendance_type: 'regular' | 'remote' | 'business_trip' | 'sick_leave' | 'vacation';
-  notes: string;
-}
+type DateSelectionMode = 'single' | 'multiple' | 'range';
 
 const AttendanceManager: React.FC = () => {
   const { user } = useAdmin();
@@ -94,12 +107,19 @@ const AttendanceManager: React.FC = () => {
   // 現在のユーザーのメンバーID
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<AttendanceForm>({
+  // 複数日付選択機能のstate
+  const [dateSelectionMode, setDateSelectionMode] = useState<DateSelectionMode>('single');
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+
+  // フォームデータ
+  const [formData, setFormData] = useState({
     date: new Date(),
     start_time: '09:00',
-    end_time: '18:00',
+    end_time: '17:00',
     break_time_minutes: 60,
-    attendance_type: 'regular',
+    status: 'scheduled' as AttendanceRecord['status'],
+    attendance_type: 'regular' as AttendanceRecord['attendance_type'],
     notes: ''
   });
 
@@ -207,44 +227,127 @@ const AttendanceManager: React.FC = () => {
     setFormData({
       date: new Date(),
       start_time: '09:00',
-      end_time: '18:00',
+      end_time: '17:00',
       break_time_minutes: 60,
+      status: 'scheduled',
       attendance_type: 'regular',
       notes: ''
     });
+    setDateSelectionMode('single');
+    setSelectedDates([]);
+    setDateRange({});
     setEditingRecord(null);
   };
 
   const handleCreateRecord = async () => {
     if (!currentMemberId) return;
 
+    // 対象日付を取得
+    const targetDates: Date[] = [];
+    
+    if (dateSelectionMode === 'single') {
+      targetDates.push(formData.date);
+    } else if (dateSelectionMode === 'multiple') {
+      if (selectedDates.length === 0) {
+        toast.error('日付を選択してください');
+        return;
+      }
+      targetDates.push(...selectedDates);
+    } else if (dateSelectionMode === 'range') {
+      if (!dateRange.from || !dateRange.to) {
+        toast.error('期間を選択してください');
+        return;
+      }
+      const rangeDates = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+      targetDates.push(...rangeDates);
+    }
+
+    const successCount = { value: 0 };
+    const errorCount = { value: 0 };
+    const duplicateCount = { value: 0 };
+
     try {
+      // 各日付に対して記録を作成
+      const records = targetDates.map(date => ({
+        member_id: currentMemberId,
+        date: format(date, 'yyyy-MM-dd'),
+        start_time: formData.start_time || null,
+        end_time: formData.end_time || null,
+        break_time_minutes: formData.break_time_minutes,
+        status: formData.status,
+        attendance_type: formData.attendance_type,
+        notes: formData.notes
+      }));
+
+      // 一括挿入を試行
       const { error } = await supabase
         .from('attendance_records')
-        .insert({
-          member_id: currentMemberId,
-          date: format(formData.date, 'yyyy-MM-dd'),
-          start_time: formData.start_time || null,
-          end_time: formData.end_time || null,
-          break_time_minutes: formData.break_time_minutes,
-          attendance_type: formData.attendance_type,
-          notes: formData.notes,
-          status: 'scheduled'
-        });
+        .insert(records);
 
-      if (error) throw error;
+      if (error) {
+        // 重複エラーの場合は個別に処理
+        if (error.code === '23505') {
+          for (const date of targetDates) {
+            try {
+              const { error: singleError } = await supabase
+                .from('attendance_records')
+                .insert({
+                  member_id: currentMemberId,
+                  date: format(date, 'yyyy-MM-dd'),
+                  start_time: formData.start_time || null,
+                  end_time: formData.end_time || null,
+                  break_time_minutes: formData.break_time_minutes,
+                  status: formData.status,
+                  attendance_type: formData.attendance_type,
+                  notes: formData.notes
+                });
 
-      toast.success('勤怠記録を作成しました');
+              if (singleError) {
+                if (singleError.code === '23505') {
+                  duplicateCount.value++;
+                } else {
+                  errorCount.value++;
+                }
+              } else {
+                successCount.value++;
+              }
+            } catch (e) {
+              errorCount.value++;
+            }
+          }
+        } else {
+          throw error;
+        }
+      } else {
+        successCount.value = targetDates.length;
+      }
+
+      // 結果メッセージ
+      let message = '';
+      if (successCount.value > 0) {
+        message += `${successCount.value}件の勤怠記録を作成しました`;
+      }
+      if (duplicateCount.value > 0) {
+        message += message ? `、${duplicateCount.value}件は重複のためスキップされました` : `${duplicateCount.value}件は重複のためスキップされました`;
+      }
+      if (errorCount.value > 0) {
+        message += message ? `、${errorCount.value}件でエラーが発生しました` : `${errorCount.value}件でエラーが発生しました`;
+      }
+
+      if (successCount.value > 0) {
+        toast.success(message);
+      } else if (duplicateCount.value > 0) {
+        toast.warning(message);
+      } else {
+        toast.error(message);
+      }
+
       setCreateDialogOpen(false);
       resetForm();
       await Promise.all([fetchAttendance(), fetchMonthlyStats()]);
     } catch (error: any) {
-      console.error('Error creating attendance record:', error);
-      if (error.code === '23505') {
-        toast.error('この日付の勤怠記録は既に存在します');
-      } else {
-        toast.error('勤怠記録の作成に失敗しました');
-      }
+      console.error('Error creating attendance records:', error);
+      toast.error('勤怠記録の作成に失敗しました');
     }
   };
 
@@ -281,8 +384,9 @@ const AttendanceManager: React.FC = () => {
     setFormData({
       date: new Date(record.date),
       start_time: record.start_time || '09:00',
-      end_time: record.end_time || '18:00',
+      end_time: record.end_time || '17:00',
       break_time_minutes: record.break_time_minutes,
+      status: record.status,
       attendance_type: record.attendance_type,
       notes: record.notes
     });
@@ -460,8 +564,68 @@ const AttendanceManager: React.FC = () => {
                   </DialogHeader>
                   
                   <div className="space-y-4">
+                    {/* 日付選択モード切り替え */}
+                    {!editingRecord && (
+                      <div className="space-y-3">
+                        <Label>日付選択モード</Label>
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="single"
+                              name="dateMode"
+                              checked={dateSelectionMode === 'single'}
+                              onChange={() => setDateSelectionMode('single')}
+                              className="w-4 h-4"
+                            />
+                            <label htmlFor="single" className="text-sm">単一日付</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="multiple"
+                              name="dateMode"
+                              checked={dateSelectionMode === 'multiple'}
+                              onChange={() => setDateSelectionMode('multiple')}
+                              className="w-4 h-4"
+                            />
+                            <label htmlFor="multiple" className="text-sm">複数日付</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="range"
+                              name="dateMode"
+                              checked={dateSelectionMode === 'range'}
+                              onChange={() => setDateSelectionMode('range')}
+                              className="w-4 h-4"
+                            />
+                            <label htmlFor="range" className="text-sm">期間選択</label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 日付選択 */}
                     <div className="space-y-2">
-                      <Label>日付</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>日付</Label>
+                        {!editingRecord && (dateSelectionMode === 'multiple' || dateSelectionMode === 'range') && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedDates([]);
+                              setDateRange({});
+                            }}
+                          >
+                            <RotateCcw className="w-3 h-3 mr-1" />
+                            リセット
+                          </Button>
+                        )}
+                      </div>
+                      
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -470,18 +634,72 @@ const AttendanceManager: React.FC = () => {
                             disabled={!!editingRecord}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(formData.date, 'yyyy年MM月dd日', { locale: ja })}
+                            {editingRecord || dateSelectionMode === 'single' 
+                              ? format(formData.date, 'yyyy年MM月dd日', { locale: ja })
+                              : dateSelectionMode === 'multiple'
+                                ? selectedDates.length > 0
+                                  ? `${selectedDates.length}日選択中`
+                                  : '複数日付を選択'
+                                : dateRange.from && dateRange.to
+                                  ? `${format(dateRange.from, 'MM/dd', { locale: ja })} - ${format(dateRange.to, 'MM/dd', { locale: ja })}`
+                                  : dateRange.from
+                                    ? `${format(dateRange.from, 'MM/dd', { locale: ja })} -`
+                                    : '期間を選択'
+                            }
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={formData.date}
-                            onSelect={(date) => date && setFormData(prev => ({ ...prev, date }))}
-                            initialFocus
-                          />
+                          {(editingRecord || dateSelectionMode === 'single') && (
+                            <Calendar
+                              mode="single"
+                              selected={formData.date}
+                              onSelect={(date) => date && setFormData(prev => ({ ...prev, date }))}
+                              initialFocus
+                            />
+                          )}
+                          {!editingRecord && dateSelectionMode === 'multiple' && (
+                            <Calendar
+                              mode="multiple"
+                              selected={selectedDates}
+                              onSelect={(dates) => setSelectedDates(dates || [])}
+                              initialFocus
+                            />
+                          )}
+                          {!editingRecord && dateSelectionMode === 'range' && (
+                            <Calendar
+                              mode="range"
+                              selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
+                              onSelect={(range) => setDateRange(range || {})}
+                              numberOfMonths={2}
+                              initialFocus
+                            />
+                          )}
                         </PopoverContent>
                       </Popover>
+                      
+                      {/* 選択された日付の表示 */}
+                      {!editingRecord && dateSelectionMode === 'multiple' && selectedDates.length > 0 && (
+                        <div className="mt-2 p-2 bg-gray-50 rounded-md">
+                          <div className="text-xs text-gray-600 mb-1">選択された日付:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedDates.map((date, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {format(date, 'MM/dd', { locale: ja })}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!editingRecord && dateSelectionMode === 'range' && dateRange.from && dateRange.to && (
+                        <div className="mt-2 p-2 bg-gray-50 rounded-md">
+                          <div className="text-xs text-gray-600 mb-1">選択された期間:</div>
+                          <Badge variant="secondary" className="text-xs">
+                            {format(dateRange.from, 'yyyy年MM月dd日', { locale: ja })} - {format(dateRange.to, 'yyyy年MM月dd日', { locale: ja })}
+                            （{eachDayOfInterval({ start: dateRange.from, end: dateRange.to }).length}日間）
+                          </Badge>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -555,7 +773,13 @@ const AttendanceManager: React.FC = () => {
                       キャンセル
                     </Button>
                     <Button onClick={editingRecord ? handleUpdateRecord : handleCreateRecord}>
-                      {editingRecord ? '更新' : '作成'}
+                      {editingRecord ? '更新' : 
+                        dateSelectionMode === 'single' ? '作成' :
+                        dateSelectionMode === 'multiple' ? `一括作成 (${selectedDates.length}件)` :
+                        dateSelectionMode === 'range' && dateRange.from && dateRange.to ? 
+                          `一括作成 (${eachDayOfInterval({ start: dateRange.from, end: dateRange.to }).length}件)` : 
+                          '作成'
+                      }
                     </Button>
                   </DialogFooter>
                 </DialogContent>
