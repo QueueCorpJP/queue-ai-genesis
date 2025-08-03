@@ -53,6 +53,8 @@ import TodoManager from '@/components/TodoManager';
 import TodoProgress from '@/components/TodoProgress';
 import AttendanceManager from '@/components/AttendanceManager';
 import PayrollManager from '@/components/PayrollManager';
+import ScheduleManager from '@/components/ScheduleManager';
+import ScheduleWidget from '@/components/ScheduleWidget';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -657,6 +659,13 @@ const AdminDashboard: React.FC = () => {
                     <CalendarDays className="w-4 h-4" />
                     <span>勤怠</span>
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="schedule" 
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>スケジュール</span>
+                  </TabsTrigger>
                   {user?.email === 'queue@queue-tech.jp' && (
                     <TabsTrigger 
                       value="payroll" 
@@ -838,6 +847,7 @@ const AdminDashboard: React.FC = () => {
                   {[
                     { value: 'todos', icon: Target, label: 'Todo' },
                     { value: 'attendance', icon: CalendarDays, label: '勤怠管理' },
+                    { value: 'schedule', icon: Calendar, label: 'スケジュール' },
                     ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : []),
                     { value: 'news', icon: Newspaper, label: 'ブログ管理' },
                     ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
@@ -874,6 +884,10 @@ const AdminDashboard: React.FC = () => {
             <AttendanceManager />
           </TabsContent>
 
+          <TabsContent value="schedule">
+            <ScheduleManager />
+          </TabsContent>
+
           {user?.email === 'queue@queue-tech.jp' && (
             <TabsContent value="payroll">
               <PayrollManager />
@@ -900,17 +914,19 @@ const AdminDashboard: React.FC = () => {
               ))}
             </div>
 
-            {/* 今日やること */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg md:text-xl">
-                  <Target className="w-5 h-5 mr-2" />
-                  今日やること
-                </CardTitle>
-                <CardDescription>
-                  期限が今日かそれ以前の未完了タスク
-                </CardDescription>
-              </CardHeader>
+            {/* メインコンテンツエリア */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              {/* 今日やること */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg md:text-xl">
+                    <Target className="w-5 h-5 mr-2" />
+                    今日やること
+                  </CardTitle>
+                  <CardDescription>
+                    期限が今日かそれ以前の未完了タスク
+                  </CardDescription>
+                </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {todosLoading ? (
@@ -1008,7 +1024,14 @@ const AdminDashboard: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+
+            {/* スケジュール */}
+            <ScheduleWidget 
+              maxItems={5}
+              onViewAllClick={() => setActiveTab('schedule')}
+            />
+          </div>
+        </TabsContent>
 
           <TabsContent value="analytics">
             <Analytics />
@@ -1106,6 +1129,7 @@ const getTabIcon = (tab: string) => {
     todos: <Target className="w-4 h-4" />,
     'todo-progress': <ClipboardList className="w-4 h-4" />,
     attendance: <CalendarDays className="w-4 h-4" />,
+    schedule: <Calendar className="w-4 h-4" />,
     payroll: <DollarSign className="w-4 h-4" />,
     analytics: <BarChart3 className="w-4 h-4" />,
     'cta-analytics': <MousePointer className="w-4 h-4" />,
@@ -1126,6 +1150,7 @@ const getTabLabel = (tab: string) => {
     todos: 'Todo',
     'todo-progress': 'Todo進捗',
     attendance: '勤怠管理',
+    schedule: 'スケジュール',
     payroll: '人件費管理',
     analytics: '基本分析',
     'cta-analytics': 'CTA分析',
