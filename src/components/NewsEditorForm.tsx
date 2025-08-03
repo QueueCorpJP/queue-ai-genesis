@@ -55,6 +55,133 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     }
   };
 
+  // テーブル挿入機能
+  const insertTable = (rows: number = 3, cols: number = 3) => {
+    const quill = quillRef.current?.getEditor();
+    if (quill) {
+      const range = quill.getSelection(true);
+      
+      // テーブルHTMLを生成
+      let tableHTML = '<table style="border-collapse: collapse; width: 100%; margin: 16px 0;">';
+      
+      // ヘッダー行
+      tableHTML += '<thead><tr>';
+      for (let j = 0; j < cols; j++) {
+        tableHTML += `<th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: left;">ヘッダー ${j + 1}</th>`;
+      }
+      tableHTML += '</tr></thead>';
+      
+      // データ行
+      tableHTML += '<tbody>';
+      for (let i = 1; i < rows; i++) {
+        tableHTML += '<tr>';
+        for (let j = 0; j < cols; j++) {
+          tableHTML += `<td style="border: 1px solid #e2e8f0; padding: 12px;">データ ${i}-${j + 1}</td>`;
+        }
+        tableHTML += '</tr>';
+      }
+      tableHTML += '</tbody></table><p><br></p>';
+      
+      quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
+      quill.setSelection(range.index + tableHTML.length);
+    }
+  };
+
+  // 比較表テンプレート挿入
+  const insertComparisonTable = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill) {
+      const range = quill.getSelection(true);
+      
+      const comparisonTableHTML = `
+        <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+          <thead>
+            <tr>
+              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: left;">項目</th>
+              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランA</th>
+              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランB</th>
+              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">価格</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥10,000</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥20,000</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥30,000</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">機能数</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">5個</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">10個</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">無制限</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">サポート</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">メール</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">メール + チャット</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">24時間対応</td>
+            </tr>
+            <tr style="background-color: #f0f9ff;">
+              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">おすすめ度</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐⭐</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐</td>
+            </tr>
+          </tbody>
+        </table>
+        <p><br></p>
+      `;
+      
+      quill.clipboard.dangerouslyPasteHTML(range.index, comparisonTableHTML);
+      quill.setSelection(range.index + comparisonTableHTML.length);
+    }
+  };
+
+  // 仕様表テンプレート挿入
+  const insertSpecTable = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill) {
+      const range = quill.getSelection(true);
+      
+      const specTableHTML = `
+        <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+          <thead>
+            <tr>
+              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #1e3a8a; color: white; font-weight: bold; text-align: left;" colspan="2">製品仕様</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600; width: 30%;">プロセッサー</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px;">Intel Core i7-12700K</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">メモリ</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px;">32GB DDR4</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">ストレージ</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px;">1TB NVMe SSD</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">OS</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px;">Windows 11 Pro</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">保証期間</td>
+              <td style="border: 1px solid #e2e8f0; padding: 12px;">3年間</td>
+            </tr>
+          </tbody>
+        </table>
+        <p><br></p>
+      `;
+      
+      quill.clipboard.dangerouslyPasteHTML(range.index, specTableHTML);
+      quill.setSelection(range.index + specTableHTML.length);
+    }
+  };
+
   const handleContentUndo = () => {
     const quill = quillRef.current?.getEditor();
     if (quill && quill.history) {
@@ -98,11 +225,15 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         [{ 'direction': 'rtl' }],
         [{ 'align': [] }],
         ['link', 'image', 'video'],
+        ['table', 'comparison-table', 'spec-table'], // テーブル関連ボタン
         ['consultation-link'], // カスタムボタン
         ['undo', 'redo'], // 元に戻す・やり直し
         ['clean']
       ],
       handlers: {
+        'table': () => insertTable(3, 3),
+        'comparison-table': insertComparisonTable,
+        'spec-table': insertSpecTable,
         'consultation-link': insertConsultationLink,
         'undo': handleContentUndo,
         'redo': handleContentRedo
@@ -143,7 +274,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     'header', 'font', 'size',
     'bold', 'italic', 'underline', 'strike', 'blockquote',
     'list', 'bullet', 'indent',
-    'link', 'image', 'video',
+    'link', 'image', 'video', 'table',
     'color', 'background',
     'align', 'script'
   ];
@@ -178,6 +309,80 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
 
   // Quillエディタの初期化後にカスタムボタンを追加
   useEffect(() => {
+    // カスタムツールバーボタンのスタイルを追加
+    const style = document.createElement('style');
+    style.id = 'custom-quill-styles';
+    style.textContent = `
+      .ql-table::before {
+        content: "📊";
+        font-size: 14px;
+      }
+      .ql-comparison-table::before {
+        content: "⚖️";
+        font-size: 14px;
+      }
+      .ql-spec-table::before {
+        content: "📋";
+        font-size: 14px;
+      }
+      .ql-consultation-link::before {
+        content: "💬";
+        font-size: 14px;
+      }
+      .ql-undo::before {
+        content: "↶";
+        font-size: 14px;
+      }
+      .ql-redo::before {
+        content: "↷";
+        font-size: 14px;
+      }
+      
+      /* ツールバーボタンのホバー効果 */
+      .ql-toolbar .ql-table,
+      .ql-toolbar .ql-comparison-table,
+      .ql-toolbar .ql-spec-table,
+      .ql-toolbar .ql-consultation-link,
+      .ql-toolbar .ql-undo,
+      .ql-toolbar .ql-redo {
+        width: 28px !important;
+        height: 28px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 4px !important;
+        margin: 1px !important;
+        background-color: white !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+      }
+      
+      .ql-toolbar .ql-table:hover,
+      .ql-toolbar .ql-comparison-table:hover,
+      .ql-toolbar .ql-spec-table:hover,
+      .ql-toolbar .ql-consultation-link:hover,
+      .ql-toolbar .ql-undo:hover,
+      .ql-toolbar .ql-redo:hover {
+        background-color: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+      }
+      
+      /* アクティブ状態 */
+      .ql-toolbar .ql-table.ql-active,
+      .ql-toolbar .ql-comparison-table.ql-active,
+      .ql-toolbar .ql-spec-table.ql-active,
+      .ql-toolbar .ql-consultation-link.ql-active {
+        background-color: #3b82f6 !important;
+        color: white !important;
+        border-color: #2563eb !important;
+      }
+    `;
+    
+    if (!document.getElementById('custom-quill-styles')) {
+      document.head.appendChild(style);
+    }
+
     const addCustomButton = () => {
       const toolbarContainer = document.querySelector('.ql-toolbar');
       if (toolbarContainer && !document.querySelector('.ql-consultation-link')) {
@@ -494,9 +699,15 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         <Label htmlFor="content">本文 *</Label>
         <div className="border rounded-md">
           <div className="bg-amber-50 border-b px-4 py-2 text-sm text-amber-800">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
               <MessageCircle className="h-4 w-4" />
-              <span>💬ボタンで無料相談リンクを挿入できます | フォント・サイズ・色の変更が可能</span>
+              <span className="flex-1">💬ボタンで無料相談リンクを挿入</span>
+            </div>
+            <div className="mt-1 text-xs text-amber-700 flex flex-wrap gap-x-4 gap-y-1">
+              <span>📊基本テーブル</span>
+              <span>⚖️比較表テンプレート</span> 
+              <span>📋仕様表テンプレート</span>
+              <span>↶↷元に戻す/やり直し</span>
             </div>
           </div>
           <ReactQuill
