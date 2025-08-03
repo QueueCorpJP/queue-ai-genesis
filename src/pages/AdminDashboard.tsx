@@ -55,6 +55,7 @@ import AttendanceManager from '@/components/AttendanceManager';
 import PayrollManager from '@/components/PayrollManager';
 import ScheduleManager from '@/components/ScheduleManager';
 import ScheduleWidget from '@/components/ScheduleWidget';
+import ExpenseManager from '@/components/ExpenseManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -976,10 +977,11 @@ const AdminDashboard: React.FC = () => {
                 
                 {/* Attendance & Schedule Management */}
                 <div className="border-t border-gray-100">
-                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">勤怠・スケジュール</div>
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">勤怠・スケジュール・財務</div>
                   {[
                     { value: 'attendance', icon: CalendarDays, label: '勤怠管理' },
                     { value: 'schedule', icon: Calendar, label: 'スケジュール' },
+                    ...(user?.role && ['executive', 'ceo', 'admin'].includes(user.role) ? [{ value: 'expenses', icon: DollarSign, label: '販管費管理' }] : []),
                     ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : [])
                   ].map((tab) => (
                     <button
@@ -1040,6 +1042,12 @@ const AdminDashboard: React.FC = () => {
           <TabsContent value="schedule">
             <ScheduleManager />
           </TabsContent>
+
+          {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+            <TabsContent value="expenses">
+              <ExpenseManager />
+            </TabsContent>
+          )}
 
           {user?.email === 'queue@queue-tech.jp' && (
             <TabsContent value="payroll">
