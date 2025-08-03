@@ -66,6 +66,13 @@ interface DashboardStats {
   monthlyContacts: number;
   monthlyConsultations: number;
   publishedNews: number;
+  // 販管費統計（役員のみ）
+  currentMonthExpenseTotal: number;
+  currentMonthExpenseBudget: number;
+  unpaidExpensesCount: number;
+  unpaidExpensesAmount: number;
+  overdueExpensesCount: number;
+  yearToDateExpenseTotal: number;
 }
 
 interface RecentActivity {
@@ -104,7 +111,14 @@ const AdminDashboard: React.FC = () => {
     pendingContacts: 0,
     monthlyContacts: 0,
     monthlyConsultations: 0,
-    publishedNews: 0
+    publishedNews: 0,
+    // 販管費統計（役員のみ）
+    currentMonthExpenseTotal: 0,
+    currentMonthExpenseBudget: 0,
+    unpaidExpensesCount: 0,
+    unpaidExpensesAmount: 0,
+    overdueExpensesCount: 0,
+    yearToDateExpenseTotal: 0
   });
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -337,6 +351,82 @@ const AdminDashboard: React.FC = () => {
           .eq('status', 'published')
       ]);
 
+      // 販管費データの取得（役員のみ）
+      let expenseStats = {
+        currentMonthExpenseTotal: 0,
+        currentMonthExpenseBudget: 0,
+        unpaidExpensesCount: 0,
+        unpaidExpensesAmount: 0,
+        overdueExpensesCount: 0,
+        yearToDateExpenseTotal: 0
+      };
+
+      if (user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) {
+        try {
+          const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+          const currentYear = new Date().getFullYear();
+          
+          // 当月の販管費総計
+          const { data: currentMonthData } = await supabase
+            .from('monthly_expenses')
+            .select('actual_amount, budgeted_amount')
+            .eq('year_month', currentMonth);
+          
+          if (currentMonthData) {
+            expenseStats.currentMonthExpenseTotal = currentMonthData.reduce((sum, item) => sum + item.actual_amount, 0);
+            expenseStats.currentMonthExpenseBudget = currentMonthData.reduce((sum, item) => sum + item.budgeted_amount, 0);
+          }
+          
+          // 未払い費用
+          const { data: unpaidData } = await supabase
+            .from('monthly_expenses')
+            .select('actual_amount')
+            .eq('year_month', currentMonth)
+            .eq('payment_status', 'unpaid');
+          
+          if (unpaidData) {
+            expenseStats.unpaidExpensesCount = unpaidData.length;
+            expenseStats.unpaidExpensesAmount = unpaidData.reduce((sum, item) => sum + item.actual_amount, 0);
+          }
+          
+          // 期限切れ費用の自動更新と取得
+          const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+          
+          // 期限が過ぎた未払い費用を自動的に期限切れステータスに更新
+          await supabase
+            .from('monthly_expenses')
+            .update({ 
+              payment_status: 'overdue',
+              updated_by: user?.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('year_month', currentMonth)
+            .eq('payment_status', 'unpaid')
+            .lt('payment_due_date', today);
+          
+          // 期限切れ費用の件数を取得
+          const { count: overdueCount } = await supabase
+            .from('monthly_expenses')
+            .select('*', { count: 'exact', head: true })
+            .eq('year_month', currentMonth)
+            .eq('payment_status', 'overdue');
+          
+          expenseStats.overdueExpensesCount = overdueCount || 0;
+          
+          // 年間累計
+          const { data: yearToDateData } = await supabase
+            .from('monthly_expenses')
+            .select('actual_amount')
+            .like('year_month', `${currentYear}-%`);
+          
+          if (yearToDateData) {
+            expenseStats.yearToDateExpenseTotal = yearToDateData.reduce((sum, item) => sum + item.actual_amount, 0);
+          }
+        } catch (expenseError) {
+          console.error('Error fetching expense stats:', expenseError);
+        }
+      }
+
       const newStats = {
         todayContacts: todayContacts || 0,
         todayConsultations: todayConsultations || 0,
@@ -344,7 +434,8 @@ const AdminDashboard: React.FC = () => {
         pendingContacts: pendingContacts || 0,
         monthlyContacts: monthlyContacts || 0,
         monthlyConsultations: monthlyConsultations || 0,
-        publishedNews: publishedNews || 0
+        publishedNews: publishedNews || 0,
+        ...expenseStats
       };
 
       setStats(newStats);
@@ -359,7 +450,13 @@ const AdminDashboard: React.FC = () => {
         pendingContacts: 0,
         monthlyContacts: 0,
         monthlyConsultations: 0,
-        publishedNews: 0
+        publishedNews: 0,
+        currentMonthExpenseTotal: 0,
+        currentMonthExpenseBudget: 0,
+        unpaidExpensesCount: 0,
+        unpaidExpensesAmount: 0,
+        overdueExpensesCount: 0,
+        yearToDateExpenseTotal: 0
       });
     } finally {
       setLoading(false);
@@ -553,7 +650,8 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const statsCards = [
+  // 基本統計カード（全ユーザー）
+  const basicStatsCards = [
     {
       title: "今日の新規お問い合わせ",
       value: stats.todayContacts,
@@ -597,6 +695,48 @@ const AdminDashboard: React.FC = () => {
       color: "text-purple-600"
     }
   ];
+
+  // 役員向け販管費統計カード
+  const expenseStatsCards = user?.role && ['executive', 'ceo', 'admin'].includes(user.role) ? [
+    {
+      title: "今月の販管費総額",
+      value: `¥${stats.currentMonthExpenseTotal.toLocaleString()}`,
+      icon: DollarSign,
+      color: "text-blue-600"
+    },
+    {
+      title: "今月の予算額",
+      value: `¥${stats.currentMonthExpenseBudget.toLocaleString()}`,
+      icon: TrendingUp,
+      color: "text-green-600"
+    },
+    {
+      title: "未払い件数",
+      value: stats.unpaidExpensesCount,
+      icon: AlertTriangle,
+      color: "text-orange-600"
+    },
+    {
+      title: "未払い金額",
+      value: `¥${stats.unpaidExpensesAmount.toLocaleString()}`,
+      icon: DollarSign,
+      color: "text-red-600"
+    },
+    {
+      title: "期限切れ件数",
+      value: stats.overdueExpensesCount,
+      icon: AlertCircle,
+      color: "text-red-600"
+    },
+    {
+      title: "年間累計",
+      value: `¥${stats.yearToDateExpenseTotal.toLocaleString()}`,
+      icon: Calendar,
+      color: "text-purple-600"
+    }
+  ] : [];
+
+  const statsCards = [...basicStatsCards, ...expenseStatsCards];
 
   // ローディング中またはログイン状態確認中（自動ログイン対応）
   if (isLoading) {
@@ -1183,6 +1323,81 @@ const AdminDashboard: React.FC = () => {
               onViewAllClick={() => setActiveTab('schedule')}
             />
           </div>
+
+          {/* 役員向け販管費概要 */}
+          {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg md:text-xl">
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  販管費概要
+                </CardTitle>
+                <CardDescription>
+                  当月の販売管理費の状況と支払いアラート
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800">当月サマリー</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">実際費用:</span>
+                        <span className="font-medium">¥{stats.currentMonthExpenseTotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">予算額:</span>
+                        <span className="font-medium">¥{stats.currentMonthExpenseBudget.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">差額:</span>
+                        <span className={`font-medium ${
+                          stats.currentMonthExpenseTotal <= stats.currentMonthExpenseBudget 
+                            ? 'text-green-600' 
+                            : 'text-red-600'
+                        }`}>
+                          ¥{Math.abs(stats.currentMonthExpenseTotal - stats.currentMonthExpenseBudget).toLocaleString()}
+                          {stats.currentMonthExpenseTotal <= stats.currentMonthExpenseBudget ? ' 予算内' : ' 予算超過'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-800">支払いアラート</h4>
+                    <div className="space-y-2">
+                      {stats.unpaidExpensesCount > 0 && (
+                        <div className="flex items-center text-sm text-orange-600">
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          <span>未払い {stats.unpaidExpensesCount} 件 (¥{stats.unpaidExpensesAmount.toLocaleString()})</span>
+                        </div>
+                      )}
+                      {stats.overdueExpensesCount > 0 && (
+                        <div className="flex items-center text-sm text-red-600">
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          <span>期限切れ {stats.overdueExpensesCount} 件</span>
+                        </div>
+                      )}
+                      {stats.unpaidExpensesCount === 0 && stats.overdueExpensesCount === 0 && (
+                        <div className="flex items-center text-sm text-green-600">
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          <span>支払い状況は良好です</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab('expenses')}
+                      className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      販管費管理を開く
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
           <TabsContent value="analytics">
@@ -1282,6 +1497,7 @@ const getTabIcon = (tab: string) => {
     'todo-progress': <ClipboardList className="w-4 h-4" />,
     attendance: <CalendarDays className="w-4 h-4" />,
     schedule: <Calendar className="w-4 h-4" />,
+    expenses: <DollarSign className="w-4 h-4" />,
     payroll: <DollarSign className="w-4 h-4" />,
     analytics: <BarChart3 className="w-4 h-4" />,
     'cta-analytics': <MousePointer className="w-4 h-4" />,
@@ -1303,6 +1519,7 @@ const getTabLabel = (tab: string) => {
     'todo-progress': 'Todo進捗',
     attendance: '勤怠管理',
     schedule: 'スケジュール',
+    expenses: '販管費管理',
     payroll: '人件費管理',
     analytics: '基本分析',
     'cta-analytics': 'CTA分析',
