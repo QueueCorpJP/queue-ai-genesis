@@ -117,6 +117,7 @@ const PayrollManager: React.FC = () => {
   const [editingRate, setEditingRate] = useState<HourlyRate | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('rates');
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<HourlyRateForm>({
     member_id: '',
@@ -129,14 +130,59 @@ const PayrollManager: React.FC = () => {
   // 役員権限チェック
   const isExecutive = user?.email === 'queue@queue-tech.jp';
 
+  // メンバーIDを取得する関数
+  const fetchMemberId = async () => {
+    if (!user?.email) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id')
+        .eq('email', user.email)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        // queue@queue-tech.jpの場合の特別処理
+        if (user.email === 'queue@queue-tech.jp') {
+          const { data: queueData, error: queueError } = await supabase
+            .from('members')
+            .select('id')
+            .eq('email', 'queue@queue-tech.jp')
+            .single();
+          
+          if (!queueError && queueData) {
+            setCurrentMemberId(queueData.id);
+            return;
+          }
+        }
+        throw error;
+      }
+
+      if (data) {
+        setCurrentMemberId(data.id);
+        console.log('Payroll Manager - Member ID found:', data.id);
+      }
+    } catch (error) {
+      console.error('Error fetching member ID:', error);
+      setCurrentMemberId(null);
+    }
+  };
+
   useEffect(() => {
-    if (isExecutive) {
+    if (user?.email) {
+      fetchMemberId();
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (isExecutive && currentMemberId) {
       fetchMembers();
       fetchHourlyRates();
       fetchMonthlyPayroll();
       fetchPayrollSummary();
     }
-  }, [isExecutive, selectedMonth]);
+  }, [isExecutive, currentMemberId, selectedMonth]);
 
   const fetchMembers = async () => {
     try {
@@ -186,6 +232,7 @@ const PayrollManager: React.FC = () => {
   const fetchMonthlyPayroll = async () => {
     try {
       const yearMonth = format(selectedMonth, 'yyyy-MM');
+      console.log('Fetching payroll for:', yearMonth);
       
       const { data, error } = await supabase
         .from('monthly_payroll')
@@ -194,6 +241,22 @@ const PayrollManager: React.FC = () => {
         .order('total_pay', { ascending: false });
 
       if (error) throw error;
+      console.log('Monthly payroll data:', data);
+      
+      // 詳細デバッグ：各レコードの内容を確認
+      if (data && data.length > 0) {
+        data.forEach((record, index) => {
+          console.log(`Payroll Record ${index}:`, {
+            member_name: record.member_name,
+            total_work_hours: record.total_work_hours,
+            hourly_rate: record.hourly_rate,
+            regular_pay: record.regular_pay,
+            overtime_pay: record.overtime_pay,
+            total_pay: record.total_pay
+          });
+        });
+      }
+      
       setMonthlyPayroll(data || []);
     } catch (error) {
       console.error('Error fetching monthly payroll:', error);
@@ -205,11 +268,13 @@ const PayrollManager: React.FC = () => {
   const fetchPayrollSummary = async () => {
     try {
       const yearMonth = format(selectedMonth, 'yyyy-MM');
+      console.log('Fetching payroll summary for:', yearMonth);
       
       const { data, error } = await supabase
         .rpc('get_monthly_payroll_summary', { target_year_month: yearMonth });
 
       if (error) throw error;
+      console.log('Payroll summary data:', data);
       
       if (data && data.length > 0) {
         setPayrollSummary(data[0]);
@@ -220,6 +285,146 @@ const PayrollManager: React.FC = () => {
       console.error('Error fetching payroll summary:', error);
       toast.error('人件費サマリーの取得に失敗しました');
       setPayrollSummary(null);
+    }
+  };
+
+  // デバッグ用：データの存在確認
+  const checkDataExistence = async () => {
+    try {
+      const yearMonth = format(selectedMonth, 'yyyy-MM');
+      
+      // 勤怠データの確認
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .gte('date', yearMonth + '-01')
+        .lt('date', yearMonth + '-32');
+      
+      console.log('Attendance records count:', attendanceData?.length || 0);
+      
+      // 時給設定の確認
+      const { data: ratesData, error: ratesError } = await supabase
+        .from('member_hourly_rates')
+        .select('*')
+        .eq('is_active', true);
+      
+      console.log('Active hourly rates count:', ratesData?.length || 0);
+      console.log('Active hourly rates details:', ratesData);
+      
+      // ビューの確認
+      const { data: summaryData, error: summaryError } = await supabase
+        .from('attendance_summary')
+        .select('*')
+        .limit(5);
+      
+      console.log('Attendance summary sample:', summaryData);
+      
+      // 月次統計の確認
+      const { data: statsData, error: statsError } = await supabase
+        .from('monthly_attendance_stats')
+        .select('*')
+        .eq('year_month', yearMonth);
+      
+      console.log('Monthly attendance stats:', statsData);
+      
+      // 時給設定との結合確認
+      const { data: joinData, error: joinError } = await supabase
+        .from('monthly_attendance_stats')
+        .select(`
+          *,
+          member_hourly_rates!inner(hourly_rate, overtime_rate, effective_from, effective_to, is_active)
+        `)
+        .eq('year_month', yearMonth);
+      
+      console.log('Stats with hourly rates joined:', joinData);
+      
+    } catch (error) {
+      console.error('Error checking data existence:', error);
+    }
+  };
+
+  // テストデータの作成
+  const createTestData = async () => {
+    if (!currentMemberId) {
+      toast.error('ユーザー情報が取得できていません');
+      return;
+    }
+
+    try {
+      const yearMonth = format(selectedMonth, 'yyyy-MM');
+      
+      // 時給設定の作成（存在しない場合）
+      const { data: existingRate } = await supabase
+        .from('member_hourly_rates')
+        .select('*')
+        .eq('member_id', currentMemberId)
+        .eq('is_active', true)
+        .single();
+
+      if (!existingRate) {
+        const effectiveFrom = format(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1), 'yyyy-MM-dd');
+        
+        const { error: rateError } = await supabase
+          .from('member_hourly_rates')
+          .insert({
+            member_id: currentMemberId,
+            hourly_rate: 3000,
+            overtime_rate: 3750,
+            effective_from: effectiveFrom,
+            created_by: currentMemberId
+          });
+
+        if (rateError) throw rateError;
+        console.log('Test hourly rate created with effective_from:', effectiveFrom);
+      } else {
+        console.log('Existing hourly rate found:', existingRate);
+      }
+
+      // 勤怠データの作成（選択された月の数日分）
+      const year = selectedMonth.getFullYear();
+      const month = selectedMonth.getMonth();
+      const testDates = [
+        format(new Date(year, month, 1), 'yyyy-MM-dd'),
+        format(new Date(year, month, 2), 'yyyy-MM-dd'),
+        format(new Date(year, month, 3), 'yyyy-MM-dd'),
+        format(new Date(year, month, 4), 'yyyy-MM-dd'),
+        format(new Date(year, month, 5), 'yyyy-MM-dd'),
+      ];
+      
+      console.log('Creating test data for dates:', testDates);
+
+      for (const date of testDates) {
+        const { error: attendanceError } = await supabase
+          .from('attendance_records')
+          .upsert({
+            member_id: currentMemberId,
+            date: date,
+            start_time: '09:00',
+            end_time: '17:00',
+            break_time_minutes: 60,
+            status: 'present',
+            attendance_type: 'regular'
+          }, {
+            onConflict: 'member_id,date'
+          });
+
+        if (attendanceError) {
+          console.error('Error creating attendance record:', attendanceError);
+        }
+      }
+
+      toast.success('テストデータを作成しました');
+      
+      // データを再取得
+      await Promise.all([
+        fetchHourlyRates(),
+        fetchMonthlyPayroll(),
+        fetchPayrollSummary()
+      ]);
+      
+    } catch (error) {
+      console.error('Error creating test data:', error);
+      toast.error('テストデータの作成に失敗しました');
     }
   };
 
@@ -237,6 +442,16 @@ const PayrollManager: React.FC = () => {
   const handleCreateRate = async () => {
     if (!formData.member_id || !formData.hourly_rate) {
       toast.error('メンバーと時給を選択してください');
+      return;
+    }
+
+    if (!currentMemberId) {
+      toast.error('ユーザー情報の取得中です。しばらくお待ちください');
+      return;
+    }
+
+    if (!isExecutive) {
+      toast.error('この操作は役員のみ実行できます');
       return;
     }
 
@@ -259,7 +474,7 @@ const PayrollManager: React.FC = () => {
           overtime_rate: formData.overtime_rate,
           effective_from: format(formData.effective_from, 'yyyy-MM-dd'),
           effective_to: formData.effective_to ? format(formData.effective_to, 'yyyy-MM-dd') : null,
-          created_by: user.id // 仮の値
+          created_by: currentMemberId
         });
 
       if (error) throw error;
@@ -411,8 +626,31 @@ const PayrollManager: React.FC = () => {
               </CardDescription>
             </div>
             
-            {/* 月選択 */}
-            <Popover>
+            <div className="flex items-center space-x-2">
+              {/* デバッグボタン（開発環境のみ） */}
+              {import.meta.env.DEV && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={checkDataExistence}
+                    className="text-xs"
+                  >
+                    データ確認
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={createTestData}
+                    className="text-xs bg-green-50 text-green-700"
+                  >
+                    テストデータ作成
+                  </Button>
+                </>
+              )}
+              
+              {/* 月選択 */}
+              <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-[180px]">
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -429,6 +667,7 @@ const PayrollManager: React.FC = () => {
                 />
               </PopoverContent>
             </Popover>
+            </div>
           </div>
         </CardHeader>
 
