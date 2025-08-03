@@ -143,9 +143,18 @@ const ScheduleManager: React.FC = () => {
 
   // メールアドレスからメンバーIDを取得
   const fetchMemberId = async () => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      console.log('🔐 No user email available');
+      return;
+    }
+    
+    console.log('🔐 Fetching member ID for:', user.email);
     
     try {
+      // Supabaseの認証状態をチェック
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      console.log('🔐 Auth status:', authData?.user ? 'Authenticated' : 'Not authenticated', authError);
+      
       const { data, error } = await supabase
         .from('members')
         .select('id, role')
@@ -154,28 +163,36 @@ const ScheduleManager: React.FC = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching member ID:', error);
+        console.error('🔐 Error fetching member ID:', error);
         toast.error('メンバー情報の取得に失敗しました');
         return;
       }
 
       if (data) {
+        console.log('🔐 Member found:', data);
         setCurrentMemberId(data.id);
         setIsExecutive(data.role === 'executive');
       }
     } catch (error) {
-      console.error('Error fetching member ID:', error);
+      console.error('🔐 Error fetching member ID:', error);
       toast.error('メンバー情報の取得に失敗しました');
     }
   };
 
   const fetchSchedules = async () => {
-    if (!currentMemberId) return;
+    if (!currentMemberId) {
+      console.log('📅 No current member ID, skipping schedule fetch');
+      return;
+    }
+    
+    console.log('📅 Fetching schedules for member:', currentMemberId);
     
     setLoading(true);
     try {
       const monthStart = startOfMonth(selectedMonth);
       const monthEnd = endOfMonth(selectedMonth);
+      
+      console.log('📅 Date range:', format(monthStart, 'yyyy-MM-dd'), 'to', format(monthEnd, 'yyyy-MM-dd'));
       
       const { data, error } = await supabase
         .from('company_schedules')
@@ -185,10 +202,15 @@ const ScheduleManager: React.FC = () => {
         .eq('is_active', true)
         .order('start_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('📅 Error fetching schedules:', error);
+        throw error;
+      }
+      
+      console.log('📅 Schedules fetched:', data?.length || 0, 'items');
       setSchedules(data || []);
     } catch (error) {
-      console.error('Error fetching schedules:', error);
+      console.error('📅 Error fetching schedules:', error);
       toast.error('スケジュールの取得に失敗しました');
       setSchedules([]);
     } finally {
@@ -232,7 +254,10 @@ const ScheduleManager: React.FC = () => {
   };
 
   const handleCreateSchedule = async () => {
+    console.log('📅 Creating schedule - Member ID:', currentMemberId, 'Is Executive:', isExecutive);
+    
     if (!currentMemberId || !isExecutive) {
+      console.log('📅 Permission denied - Missing member ID or not executive');
       toast.error('スケジュールの作成権限がありません');
       return;
     }
@@ -254,18 +279,24 @@ const ScheduleManager: React.FC = () => {
         created_by: currentMemberId
       };
 
+      console.log('📅 Schedule data to insert:', scheduleData);
+
       const { error } = await supabase
         .from('company_schedules')
         .insert(scheduleData);
 
-      if (error) throw error;
+      if (error) {
+        console.error('📅 Insert error:', error);
+        throw error;
+      }
 
+      console.log('📅 Schedule created successfully');
       toast.success('スケジュールを作成しました');
       setCreateDialogOpen(false);
       resetForm();
       await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
     } catch (error) {
-      console.error('Error creating schedule:', error);
+      console.error('📅 Error creating schedule:', error);
       toast.error('スケジュールの作成に失敗しました');
     }
   };
