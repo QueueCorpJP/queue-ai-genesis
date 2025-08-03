@@ -118,8 +118,11 @@ const KPIManager: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAdmin();
 
-  // 役員権限チェック
-  if (!user?.role || !['executive', 'ceo', 'admin'].includes(user.role)) {
+  // 権限チェック（役員は全機能、メンバーは自分のKPIのみ）
+  const isExecutive = user?.role && ['executive', 'ceo', 'admin'].includes(user.role);
+  const isMember = user?.role && ['member', 'employee'].includes(user.role);
+  
+  if (!user?.role || (!isExecutive && !isMember)) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
@@ -129,8 +132,8 @@ const KPIManager: React.FC = () => {
             </div>
             <h3 className="text-lg font-semibold text-gray-900">アクセス権限がありません</h3>
             <p className="text-gray-600 max-w-md">
-              KPI/KGI管理機能は役員アカウントのみご利用いただけます。<br />
-              アクセスが必要な場合は、役員アカウントでログインしてください。
+              KPI/KGI管理機能へのアクセス権限がありません。<br />
+              適切なアカウントでログインしてください。
             </p>
           </div>
         </CardContent>
@@ -139,7 +142,7 @@ const KPIManager: React.FC = () => {
   }
 
   // State管理
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(isExecutive ? 'overview' : 'personal');
   const [selectedPeriod, setSelectedPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [indicators, setIndicators] = useState<KPIIndicator[]>([]);
   const [targets, setTargets] = useState<KPITarget[]>([]);
@@ -222,11 +225,17 @@ const KPIManager: React.FC = () => {
 
   const fetchTargets = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('kpi_management_view')
         .select('*')
-        .eq('target_period', selectedPeriod)
-        .order('priority', { ascending: false });
+        .eq('target_period', selectedPeriod);
+
+      // メンバーの場合は自分に関連するKPIのみ取得
+      if (isMember && !isExecutive) {
+        query = query.or(`assigned_member_id.eq.${user?.id},assigned_team.eq.${user?.department}`);
+      }
+
+      const { data, error } = await query.order('priority', { ascending: false });
 
       if (error) throw error;
       setTargets(data || []);
@@ -238,7 +247,7 @@ const KPIManager: React.FC = () => {
         variant: 'destructive',
       });
     }
-  }, [selectedPeriod, toast]);
+  }, [selectedPeriod, isMember, isExecutive, user?.id, user?.department, toast]);
 
   const fetchDashboardStats = useCallback(async () => {
     try {
@@ -488,13 +497,15 @@ const KPIManager: React.FC = () => {
 
   // useEffect
   useEffect(() => {
-    if (user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) {
+    if (user?.role && (isExecutive || isMember)) {
       fetchIndicators();
       fetchTargets();
-      fetchDashboardStats();
+      if (isExecutive) {
+        fetchDashboardStats();
+      }
       fetchMembers();
     }
-  }, [selectedPeriod, user, fetchIndicators, fetchTargets, fetchDashboardStats, fetchMembers]);
+  }, [selectedPeriod, user, isExecutive, isMember, fetchIndicators, fetchTargets, fetchDashboardStats, fetchMembers]);
 
   // ヘルパー関数
   const getPerformanceIcon = (status: string) => {
@@ -709,308 +720,319 @@ const KPIManager: React.FC = () => {
 
       {/* タブナビゲーション */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">概要</TabsTrigger>
-          <TabsTrigger value="personal">個人KPI</TabsTrigger>
-          <TabsTrigger value="team">チームKPI</TabsTrigger>
-          <TabsTrigger value="kgi">KGI</TabsTrigger>
-        </TabsList>
+        {isExecutive ? (
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">概要</TabsTrigger>
+            <TabsTrigger value="personal">個人KPI</TabsTrigger>
+            <TabsTrigger value="team">チームKPI</TabsTrigger>
+            <TabsTrigger value="kgi">KGI</TabsTrigger>
+          </TabsList>
+        ) : (
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="personal">個人KPI</TabsTrigger>
+            <TabsTrigger value="team">チームKPI</TabsTrigger>
+          </TabsList>
+        )}
 
         {/* 概要タブ */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* ダッシュボード統計カード */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">総KPI数</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats.total_kpis}</p>
+        {isExecutive && (
+          <TabsContent value="overview" className="space-y-6">
+            {/* ダッシュボード統計カード */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">総KPI数</p>
+                      <p className="text-2xl font-bold text-gray-900">{dashboardStats.total_kpis}</p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 text-blue-600" />
                   </div>
-                  <BarChart3 className="w-8 h-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">平均達成率</p>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-2xl font-bold text-gray-900">
-                        {(dashboardStats.current_month_avg_rate || 0).toFixed(1)}%
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">平均達成率</p>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-2xl font-bold text-gray-900">
+                          {(dashboardStats.current_month_avg_rate || 0).toFixed(1)}%
+                        </p>
+                        {dashboardStats.rate_change_from_previous !== 0 && (
+                          <Badge variant={dashboardStats.rate_change_from_previous > 0 ? "default" : "destructive"}>
+                            {dashboardStats.rate_change_from_previous > 0 ? '+' : ''}
+                            {(dashboardStats.rate_change_from_previous || 0).toFixed(1)}%
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">達成済み</p>
+                      <p className="text-2xl font-bold text-green-600">{dashboardStats.achieved_kpis}</p>
+                    </div>
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">要注意</p>
+                      <p className="text-2xl font-bold text-red-600">
+                        {dashboardStats.at_risk_kpis + dashboardStats.critical_at_risk}
                       </p>
-                      {dashboardStats.rate_change_from_previous !== 0 && (
-                        <Badge variant={dashboardStats.rate_change_from_previous > 0 ? "default" : "destructive"}>
-                          {dashboardStats.rate_change_from_previous > 0 ? '+' : ''}
-                          {(dashboardStats.rate_change_from_previous || 0).toFixed(1)}%
-                        </Badge>
-                      )}
                     </div>
+                    <AlertTriangle className="w-8 h-8 text-red-600" />
                   </div>
-                  <TrendingUp className="w-8 h-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">達成済み</p>
-                    <p className="text-2xl font-bold text-green-600">{dashboardStats.achieved_kpis}</p>
+            {/* KPI分類別統計 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-blue-600" />
+                    個人KPI
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">{dashboardStats.personal_kpis}</p>
+                    <p className="text-sm text-gray-600 mt-1">設定済み</p>
                   </div>
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">要注意</p>
-                    <p className="text-2xl font-bold text-red-600">
-                      {dashboardStats.at_risk_kpis + dashboardStats.critical_at_risk}
-                    </p>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <Users className="w-5 h-5 mr-2 text-green-600" />
+                    チームKPI
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-green-600">{dashboardStats.team_kpis}</p>
+                    <p className="text-sm text-gray-600 mt-1">設定済み</p>
                   </div>
-                  <AlertTriangle className="w-8 h-8 text-red-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
 
-          {/* KPI分類別統計 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <Target className="w-5 h-5 mr-2 text-blue-600" />
-                  個人KPI
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-600">{dashboardStats.personal_kpis}</p>
-                  <p className="text-sm text-gray-600 mt-1">設定済み</p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <Building className="w-5 h-5 mr-2 text-purple-600" />
+                    KGI
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-purple-600">{dashboardStats.kgis}</p>
+                    <p className="text-sm text-gray-600 mt-1">設定済み</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <Users className="w-5 h-5 mr-2 text-green-600" />
-                  チームKPI
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-green-600">{dashboardStats.team_kpis}</p>
-                  <p className="text-sm text-gray-600 mt-1">設定済み</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <Building className="w-5 h-5 mr-2 text-purple-600" />
-                  KGI
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-purple-600">{dashboardStats.kgis}</p>
-                  <p className="text-sm text-gray-600 mt-1">設定済み</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* 期限・パフォーマンス アラート */}
-          {(dashboardStats.overdue_count > 0 || dashboardStats.due_soon_count > 0 || dashboardStats.critical_at_risk > 0) && (
-            <Card className="border-red-200">
-              <CardHeader>
-                <CardTitle className="text-lg text-red-700 flex items-center">
-                  <AlertTriangle className="w-5 h-5 mr-2" />
-                  アラート
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {dashboardStats.overdue_count > 0 && (
-                    <div className="bg-red-50 p-4 rounded-lg">
-                      <p className="font-semibold text-red-800">期限切れ</p>
-                      <p className="text-2xl font-bold text-red-600">{dashboardStats.overdue_count}</p>
-                      <p className="text-sm text-red-600">件のKPIが期限切れです</p>
-                    </div>
-                  )}
-                  {dashboardStats.due_soon_count > 0 && (
-                    <div className="bg-yellow-50 p-4 rounded-lg">
-                      <p className="font-semibold text-yellow-800">期限間近</p>
-                      <p className="text-2xl font-bold text-yellow-600">{dashboardStats.due_soon_count}</p>
-                      <p className="text-sm text-yellow-600">件のKPIが期限間近です</p>
-                    </div>
-                  )}
-                  {dashboardStats.critical_at_risk > 0 && (
-                    <div className="bg-red-50 p-4 rounded-lg">
-                      <p className="font-semibold text-red-800">緊急対応必要</p>
-                      <p className="text-2xl font-bold text-red-600">{dashboardStats.critical_at_risk}</p>
-                      <p className="text-sm text-red-600">件の重要KPIがリスク状態です</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+            {/* 期限・パフォーマンス アラート */}
+            {(dashboardStats.overdue_count > 0 || dashboardStats.due_soon_count > 0 || dashboardStats.critical_at_risk > 0) && (
+              <Card className="border-red-200">
+                <CardHeader>
+                  <CardTitle className="text-lg text-red-700 flex items-center">
+                    <AlertTriangle className="w-5 h-5 mr-2" />
+                    アラート
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {dashboardStats.overdue_count > 0 && (
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <p className="font-semibold text-red-800">期限切れ</p>
+                        <p className="text-2xl font-bold text-red-600">{dashboardStats.overdue_count}</p>
+                        <p className="text-sm text-red-600">件のKPIが期限切れです</p>
+                      </div>
+                    )}
+                    {dashboardStats.due_soon_count > 0 && (
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <p className="font-semibold text-yellow-800">期限間近</p>
+                        <p className="text-2xl font-bold text-yellow-600">{dashboardStats.due_soon_count}</p>
+                        <p className="text-sm text-yellow-600">件のKPIが期限間近です</p>
+                      </div>
+                    )}
+                    {dashboardStats.critical_at_risk > 0 && (
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <p className="font-semibold text-red-800">緊急対応必要</p>
+                        <p className="text-2xl font-bold text-red-600">{dashboardStats.critical_at_risk}</p>
+                        <p className="text-sm text-red-600">件の重要KPIがリスク状態です</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
 
         {/* 個人KPIタブ */}
         <TabsContent value="personal" className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">個人KPI管理</h3>
-            <Dialog open={showCreateTargetDialog} onOpenChange={setShowCreateTargetDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  新しい目標設定
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>個人KPI目標を設定</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="target_indicator">KPI指標 *</Label>
-                      <Select
-                        value={newTarget.indicator_id}
-                        onValueChange={(value) => setNewTarget({ ...newTarget, indicator_id: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="指標を選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {indicators
-                            .filter(i => i.indicator_type === 'personal_kpi')
-                            .map((indicator) => (
-                              <SelectItem key={indicator.id} value={indicator.id}>
-                                {indicator.indicator_name} ({indicator.measurement_unit})
+            {isExecutive && (
+              <Dialog open={showCreateTargetDialog} onOpenChange={setShowCreateTargetDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    新しい目標設定
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>個人KPI目標を設定</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="target_indicator">KPI指標 *</Label>
+                        <Select
+                          value={newTarget.indicator_id}
+                          onValueChange={(value) => setNewTarget({ ...newTarget, indicator_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="指標を選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {indicators
+                              .filter(i => i.indicator_type === 'personal_kpi')
+                              .map((indicator) => (
+                                <SelectItem key={indicator.id} value={indicator.id}>
+                                  {indicator.indicator_name} ({indicator.measurement_unit})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="target_member">担当者 *</Label>
+                        <Select
+                          value={newTarget.assigned_member_id}
+                          onValueChange={(value) => setNewTarget({ ...newTarget, assigned_member_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="担当者を選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {members.map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                {member.name} ({member.department})
                               </SelectItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="target_member">担当者 *</Label>
-                      <Select
-                        value={newTarget.assigned_member_id}
-                        onValueChange={(value) => setNewTarget({ ...newTarget, assigned_member_id: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="担当者を選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {members.map((member) => (
-                            <SelectItem key={member.id} value={member.id}>
-                              {member.name} ({member.department})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="target_value">目標値 *</Label>
+                        <Input
+                          id="target_value"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newTarget.target_value}
+                          onChange={(e) => setNewTarget({ ...newTarget, target_value: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="baseline_value">ベースライン値</Label>
+                        <Input
+                          id="baseline_value"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newTarget.baseline_value}
+                          onChange={(e) => setNewTarget({ ...newTarget, baseline_value: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="priority">優先度</Label>
+                        <Select
+                          value={newTarget.priority}
+                          onValueChange={(value: 'low' | 'medium' | 'high' | 'critical') => 
+                            setNewTarget({ ...newTarget, priority: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">低</SelectItem>
+                            <SelectItem value="medium">中</SelectItem>
+                            <SelectItem value="high">高</SelectItem>
+                            <SelectItem value="critical">緊急</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="start_date">開始日 *</Label>
+                        <Input
+                          id="start_date"
+                          type="date"
+                          value={newTarget.start_date}
+                          onChange={(e) => setNewTarget({ ...newTarget, start_date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="end_date">終了日 *</Label>
+                        <Input
+                          id="end_date"
+                          type="date"
+                          value={newTarget.end_date}
+                          onChange={(e) => setNewTarget({ ...newTarget, end_date: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
                     <div>
-                      <Label htmlFor="target_value">目標値 *</Label>
-                      <Input
-                        id="target_value"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={newTarget.target_value}
-                        onChange={(e) => setNewTarget({ ...newTarget, target_value: parseFloat(e.target.value) || 0 })}
+                      <Label htmlFor="notes">備考</Label>
+                      <Textarea
+                        id="notes"
+                        value={newTarget.notes}
+                        onChange={(e) => setNewTarget({ ...newTarget, notes: e.target.value })}
+                        placeholder="目標に関する備考"
+                        rows={3}
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="baseline_value">ベースライン値</Label>
-                      <Input
-                        id="baseline_value"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={newTarget.baseline_value}
-                        onChange={(e) => setNewTarget({ ...newTarget, baseline_value: parseFloat(e.target.value) || 0 })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="priority">優先度</Label>
-                      <Select
-                        value={newTarget.priority}
-                        onValueChange={(value: 'low' | 'medium' | 'high' | 'critical') => 
-                          setNewTarget({ ...newTarget, priority: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">低</SelectItem>
-                          <SelectItem value="medium">中</SelectItem>
-                          <SelectItem value="high">高</SelectItem>
-                          <SelectItem value="critical">緊急</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="start_date">開始日 *</Label>
-                      <Input
-                        id="start_date"
-                        type="date"
-                        value={newTarget.start_date}
-                        onChange={(e) => setNewTarget({ ...newTarget, start_date: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="end_date">終了日 *</Label>
-                      <Input
-                        id="end_date"
-                        type="date"
-                        value={newTarget.end_date}
-                        onChange={(e) => setNewTarget({ ...newTarget, end_date: e.target.value })}
-                      />
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setShowCreateTargetDialog(false)}>
+                        キャンセル
+                      </Button>
+                      <Button onClick={handleCreateTarget} disabled={isLoading}>
+                        {isLoading ? '設定中...' : '設定'}
+                      </Button>
                     </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor="notes">備考</Label>
-                    <Textarea
-                      id="notes"
-                      value={newTarget.notes}
-                      onChange={(e) => setNewTarget({ ...newTarget, notes: e.target.value })}
-                      placeholder="目標に関する備考"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setShowCreateTargetDialog(false)}>
-                      キャンセル
-                    </Button>
-                    <Button onClick={handleCreateTarget} disabled={isLoading}>
-                      {isLoading ? '設定中...' : '設定'}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           {/* 個人KPI一覧テーブル */}
@@ -1101,10 +1123,12 @@ const KPIManager: React.FC = () => {
         <TabsContent value="team" className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">チームKPI管理</h3>
-            <Button onClick={() => setShowCreateTargetDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              新しい目標設定
-            </Button>
+            {isExecutive && (
+              <Button onClick={() => setShowCreateTargetDialog(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                新しい目標設定
+              </Button>
+            )}
           </div>
 
           <Card>
@@ -1189,97 +1213,99 @@ const KPIManager: React.FC = () => {
         </TabsContent>
 
         {/* KGIタブ */}
-        <TabsContent value="kgi" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">KGI（重要目標達成指標）管理</h3>
-            <Button onClick={() => setShowCreateTargetDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              新しい目標設定
-            </Button>
-          </div>
+        {isExecutive && (
+          <TabsContent value="kgi" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">KGI（重要目標達成指標）管理</h3>
+              <Button onClick={() => setShowCreateTargetDialog(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                新しい目標設定
+              </Button>
+            </div>
 
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>指標名</TableHead>
-                    <TableHead>カテゴリ</TableHead>
-                    <TableHead>目標値</TableHead>
-                    <TableHead>現在値</TableHead>
-                    <TableHead>達成率</TableHead>
-                    <TableHead>ステータス</TableHead>
-                    <TableHead>優先度</TableHead>
-                    <TableHead>期限</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {targets
-                    .filter(t => t.indicator_type === 'kgi')
-                    .map((target) => (
-                      <TableRow key={target.id}>
-                        <TableCell className="font-medium">{target.indicator_name}</TableCell>
-                        <TableCell>
-                          {indicators.find(i => i.id === target.indicator_id)?.category || 'N/A'}
-                        </TableCell>
-                        <TableCell>{target.target_value}</TableCell>
-                        <TableCell>{target.current_value}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
-                            <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
-                            {getPerformanceIcon(target.performance_status)}
-                            <span>{target.performance_status}</span>
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getPriorityColor(target.priority)}>
-                            {target.priority}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
-                            {target.timeline_status === 'overdue' && (
-                              <Badge variant="destructive" className="text-xs">期限切れ</Badge>
-                            )}
-                            {target.timeline_status === 'due_soon' && (
-                              <Badge variant="outline" className="text-xs">期限間近</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedTargetForProgress(target);
-                              setNewProgress({ ...newProgress, recorded_value: target.current_value });
-                              setShowProgressDialog(true);
-                            }}
-                          >
-                            進捗記録
-                          </Button>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>指標名</TableHead>
+                      <TableHead>カテゴリ</TableHead>
+                      <TableHead>目標値</TableHead>
+                      <TableHead>現在値</TableHead>
+                      <TableHead>達成率</TableHead>
+                      <TableHead>ステータス</TableHead>
+                      <TableHead>優先度</TableHead>
+                      <TableHead>期限</TableHead>
+                      <TableHead>操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {targets
+                      .filter(t => t.indicator_type === 'kgi')
+                      .map((target) => (
+                        <TableRow key={target.id}>
+                          <TableCell className="font-medium">{target.indicator_name}</TableCell>
+                          <TableCell>
+                            {indicators.find(i => i.id === target.indicator_id)?.category || 'N/A'}
+                          </TableCell>
+                          <TableCell>{target.target_value}</TableCell>
+                          <TableCell>{target.current_value}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
+                              <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
+                              {getPerformanceIcon(target.performance_status)}
+                              <span>{target.performance_status}</span>
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getPriorityColor(target.priority)}>
+                              {target.priority}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
+                              {target.timeline_status === 'overdue' && (
+                                <Badge variant="destructive" className="text-xs">期限切れ</Badge>
+                              )}
+                              {target.timeline_status === 'due_soon' && (
+                                <Badge variant="outline" className="text-xs">期限間近</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedTargetForProgress(target);
+                                setNewProgress({ ...newProgress, recorded_value: target.current_value });
+                                setShowProgressDialog(true);
+                              }}
+                            >
+                              進捗記録
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {targets.filter(t => t.indicator_type === 'kgi').length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                          KGIが設定されていません
                         </TableCell>
                       </TableRow>
-                    ))}
-                  {targets.filter(t => t.indicator_type === 'kgi').length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                        KGIが設定されていません
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* 進捗記録ダイアログ */}

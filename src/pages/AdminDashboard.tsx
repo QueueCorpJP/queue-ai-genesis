@@ -1024,7 +1024,8 @@ const AdminDashboard: React.FC = () => {
                       <span>販管費</span>
                     </TabsTrigger>
                   )}
-                  {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+                  {(user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+                   (user?.role && ['member', 'employee'].includes(user.role)) ? (
                     <TabsTrigger 
                       value="kpi" 
                       className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
@@ -1032,7 +1033,7 @@ const AdminDashboard: React.FC = () => {
                       <Target className="w-4 h-4" />
                       <span>KPI/KGI</span>
                     </TabsTrigger>
-                  )}
+                  ) : null}
                   {user?.email === 'queue@queue-tech.jp' && (
                     <TabsTrigger 
                       value="payroll" 
@@ -1322,7 +1323,8 @@ const AdminDashboard: React.FC = () => {
             </TabsContent>
           )}
 
-          {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+          {((user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+            (user?.role && ['member', 'employee'].includes(user.role))) && (
             <TabsContent value="kpi">
               <KPIManager />
             </TabsContent>

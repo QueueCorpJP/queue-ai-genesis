@@ -6,6 +6,8 @@ export interface AdminUser {
   email: string;
   name?: string;
   role?: 'employee' | 'executive';
+  department?: string;
+  position?: string;
   isAuthenticated: boolean;
   lastActivity: number;
 }
@@ -190,6 +192,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         email: member.email,
         name: member.name,
         role: member.role as 'employee' | 'executive',
+        department: member.department,
+        position: member.position,
         isAuthenticated: true,
         lastActivity: Date.now()
       };
