@@ -1,5 +1,6 @@
--- 企業スケジュール管理システムのマイグレーション
+-- 企業スケジュール管理システムのマイグレーション（修正版）
 -- 役員による全社スケジュール管理機能
+-- IMMUTABLE関数エラー対応済み
 
 -- 1. company_schedules テーブルの作成
 CREATE TABLE IF NOT EXISTS company_schedules (
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS company_schedules (
     )
 );
 
--- 2. インデックスの作成
+-- 2. インデックスの作成（IMMUTABLE関数エラー対応）
 CREATE INDEX IF NOT EXISTS idx_company_schedules_start_date ON company_schedules(start_date);
 CREATE INDEX IF NOT EXISTS idx_company_schedules_end_date ON company_schedules(end_date);
 CREATE INDEX IF NOT EXISTS idx_company_schedules_date_range ON company_schedules(start_date, end_date);
@@ -58,7 +59,7 @@ CREATE TRIGGER update_company_schedules_updated_at
 -- 4. Row Level Security (RLS) を有効化
 ALTER TABLE company_schedules ENABLE ROW LEVEL SECURITY;
 
--- 5. RLSポリシーの作成
+-- 5. RLSポリシーの作成（auth.email()使用）
 -- 役員は全ての操作が可能
 CREATE POLICY "役員は全てのスケジュール操作が可能" ON company_schedules
     FOR ALL
@@ -130,7 +131,7 @@ LEFT JOIN members creator ON cs.created_by = creator.id
 WHERE cs.is_active = true
 ORDER BY cs.start_date, cs.start_time;
 
--- 6.2 今後のスケジュールビュー（7日間）
+-- 6.2 今後のスケジュールビュー
 CREATE OR REPLACE VIEW upcoming_schedule_view AS
 SELECT 
     cs.*,
@@ -320,7 +321,7 @@ BEGIN
             '#EF4444',
             'high',
             admin_id
-        );
+        ) ON CONFLICT DO NOTHING;
         
         -- ゴールデンウィーク
         INSERT INTO company_schedules (title, description, schedule_type, start_date, end_date, is_all_day, is_holiday, color, priority, created_by)
@@ -335,15 +336,15 @@ BEGIN
             '#EF4444',
             'high',
             admin_id
-        );
+        ) ON CONFLICT DO NOTHING;
         
-        -- 定期ミーティング
+        -- 定期ミーティング（近日予定として追加）
         INSERT INTO company_schedules (title, description, schedule_type, start_date, start_time, end_time, is_all_day, location, color, priority, created_by)
         VALUES (
             '全体会議',
             '月次の全社会議です',
             'meeting',
-            '2025-08-15',
+            CURRENT_DATE + INTERVAL '7 days',
             '10:00',
             '11:30',
             false,
@@ -351,15 +352,15 @@ BEGIN
             '#3B82F6',
             'high',
             admin_id
-        );
+        ) ON CONFLICT DO NOTHING;
         
-        -- 研修
+        -- 研修（近日予定として追加）
         INSERT INTO company_schedules (title, description, schedule_type, start_date, start_time, end_time, is_all_day, location, color, priority, created_by)
         VALUES (
             'AI技術研修',
             '最新のAI技術に関する研修',
             'training',
-            '2025-08-20',
+            CURRENT_DATE + INTERVAL '14 days',
             '13:00',
             '17:00',
             false,
@@ -367,7 +368,23 @@ BEGIN
             '#10B981',
             'medium',
             admin_id
-        );
+        ) ON CONFLICT DO NOTHING;
+        
+        -- 今日の予定
+        INSERT INTO company_schedules (title, description, schedule_type, start_date, start_time, end_time, is_all_day, location, color, priority, created_by)
+        VALUES (
+            'プロジェクト締切',
+            '重要なプロジェクトの締切日です',
+            'deadline',
+            CURRENT_DATE,
+            '17:00',
+            '18:00',
+            false,
+            'オフィス',
+            '#F59E0B',
+            'high',
+            admin_id
+        ) ON CONFLICT DO NOTHING;
     END IF;
 END $$;
 
