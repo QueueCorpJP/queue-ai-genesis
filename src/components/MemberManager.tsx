@@ -188,6 +188,9 @@ const MemberManager: React.FC = () => {
 
       const hashedPassword = data;
 
+      // created_byを一時的にnullにする（後で修正予定）
+      const createdById = null;
+
       const { error: insertError } = await supabase
         .from('members')
         .insert({
@@ -198,24 +201,32 @@ const MemberManager: React.FC = () => {
           department: formData.department || null,
           position: formData.position || null,
           phone: formData.phone || null,
-          created_by: user?.id // 現在ログイン中の役員のID
+          created_by: createdById
         });
 
       if (insertError) throw insertError;
 
       // アクティビティログ記録
-      await supabase
-        .from('member_activity_logs')
-        .insert({
-          member_id: (await supabase.from('members').select('id').eq('email', formData.email).single()).data?.id,
-          action: 'created',
-          details: {
-            role: formData.role,
-            department: formData.department,
-            position: formData.position
-          },
-          performed_by: user?.id
-        });
+      const { data: newMember } = await supabase
+        .from('members')
+        .select('id')
+        .eq('email', formData.email)
+        .single();
+
+      if (newMember) {
+        await supabase
+          .from('member_activity_logs')
+          .insert({
+            member_id: newMember.id,
+            action: 'created',
+            details: {
+              role: formData.role,
+              department: formData.department,
+              position: formData.position
+            },
+            performed_by: createdById
+          });
+      }
 
       toast.success('メンバーを作成しました');
       setCreateDialogOpen(false);
@@ -243,6 +254,9 @@ const MemberManager: React.FC = () => {
 
       if (error) throw error;
 
+      // performed_byを一時的にnullにする（後で修正予定）
+      const performedById = null;
+
       // アクティビティログ記録
       await supabase
         .from('member_activity_logs')
@@ -253,7 +267,7 @@ const MemberManager: React.FC = () => {
             previous_status: member.is_active,
             new_status: newStatus
           },
-          performed_by: user?.id
+          performed_by: performedById
         });
 
       toast.success(`メンバーを${newStatus ? '有効' : '無効'}にしました`);

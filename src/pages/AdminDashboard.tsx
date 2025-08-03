@@ -19,8 +19,19 @@ import {
   Menu,
   X,
   MousePointer,
-  Users
+  Users,
+  ChevronDown,
+  TrendingUp,
+  UserCheck,
+  Target,
+  ClipboardList
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
@@ -33,6 +44,8 @@ import ChatbotManager from '@/components/ChatbotManager';
 import CTAAnalytics from '@/components/CTAAnalytics';
 import ReadingTimeAnalytics from '@/components/ReadingTimeAnalytics';
 import MemberManager from '@/components/MemberManager';
+import TodoManager from '@/components/TodoManager';
+import TodoProgress from '@/components/TodoProgress';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -482,88 +495,117 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-          {/* Desktop & Tablet Tabs */}
-          <div className="hidden sm:block">
-            <TabsList className="bg-white border border-gray-200 rounded-lg p-1 overflow-x-auto h-auto flex justify-start w-full">
-              <div className="flex space-x-1 min-w-max">
-                <TabsTrigger 
-                  value="overview" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <Home className="w-4 h-4" />
-                  <span>概要</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="analytics" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  <span>分析</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="cta-analytics" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <MousePointer className="w-4 h-4" />
-                  <span>CTA分析</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="reading-analytics" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>閲覧時間分析</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="consultations" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>相談申込</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="contacts" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <Phone className="w-4 h-4" />
-                  <span>お問い合わせ</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="chatbot" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>チャットボット</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="news" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <Newspaper className="w-4 h-4" />
-                  <span>ブログ</span>
-                </TabsTrigger>
-                {user?.email === 'queue@queue-tech.jp' && (
+          {/* Desktop Tabs */}
+          <div className="hidden md:block">
+            <div className="bg-white border border-gray-200 rounded-lg p-1">
+              <div className="flex space-x-1 items-center overflow-x-auto">
+                <TabsList className="bg-transparent h-auto p-0 flex-shrink-0">
                   <TabsTrigger 
-                    value="members" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
+                    value="overview" 
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
                   >
-                    <Users className="w-4 h-4" />
-                    <span>メンバー作成</span>
+                    <Home className="w-4 h-4" />
+                    <span>概要</span>
                   </TabsTrigger>
-                )}
-                <TabsTrigger 
-                  value="settings" 
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 hover:bg-gray-100"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span>設定</span>
-                </TabsTrigger>
+                  <TabsTrigger 
+                    value="todos" 
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                  >
+                    <Target className="w-4 h-4" />
+                    <span>Todo</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="news" 
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                  >
+                    <Newspaper className="w-4 h-4" />
+                    <span>ブログ</span>
+                  </TabsTrigger>
+                  {user?.email === 'queue@queue-tech.jp' && (
+                    <TabsTrigger 
+                      value="members" 
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                    >
+                      <Users className="w-4 h-4" />
+                      <span>メンバー</span>
+                    </TabsTrigger>
+                  )}
+                  <TabsTrigger 
+                    value="settings" 
+                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>設定</span>
+                  </TabsTrigger>
+                </TabsList>
+                
+                {/* Analytics Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant={activeTab.includes('analytics') ? 'default' : 'ghost'} 
+                      className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      <span>分析</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => setActiveTab('analytics')}>
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      基本分析
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('cta-analytics')}>
+                      <MousePointer className="w-4 h-4 mr-2" />
+                      CTA分析
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('reading-analytics')}>
+                      <Clock className="w-4 h-4 mr-2" />
+                      閲覧時間分析
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Management Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant={['consultations', 'contacts', 'chatbot', 'todo-progress'].includes(activeTab) ? 'default' : 'ghost'} 
+                      className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>顧客管理</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => setActiveTab('consultations')}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      相談申込
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('contacts')}>
+                      <Phone className="w-4 h-4 mr-2" />
+                      お問い合わせ
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('chatbot')}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      チャットボット
+                    </DropdownMenuItem>
+                    {user?.email === 'queue@queue-tech.jp' && (
+                      <DropdownMenuItem onClick={() => setActiveTab('todo-progress')}>
+                        <ClipboardList className="w-4 h-4 mr-2" />
+                        Todo進捗
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </TabsList>
+            </div>
           </div>
 
           {/* Mobile Tab Selector */}
-          <div className="sm:hidden">
+          <div className="md:hidden">
             <Button
               variant="outline"
               className="w-full justify-between"
@@ -578,35 +620,101 @@ const AdminDashboard: React.FC = () => {
             
             {mobileMenuOpen && (
               <div className="mt-2 bg-white rounded-lg shadow-lg border overflow-hidden">
-                {[
-                  { value: 'overview', icon: Home, label: '概要' },
-                  { value: 'analytics', icon: BarChart3, label: '分析' },
-                  { value: 'cta-analytics', icon: MousePointer, label: 'CTA分析' },
-                  { value: 'reading-analytics', icon: Clock, label: '閲覧時間分析' },
-                  { value: 'consultations', icon: MessageSquare, label: '相談申込' },
-                  { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
-                  { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
-                  { value: 'news', icon: Newspaper, label: 'ブログ' },
-                  ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'members', icon: Users, label: 'メンバー作成' }] : []),
-                  { value: 'settings', icon: Settings, label: '設定' }
-                ].map((tab) => (
-                  <button
-                    key={tab.value}
-                    onClick={() => {
-                      setActiveTab(tab.value);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
-                      activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                    }`}
-                  >
-                    <tab.icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+                <button
+                  onClick={() => {
+                    setActiveTab('overview');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
+                    activeTab === 'overview' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                  }`}
+                >
+                  <Home className="w-4 h-4" />
+                  <span>概要</span>
+                </button>
+                
+                {/* Analytics Submenu */}
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">分析・レポート</div>
+                  {[
+                    { value: 'analytics', icon: BarChart3, label: '基本分析' },
+                    { value: 'cta-analytics', icon: MousePointer, label: 'CTA分析' },
+                    { value: 'reading-analytics', icon: Clock, label: '閲覧時間分析' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Management Submenu */}
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">顧客管理</div>
+                  {[
+                    { value: 'consultations', icon: MessageSquare, label: '相談申込' },
+                    { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
+                    { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
+                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'todo-progress', icon: ClipboardList, label: 'Todo進捗' }] : [])
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="border-t border-gray-100">
+                  {[
+                    { value: 'todos', icon: Target, label: 'Todo' },
+                    { value: 'news', icon: Newspaper, label: 'ブログ管理' },
+                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
+                    { value: 'settings', icon: Settings, label: '設定' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
+
+          <TabsContent value="todos">
+            <TodoManager />
+          </TabsContent>
+
+          <TabsContent value="todo-progress">
+            <TodoProgress />
+          </TabsContent>
 
           <TabsContent value="overview" className="space-y-4 md:space-y-6">
             {/* 統計カード */}
@@ -765,6 +873,8 @@ const AdminDashboard: React.FC = () => {
 const getTabIcon = (tab: string) => {
   const icons = {
     overview: <Home className="w-4 h-4" />,
+    todos: <Target className="w-4 h-4" />,
+    'todo-progress': <ClipboardList className="w-4 h-4" />,
     analytics: <BarChart3 className="w-4 h-4" />,
     'cta-analytics': <MousePointer className="w-4 h-4" />,
     'reading-analytics': <Clock className="w-4 h-4" />,
@@ -781,14 +891,16 @@ const getTabIcon = (tab: string) => {
 const getTabLabel = (tab: string) => {
   const labels = {
     overview: '概要',
-    analytics: '分析',
+    todos: 'Todo',
+    'todo-progress': 'Todo進捗',
+    analytics: '基本分析',
     'cta-analytics': 'CTA分析',
     'reading-analytics': '閲覧時間分析',
     consultations: '相談申込',
     contacts: 'お問い合わせ',
     chatbot: 'チャットボット',
     news: 'ブログ',
-    members: 'メンバー作成',
+    members: 'メンバー',
     settings: '設定'
   };
   return labels[tab as keyof typeof labels] || '概要';

@@ -4,57 +4,59 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
 
+// Global instance store to prevent multiple instances
+declare global {
+  var __supabase_instance: any;
+}
+
 // Prevent multiple instances with development-safe singleton
-const getSupabaseInstance = (() => {
-  let instance: any = null;
-  
-  return () => {
-    if (!instance) {
-      instance = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: false, // Disable URL detection to prevent conflicts
-          storageKey: 'queue-supabase-auth-token',
-          storage: window?.localStorage
-        },
-        db: {
-          schema: 'public'
-        },
-        global: {
-          headers: { 'x-application-name': 'queue-lp' }
-        }
-      });
-    }
-    return instance;
-  };
-})();
+const getSupabaseInstance = () => {
+  if (typeof window !== 'undefined' && !globalThis.__supabase_instance) {
+    globalThis.__supabase_instance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+        storageKey: 'queue-supabase-auth-token',
+        storage: window.localStorage
+      },
+      db: {
+        schema: 'public'
+      },
+      global: {
+        headers: { 'x-application-name': 'queue-lp' }
+      }
+    });
+  }
+  return globalThis.__supabase_instance;
+};
 
 export const supabase = getSupabaseInstance();
 
+// Global admin instance store
+declare global {
+  var __supabase_admin_instance: any;
+}
+
 // Admin client with service role key (bypasses RLS)
-const getSupabaseAdminInstance = (() => {
-  let adminInstance: any = null;
-  
-  return () => {
-    if (!adminInstance) {
-      adminInstance = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-          storageKey: 'queue-supabase-admin-auth-token'
-        },
-        db: {
-          schema: 'public'
-        },
-        global: {
-          headers: { 'x-application-name': 'queue-lp-admin' }
-        }
-      });
-    }
-    return adminInstance;
-  };
-})();
+const getSupabaseAdminInstance = () => {
+  if (typeof window !== 'undefined' && !globalThis.__supabase_admin_instance) {
+    globalThis.__supabase_admin_instance = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        storageKey: 'queue-supabase-admin-auth-token'
+      },
+      db: {
+        schema: 'public'
+      },
+      global: {
+        headers: { 'x-application-name': 'queue-lp-admin' }
+      }
+    });
+  }
+  return globalThis.__supabase_admin_instance;
+};
 
 export const supabaseAdmin = getSupabaseAdminInstance();
 

@@ -512,9 +512,9 @@ const ReadingTimeAnalytics: React.FC = () => {
                   <tbody>
                     {detailedSessions.map((session) => (
                       <tr key={session.id} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-mono text-xs">{session.session_id.slice(-8)}</td>
-                        <td className="p-2 max-w-xs truncate">{session.article_title}</td>
-                        <td className="p-2 font-mono text-xs">{session.ip_address}</td>
+                        <td className="p-2 font-mono text-xs">{session.session_id ? session.session_id.slice(-8) : 'N/A'}</td>
+                        <td className="p-2 max-w-xs truncate">{session.article_title || 'タイトルなし'}</td>
+                        <td className="p-2 font-mono text-xs">{session.ip_address || 'N/A'}</td>
                         <td className="p-2">{formatDate(session.view_start_time)}</td>
                         <td className="p-2">{formatDuration(session.reading_duration_seconds)}</td>
                         <td className="p-2">
