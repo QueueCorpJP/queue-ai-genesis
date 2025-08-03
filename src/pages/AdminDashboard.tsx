@@ -490,6 +490,19 @@ const AdminDashboard: React.FC = () => {
           }
         } catch (kpiError) {
           console.error('Error fetching KPI stats:', kpiError);
+          // エラー時は明確にデフォルト値を保持
+          kpiStats = {
+            totalKPIs: 0,
+            achievedKPIs: 0,
+            onTrackKPIs: 0,
+            atRiskKPIs: 0,
+            averageAchievementRate: 0,
+            personalKPIs: 0,
+            teamKPIs: 0,
+            kgis: 0,
+            criticalAtRiskKPIs: 0,
+            overdueKPIs: 0
+          };
         }
       }
 

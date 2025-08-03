@@ -739,12 +739,12 @@ const KPIManager: React.FC = () => {
                     <p className="text-sm font-medium text-gray-600">平均達成率</p>
                     <div className="flex items-center space-x-2">
                       <p className="text-2xl font-bold text-gray-900">
-                        {dashboardStats.current_month_avg_rate.toFixed(1)}%
+                        {(dashboardStats.current_month_avg_rate || 0).toFixed(1)}%
                       </p>
                       {dashboardStats.rate_change_from_previous !== 0 && (
                         <Badge variant={dashboardStats.rate_change_from_previous > 0 ? "default" : "destructive"}>
                           {dashboardStats.rate_change_from_previous > 0 ? '+' : ''}
-                          {dashboardStats.rate_change_from_previous.toFixed(1)}%
+                          {(dashboardStats.rate_change_from_previous || 0).toFixed(1)}%
                         </Badge>
                       )}
                     </div>
@@ -1041,8 +1041,8 @@ const KPIManager: React.FC = () => {
                         <TableCell>{target.current_value}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Progress value={Math.min(target.achievement_rate, 100)} className="w-16" />
-                            <span className="text-sm">{target.achievement_rate.toFixed(1)}%</span>
+                            <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
+                            <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1134,8 +1134,8 @@ const KPIManager: React.FC = () => {
                         <TableCell>{target.current_value}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Progress value={Math.min(target.achievement_rate, 100)} className="w-16" />
-                            <span className="text-sm">{target.achievement_rate.toFixed(1)}%</span>
+                            <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
+                            <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1227,8 +1227,8 @@ const KPIManager: React.FC = () => {
                         <TableCell>{target.current_value}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Progress value={Math.min(target.achievement_rate, 100)} className="w-16" />
-                            <span className="text-sm">{target.achievement_rate.toFixed(1)}%</span>
+                            <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
+                            <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1295,7 +1295,7 @@ const KPIManager: React.FC = () => {
                 <p className="text-sm text-gray-600">
                   目標値: {selectedTargetForProgress.target_value} | 
                   現在値: {selectedTargetForProgress.current_value} | 
-                  達成率: {selectedTargetForProgress.achievement_rate.toFixed(1)}%
+                  達成率: {(selectedTargetForProgress.achievement_rate || 0).toFixed(1)}%
                 </p>
               </div>
 
