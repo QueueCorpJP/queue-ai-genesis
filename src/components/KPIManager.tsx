@@ -1069,8 +1069,8 @@ const KPIManager: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
-                            {getPerformanceIcon(target.performance_status)}
-                            <span>{target.performance_status}</span>
+                            <span key="icon">{getPerformanceIcon(target.performance_status)}</span>
+                            <span key="text">{target.performance_status}</span>
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -1082,10 +1082,10 @@ const KPIManager: React.FC = () => {
                           <div className="text-sm">
                             <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
                             {target.timeline_status === 'overdue' && (
-                              <Badge variant="destructive" className="text-xs">期限切れ</Badge>
+                              <Badge key="overdue-badge" variant="destructive" className="text-xs">期限切れ</Badge>
                             )}
                             {target.timeline_status === 'due_soon' && (
-                              <Badge variant="outline" className="text-xs">期限間近</Badge>
+                              <Badge key="due-soon-badge" variant="outline" className="text-xs">期限間近</Badge>
                             )}
                           </div>
                         </TableCell>
@@ -1164,8 +1164,8 @@ const KPIManager: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
-                            {getPerformanceIcon(target.performance_status)}
-                            <span>{target.performance_status}</span>
+                            <span key="team-icon">{getPerformanceIcon(target.performance_status)}</span>
+                            <span key="team-text">{target.performance_status}</span>
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -1177,10 +1177,10 @@ const KPIManager: React.FC = () => {
                           <div className="text-sm">
                             <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
                             {target.timeline_status === 'overdue' && (
-                              <Badge variant="destructive" className="text-xs">期限切れ</Badge>
+                              <Badge key="team-overdue-badge" variant="destructive" className="text-xs">期限切れ</Badge>
                             )}
                             {target.timeline_status === 'due_soon' && (
-                              <Badge variant="outline" className="text-xs">期限間近</Badge>
+                              <Badge key="team-due-soon-badge" variant="outline" className="text-xs">期限間近</Badge>
                             )}
                           </div>
                         </TableCell>
@@ -1258,8 +1258,8 @@ const KPIManager: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
-                              {getPerformanceIcon(target.performance_status)}
-                              <span>{target.performance_status}</span>
+                              <span key="kgi-icon">{getPerformanceIcon(target.performance_status)}</span>
+                              <span key="kgi-text">{target.performance_status}</span>
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -1271,10 +1271,10 @@ const KPIManager: React.FC = () => {
                             <div className="text-sm">
                               <p>{new Date(target.end_date).toLocaleDateString('ja-JP')}</p>
                               {target.timeline_status === 'overdue' && (
-                                <Badge variant="destructive" className="text-xs">期限切れ</Badge>
+                                <Badge key="kgi-overdue-badge" variant="destructive" className="text-xs">期限切れ</Badge>
                               )}
                               {target.timeline_status === 'due_soon' && (
-                                <Badge variant="outline" className="text-xs">期限間近</Badge>
+                                <Badge key="kgi-due-soon-badge" variant="outline" className="text-xs">期限間近</Badge>
                               )}
                             </div>
                           </TableCell>
