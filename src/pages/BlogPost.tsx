@@ -230,9 +230,9 @@ const BlogPost: React.FC = () => {
       
       <Navbar />
       
-      <main className="flex-1 relative">
+      <main className="flex-1 relative pt-20 md:pt-24">
         {/* Breadcrumb */}
-        <section className="bg-white border-b relative z-10">
+        <section className="bg-white border-b relative">
           <Container>
             <div className="max-w-4xl mx-auto py-4">
               <nav className="flex items-center space-x-2 text-sm text-gray-500" aria-label="パンくずナビゲーション">
@@ -246,7 +246,7 @@ const BlogPost: React.FC = () => {
           </Container>
         </section>
 
-        <section className="py-8 md:py-16 relative z-10">
+        <section className="py-8 md:py-16 relative">
           <Container>
             <div className="container max-w-4xl mx-auto px-4 py-6">
               <Button

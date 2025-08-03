@@ -193,7 +193,7 @@ const Blog: React.FC = () => {
       
       <Navbar />
       
-      <main className="flex-1">
+      <main className="flex-1 pt-20 md:pt-24">
         {/* Hero Section */}
         <section className="bg-white border-b">
           <Container>
