@@ -44,6 +44,45 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [summaryHistoryIndex, setSummaryHistoryIndex] = useState(-1);
 
+  // ハンドラー関数を先に定義
+  const insertConsultationLink = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill) {
+      const range = quill.getSelection(true);
+      const link = '<a href="/consultation" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; margin: 16px 0; transition: all 0.3s ease;"><span style="margin-right: 8px;">💬</span>無料相談を申し込む</a>';
+      quill.clipboard.dangerouslyPasteHTML(range.index, link);
+      quill.setSelection(range.index + link.length);
+    }
+  };
+
+  const handleContentUndo = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.undo();
+    }
+  };
+
+  const handleContentRedo = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.redo();
+    }
+  };
+
+  const handleSummaryUndo = () => {
+    const quill = summaryQuillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.undo();
+    }
+  };
+
+  const handleSummaryRedo = () => {
+    const quill = summaryQuillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.redo();
+    }
+  };
+
   // 本文用Quillツールバーの設定
   const contentModules = useMemo(() => ({
     toolbar: {
@@ -136,47 +175,6 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
       setImagePreview('');
     }
   }, [article]);
-
-  // 無料相談リンク挿入機能
-  function insertConsultationLink() {
-    const quill = quillRef.current?.getEditor();
-    if (quill) {
-      const range = quill.getSelection(true);
-      const link = '<a href="/consultation" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; margin: 16px 0; transition: all 0.3s ease;"><span style="margin-right: 8px;">💬</span>無料相談を申し込む</a>';
-      quill.clipboard.dangerouslyPasteHTML(range.index, link);
-      quill.setSelection(range.index + link.length);
-    }
-  }
-
-  // 本文の元に戻す機能
-  const handleContentUndo = () => {
-    const quill = quillRef.current?.getEditor();
-    if (quill && quill.history) {
-      quill.history.undo();
-    }
-  };
-
-  const handleContentRedo = () => {
-    const quill = quillRef.current?.getEditor();
-    if (quill && quill.history) {
-      quill.history.redo();
-    }
-  };
-
-  // 概要の元に戻す機能
-  const handleSummaryUndo = () => {
-    const quill = summaryQuillRef.current?.getEditor();
-    if (quill && quill.history) {
-      quill.history.undo();
-    }
-  };
-
-  const handleSummaryRedo = () => {
-    const quill = summaryQuillRef.current?.getEditor();
-    if (quill && quill.history) {
-      quill.history.redo();
-    }
-  };
 
   // Quillエディタの初期化後にカスタムボタンを追加
   useEffect(() => {
