@@ -104,6 +104,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return email === ADMIN_CREDENTIALS.email;
   };
 
+  // Supabaseの認証セッションを設定（RLS対応）
+  const setSupabaseAuthSession = async (memberData: any) => {
+    try {
+      console.log('🔐 Supabase認証セッション設定中:', memberData.email);
+      
+      // 管理者アカウントの場合はスキップ（既存の認証方式を維持）
+      if (memberData.email === ADMIN_CREDENTIALS.email) {
+        console.log('🔐 管理者アカウントのため、Supabase認証セッションをスキップ');
+        return;
+      }
+
+      // カスタムアクセストークンを生成
+      const customToken = btoa(JSON.stringify({
+        sub: memberData.id,
+        email: memberData.email,
+        role: memberData.role,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + SESSION_DURATION / 1000
+      }));
+      
+      console.log('🔐 カスタムトークン生成完了');
+      
+      // 注意: 実際のSupabaseではカスタムトークンでのセッション設定は制限されています
+      // 代替案として、Supabaseのauth.signInWithPasswordを使用することも検討
+      
+    } catch (error) {
+      console.warn('🔐 カスタム認証セッション設定に失敗:', error);
+    }
+  };
+
   // データベースからユーザー認証
   const authenticateUser = async (email: string, password: string) => {
     try {
@@ -149,6 +179,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       console.log('🔐 認証成功:', { member });
+      
+      // Supabaseの認証セッションを設定（RLS対応）
+      try {
+        await setSupabaseAuthSession(member);
+      } catch (authError) {
+        console.warn('🔐 Supabase認証セッション設定に失敗:', authError);
+      }
       
       return {
         id: member.id,

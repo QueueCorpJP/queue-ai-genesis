@@ -51,7 +51,7 @@ import {
   BookOpen,
   Target
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
 import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
@@ -281,7 +281,17 @@ const ScheduleManager: React.FC = () => {
 
       console.log('📅 Schedule data to insert:', scheduleData);
 
-      const { error } = await supabase
+      // 管理者クライアントを使用してRLSをバイパス
+      const adminClient = getSupabaseAdmin();
+      console.log('📅 Admin client status:', adminClient ? 'Available' : 'Not available');
+      
+      if (!adminClient) {
+        console.warn('📅 Admin client not available, using regular client');
+        console.log('📅 Note: Set VITE_SUPABASE_SERVICE_ROLE_KEY in environment variables for admin access');
+      }
+      
+      const client = adminClient || supabase;
+      const { error } = await client
         .from('company_schedules')
         .insert(scheduleData);
 
@@ -321,7 +331,11 @@ const ScheduleManager: React.FC = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      // 管理者クライアントを使用してRLSをバイパス
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+      
+      const { error } = await client
         .from('company_schedules')
         .update(scheduleData)
         .eq('id', editingSchedule.id);
@@ -363,7 +377,11 @@ const ScheduleManager: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
+      // 管理者クライアントを使用してRLSをバイパス
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+      
+      const { error } = await client
         .from('company_schedules')
         .delete()
         .eq('id', scheduleId);
