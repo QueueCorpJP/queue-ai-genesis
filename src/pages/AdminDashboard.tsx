@@ -872,6 +872,15 @@ const AdminDashboard: React.FC = () => {
                     <Calendar className="w-4 h-4" />
                     <span>スケジュール</span>
                   </TabsTrigger>
+                  {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+                    <TabsTrigger 
+                      value="expenses" 
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      <span>販管費</span>
+                    </TabsTrigger>
+                  )}
                   {user?.email === 'queue@queue-tech.jp' && (
                     <TabsTrigger 
                       value="payroll" 
