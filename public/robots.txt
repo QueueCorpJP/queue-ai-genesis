@@ -1,17 +1,69 @@
+# Robots.txt for Queue株式会社 (https://queue-tech.jp)
+# Generated: 2025-02-01
 
-# Allow all web crawlers to index the entire site
+# Allow all web crawlers to index the site
 User-agent: *
 Allow: /
 
-# Set the crawl-delay for Googlebot
+# Specific settings for Googlebot
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 1
 
-# Set the crawl-delay for Bingbot
+# Specific settings for Bingbot
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
 
-# Sitemap location
+# Specific settings for other major crawlers
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
+
+User-agent: DuckDuckBot
+Allow: /
+Crawl-delay: 1
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /.env
+Disallow: /build/
+Disallow: /src/
+Disallow: /node_modules/
+
+# Block common unwanted crawlers and bots
+User-agent: CCBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: ia_archiver
+Disallow: /
+
+# Allow search engine crawlers to access important resources
+Allow: /sitemap.xml
+Allow: /rss.xml
+Allow: /robots.txt
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.webp$
+Allow: /*.svg$
+
+# Sitemaps
 Sitemap: https://queue-tech.jp/sitemap.xml
+Sitemap: https://queue-tech.jp/news-sitemap.xml
+
+# RSS Feed
+# RSS: https://queue-tech.jp/rss.xml
+
+# Host (preferred domain)
+Host: https://queue-tech.jp

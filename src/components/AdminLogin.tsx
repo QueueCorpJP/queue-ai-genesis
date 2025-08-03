@@ -27,7 +27,6 @@ const AdminLogin: React.FC = () => {
   // 既にログイン済みの場合はダッシュボードにリダイレクト
   React.useEffect(() => {
     if (user?.isAuthenticated) {
-      console.log('User already authenticated, redirecting to dashboard');
       navigate('/admin/dashboard', { replace: true });
     }
   }, [user?.isAuthenticated, navigate]);

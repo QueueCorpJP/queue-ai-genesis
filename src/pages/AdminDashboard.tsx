@@ -30,6 +30,7 @@ import NewsManager from '@/components/NewsManager';
 import Analytics from '@/components/Analytics';
 import ChatbotManager from '@/components/ChatbotManager';
 import CTAAnalytics from '@/components/CTAAnalytics';
+import ReadingTimeAnalytics from '@/components/ReadingTimeAnalytics';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -72,23 +73,23 @@ const AdminDashboard: React.FC = () => {
 
   // 認証チェック（自動ログイン対応）
   useEffect(() => {
-    // ローディング中は認証チェックを待つ
     if (isLoading) {
-      console.log('AdminDashboard: Waiting for authentication check...');
       return;
     }
-    
+
     if (!user?.isAuthenticated) {
-      console.log('AdminDashboard: User not authenticated, redirecting to login');
-      navigate('/admin/login', { replace: true });
-    } else {
-      console.log('AdminDashboard: User authenticated as', user.email);
+      navigate('/admin');
+      return;
     }
+
+    loadDashboardData();
   }, [user?.isAuthenticated, isLoading, navigate]);
 
-  // データフェッチ関数をuseCallbackでメモ化
-  const fetchStats = useCallback(async () => {
+  const fetchStats = async () => {
     try {
+      setLoading(true);
+      
+      // 今日の件数
       const today = new Date().toISOString().split('T')[0];
       const todayStart = `${today}T00:00:00`;
       const todayEnd = `${today}T23:59:59`;
@@ -97,8 +98,6 @@ const AdminDashboard: React.FC = () => {
       thisMonth.setDate(1);
       thisMonth.setHours(0, 0, 0, 0);
       const monthStart = thisMonth.toISOString();
-
-      console.log('Fetching dashboard stats...');
 
       // 今日の件数
       const [
@@ -136,7 +135,6 @@ const AdminDashboard: React.FC = () => {
         publishedNews: publishedNews || 0
       };
 
-      console.log('Stats fetched:', newStats);
       setStats(newStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -151,14 +149,14 @@ const AdminDashboard: React.FC = () => {
         monthlyConsultations: 0,
         publishedNews: 0
       });
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
-  const fetchRecentActivities = useCallback(async () => {
+  const fetchRecentActivities = async () => {
     try {
       const activities: RecentActivity[] = [];
-
-      console.log('Fetching recent activities...');
 
       // 最新の相談申込を取得
       const { data: consultations, error: consultationsError } = await supabase
@@ -231,57 +229,28 @@ const AdminDashboard: React.FC = () => {
       // 時間順でソート
       activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       
-      console.log('Activities fetched:', activities.length);
       setActivities(activities.slice(0, 10));
     } catch (error) {
       console.error('Error fetching recent activities:', error);
       toast.error('アクティビティの取得に失敗しました');
       setActivities([]);
     }
-  }, []);
+  };
 
-  // 初回データフェッチを管理
-  useEffect(() => {
-    let mounted = true;
-
-    const loadDashboardData = async () => {
-      if (!user?.isAuthenticated) {
-        console.log('User not authenticated, skipping data fetch');
-        return;
-      }
-
-      try {
-        setLoading(true);
-        console.log('Loading dashboard data...');
-        
-        await Promise.all([
-          fetchStats(),
-          fetchRecentActivities()
-        ]);
-        
-        if (mounted) {
-          console.log('Dashboard data loaded successfully');
-        }
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        if (mounted) {
-          toast.error('ダッシュボードデータの読み込みに失敗しました');
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    if (user?.isAuthenticated) {
-      loadDashboardData();
+  const loadDashboardData = async () => {
+    if (!user?.isAuthenticated) {
+      return;
     }
 
-    return () => {
-      mounted = false;
-    };
-  }, [user?.isAuthenticated, fetchStats, fetchRecentActivities]);
+    try {
+      await Promise.all([
+        fetchStats(),
+        fetchRecentActivities()
+      ]);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    }
+  };
 
   // データリフレッシュ
   const refreshData = useCallback(async () => {
@@ -526,6 +495,10 @@ const AdminDashboard: React.FC = () => {
                 <MousePointer className="w-4 h-4" />
                 <span>CTA分析</span>
               </TabsTrigger>
+              <TabsTrigger value="reading-analytics" className="flex items-center space-x-2">
+                <Clock className="w-4 h-4" />
+                <span>閲覧時間分析</span>
+              </TabsTrigger>
               <TabsTrigger value="consultations" className="flex items-center space-x-2">
                 <MessageSquare className="w-4 h-4" />
                 <span>相談申込</span>
@@ -663,6 +636,10 @@ const AdminDashboard: React.FC = () => {
 
           <TabsContent value="cta-analytics">
             <CTAAnalytics />
+          </TabsContent>
+
+          <TabsContent value="reading-analytics">
+            <ReadingTimeAnalytics />
           </TabsContent>
 
           <TabsContent value="consultations">

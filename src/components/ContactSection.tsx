@@ -270,10 +270,34 @@ const ContactSection: React.FC = () => {
                 東京都中央区銀座8-17-5<br />
                 THE HUB 銀座 OCT
               </address>
-              {/* Google Maps would go here in a real implementation */}
-              <div className="aspect-[4/3] bg-navy-200 rounded-lg overflow-hidden">
-                <div className="w-full h-full flex items-center justify-center text-navy-600">
-                  Google Maps
+              
+              {/* Google Maps */}
+              <div className="relative aspect-[4/3] bg-navy-200 rounded-lg overflow-hidden shadow-lg">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.0666!2d139.7644!3d35.6704!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzXCsDQwJzEzLjQiTiAxMznCsDQ1JzUxLjgiRQ!5e0!3m2!1sja!2sjp!4v1647933600000!5m2!1sja!2sjp"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Queue株式会社 所在地"
+                  className="w-full h-full"
+                ></iframe>
+                
+                {/* Fallback link if map doesn't load */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 opacity-0 hover:opacity-95 transition-opacity duration-200">
+                  <a 
+                    href="https://maps.google.com/maps?q=東京都中央区銀座8-17-5+THE+HUB+銀座+OCT&hl=ja"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-navy-700 text-white px-4 py-2 rounded-lg hover:bg-navy-600 transition-colors flex items-center space-x-2 text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <span>Google Mapsで開く</span>
+                  </a>
                 </div>
               </div>
             </div>

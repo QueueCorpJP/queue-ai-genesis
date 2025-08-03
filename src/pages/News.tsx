@@ -3,10 +3,20 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { Calendar, Clock, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -26,89 +36,48 @@ type BlogArticle = {
   updated_at: string;
 };
 
+const ARTICLES_PER_PAGE = 10;
+
 const Blog: React.FC = () => {
   const [articles, setArticles] = useState<BlogArticle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalArticles, setTotalArticles] = useState(0);
 
   useEffect(() => {
-    document.title = "ブログ | Queue株式会社";
-    
-    // SEO設定
-    setupBlogListSEO();
-    
     // Ensure page starts at the top
     window.scrollTo(0, 0);
-    fetchArticles();
+    fetchArticles(1);
   }, []);
 
-  // ブログ一覧ページのSEO設定
-  const setupBlogListSEO = () => {
+  // ページ変更時の処理
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchArticles(page);
+    // ページ変更時にトップにスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // SEO用のデータを生成
+  const generateBlogListSEOData = () => {
     const currentUrl = window.location.href;
     const baseUrl = window.location.origin;
     const imageUrl = `${baseUrl}/Queue.png`;
     const description = "Queue株式会社の技術ブログ。AI・機械学習の最新動向、開発事例、技術的な知見など、私たちの経験と学びを共有しています。";
+    const title = "ブログ | Queue株式会社";
 
-    // 既存のmeta要素を削除
-    const existingMetas = document.querySelectorAll('meta[name="description"], meta[name="keywords"], meta[property^="og:"], meta[name^="twitter:"], link[rel="canonical"], script[type="application/ld+json"]');
-    existingMetas.forEach(meta => meta.remove());
-
-    // meta description
-    const metaDescription = document.createElement('meta');
-    metaDescription.setAttribute('name', 'description');
-    metaDescription.setAttribute('content', description);
-    document.head.appendChild(metaDescription);
-
-    // keywords
-    const metaKeywords = document.createElement('meta');
-    metaKeywords.setAttribute('name', 'keywords');
-    metaKeywords.setAttribute('content', 'Queue株式会社, AI, 人工知能, 機械学習, ブログ, 技術記事, 開発事例, テクノロジー');
-    document.head.appendChild(metaKeywords);
-
-    // canonical URL
-    const canonicalLink = document.createElement('link');
-    canonicalLink.setAttribute('rel', 'canonical');
-    canonicalLink.setAttribute('href', currentUrl.split('?')[0]);
-    document.head.appendChild(canonicalLink);
-
-    // Open Graph Protocol (OGP)
-    const ogMetas = [
-      { property: 'og:type', content: 'website' },
-      { property: 'og:title', content: 'ブログ | Queue株式会社' },
-      { property: 'og:description', content: description },
-      { property: 'og:url', content: currentUrl },
-      { property: 'og:image', content: imageUrl },
-      { property: 'og:image:width', content: '1200' },
-      { property: 'og:image:height', content: '630' },
-      { property: 'og:site_name', content: 'Queue株式会社' },
-      { property: 'og:locale', content: 'ja_JP' }
+    // パンくずリスト
+    const breadcrumbs = [
+      { name: 'ホーム', url: baseUrl },
+      { name: 'ブログ', url: currentUrl }
     ];
 
-    ogMetas.forEach(({ property, content }) => {
-      const meta = document.createElement('meta');
-      meta.setAttribute('property', property);
-      meta.setAttribute('content', content);
-      document.head.appendChild(meta);
-    });
+    // キーワード
+    const keywords = 'Queue株式会社, AI, 人工知能, 機械学習, ブログ, 技術記事, 開発事例, テクノロジー, GenAI, LLM, プロンプトエンジニアリング';
 
-    // Twitter Card
-    const twitterMetas = [
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: 'ブログ | Queue株式会社' },
-      { name: 'twitter:description', content: description },
-      { name: 'twitter:image', content: imageUrl },
-      { name: 'twitter:site', content: '@QueueCorp' },
-      { name: 'twitter:creator', content: '@QueueCorp' }
-    ];
-
-    twitterMetas.forEach(({ name, content }) => {
-      const meta = document.createElement('meta');
-      meta.setAttribute('name', name);
-      meta.setAttribute('content', content);
-      document.head.appendChild(meta);
-    });
-
-    // 構造化データ (JSON-LD) - ブログ一覧ページ用
-    const structuredData = {
+    // ブログ一覧ページ用の構造化データ
+    const blogStructuredData = {
       "@context": "https://schema.org",
       "@type": "Blog",
       "name": "Queue株式会社ブログ",
@@ -120,7 +89,9 @@ const Blog: React.FC = () => {
         "url": baseUrl,
         "logo": {
           "@type": "ImageObject",
-          "url": imageUrl
+          "url": imageUrl,
+          "width": 200,
+          "height": 200
         }
       },
       "publisher": {
@@ -129,109 +100,59 @@ const Blog: React.FC = () => {
         "url": baseUrl,
         "logo": {
           "@type": "ImageObject",
-          "url": imageUrl
+          "url": imageUrl,
+          "width": 200,
+          "height": 200
         }
       },
       "inLanguage": "ja-JP",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": `${baseUrl}/blog?search={search_term_string}`,
+        "target": `${baseUrl}/news?search={search_term_string}`,
         "query-input": "required name=search_term_string"
       }
     };
 
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(structuredData);
-    document.head.appendChild(script);
+    return {
+      title,
+      description,
+      keywords,
+      image: imageUrl,
+      url: currentUrl,
+      type: 'website' as const,
+      breadcrumbs,
+      canonicalUrl: currentUrl.split('?')[0],
+      structuredData: blogStructuredData
+    };
   };
 
-  const fetchArticles = async () => {
+  const fetchArticles = async (page: number) => {
     try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
+      setLoading(true);
+      const start = (page - 1) * ARTICLES_PER_PAGE;
+      const end = start + ARTICLES_PER_PAGE;
 
-      if (error) throw error;
+      const { data, error, count } = await supabase
+        .from('news_articles')
+        .select('*', { count: 'exact' })
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .range(start, end - 1);
+
+      if (error) {
+        console.error('Error fetching articles:', error);
+        return;
+      }
 
       setArticles(data || []);
+      setTotalArticles(count || 0);
+             setTotalPages(Math.ceil((count || 0) / ARTICLES_PER_PAGE));
     } catch (error) {
-      // Silently handle error in production
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
-
-  // 記事閲覧数を記録する関数（同じIPから同じ記事への短時間の重複アクセスを制限）
-  const trackArticleView = async (articleId: string) => {
-    try {
-      // IPアドレスとUser-Agentを取得
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
-      const ipData = await ipResponse.json();
-      const currentIp = ipData.ip || 'unknown';
-      
-      // ローカルストレージで同じ記事への最近のアクセスをチェック（1時間以内は重複記録しない）
-      const viewKey = `article_view_${articleId}_${currentIp}`;
-      const lastViewTime = localStorage.getItem(viewKey);
-      const oneHourAgo = Date.now() - (60 * 60 * 1000);
-      
-      if (lastViewTime && parseInt(lastViewTime) > oneHourAgo) {
-        // 1時間以内に同じIPから同じ記事を閲覧している場合はスキップ
-        return;
-      }
-      
-      const { error } = await supabase
-        .from('news_article_views')
-        .insert({
-          article_id: articleId,
-          ip_address: currentIp,
-          user_agent: navigator.userAgent
-        });
-
-      if (!error) {
-        // 成功した場合は最後の閲覧時間を記録
-        localStorage.setItem(viewKey, Date.now().toString());
-      }
-    } catch (error) {
-      // Silently handle error in production
-    }
-  };
-
-  // 記事がビューポートに入った時に閲覧数を記録
-  const handleArticleInView = (articleId: string) => {
-    trackArticleView(articleId);
-  };
-
-  // Intersection Observer を使用して記事の表示を検知
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const articleId = entry.target.getAttribute('data-article-id');
-            if (articleId && !entry.target.hasAttribute('data-viewed')) {
-              entry.target.setAttribute('data-viewed', 'true');
-              handleArticleInView(articleId);
-            }
-          }
-        });
-      },
-      {
-        threshold: 0.5, // 記事の50%が表示されたら閲覧とみなす
-        rootMargin: '0px 0px -100px 0px' // 少し余裕を持たせる
-      }
-    );
-
-    // 記事要素を観察対象に追加
-    const articleElements = document.querySelectorAll('[data-article-id]');
-    articleElements.forEach((el) => observer.observe(el));
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [articles]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP', {
@@ -241,36 +162,61 @@ const Blog: React.FC = () => {
     });
   };
 
-  const estimateReadingTime = (content: string) => {
-    const wordsPerMinute = 400; // 日本語の平均読書スピード
-    // HTMLタグを除去してテキストのみを取得
-    const textOnly = content.replace(/<[^>]*>/g, '');
-    const characters = textOnly.length;
-    const minutes = Math.ceil(characters / wordsPerMinute);
-    return Math.max(1, minutes);
+  // HTMLタグを除去してテキストのみを取得
+  const stripHtmlTags = (html: string) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
   };
+
+  // 読む時間を計算（日本語: 400文字/分）
+  const calculateReadTime = (content: string) => {
+    const textOnly = stripHtmlTags(content);
+    const wordsPerMinute = 400; // 日本語の平均読書速度
+    return Math.max(1, Math.ceil(textOnly.length / wordsPerMinute));
+  };
+
+  // サマリーを安全に処理
+  const getSafeSummary = (summary: string, maxLength: number = 120): string => {
+    const cleanSummary = stripHtmlTags(summary);
+    return cleanSummary.length > maxLength 
+      ? cleanSummary.substring(0, maxLength) + '...'
+      : cleanSummary;
+  };
+
+  const seoData = generateBlogListSEOData();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* SEO設定 */}
+      <SEOHead {...seoData} />
+      
       <Navbar />
       
       <main className="flex-1">
-        <section className="bg-queue-gradient py-16 md:py-24">
+        {/* Hero Section */}
+        <section className="bg-white border-b">
           <Container>
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">ブログ</h1>
-              <p className="text-lg text-white/90 max-w-2xl mx-auto">
-                Queue株式会社の技術記事やインサイトをお届けします。
-                AI・機械学習の最新動向、開発事例、技術的な知見など、
-                私たちの経験と学びを共有しています。
-              </p>
+            <div className="py-12 md:py-16">
+              <div className="max-w-4xl mx-auto text-center">
+                <header>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+                    Queue 技術ブログ
+                  </h1>
+                  <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+                    AI・機械学習の最新動向、開発事例、技術的な知見など、<br className="hidden md:block" />
+                    私たちの経験と学びを共有しています。
+                  </p>
+                </header>
+              </div>
             </div>
           </Container>
         </section>
-        
-        <section className="py-16">
+
+        {/* Articles List */}
+        <section className="py-8 md:py-16">
           <Container>
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               {loading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-600 mx-auto"></div>
@@ -278,104 +224,195 @@ const Blog: React.FC = () => {
                 </div>
               ) : articles.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-600">現在、表示できる記事はありません。</p>
+                  <p className="text-gray-600">まだ記事が投稿されていません。</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {articles.map((article) => (
-                    <Card 
-                      key={article.id} 
-                      className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
-                      data-article-id={article.id}
-                    >
-                      <CardContent className="p-0 h-full flex flex-col">
-                        {/* アイキャッチ画像 */}
-                        {article.image_url ? (
-                          <div className="relative h-48 overflow-hidden bg-gray-100">
-                            <img
-                              src={article.image_url}
-                              alt={article.title}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                target.parentElement!.innerHTML = `
-                                  <div class="flex items-center justify-center h-full bg-gray-200 text-gray-500">
-                                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                  </div>
-                                `;
-                              }}
-                            />
+                    <Card key={article.id} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
+                      <CardContent className="p-0">
+                        <article className="relative">
+                          {/* ブログタグ */}
+                          <div className="absolute top-2 right-2 z-10">
+                            <Badge className="bg-navy-600 text-white text-xs px-2 py-1 shadow-sm">
+                              📝 ブログ
+                            </Badge>
                           </div>
-                        ) : (
-                          <div className="h-48 bg-gradient-to-br from-navy-100 to-navy-200 flex items-center justify-center">
-                            <ImageIcon className="w-16 h-16 text-navy-400" />
-                          </div>
-                        )}
-                        
-                        <div className="p-6 flex flex-col flex-grow">
-                          {/* メタ情報 */}
-                          <div className="flex items-center justify-between mb-3 text-sm text-gray-500">
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              <span>{formatDate(article.published_at || article.created_at)}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-1" />
-                              <span>{estimateReadingTime(article.content)}分</span>
-                            </div>
-                          </div>
-                          
-                          {/* タイトル */}
-                          <h2 className="text-xl font-bold mb-3 text-gray-900 leading-tight line-clamp-2">
-                            <Link 
-                              to={`/blog/${article.id}`}
-                              className="hover:text-navy-600 transition-colors"
-                            >
-                              {article.title}
-                            </Link>
-                          </h2>
-                          
-                          {/* 要約 */}
-                          <div className="text-gray-600 mb-4 line-clamp-3 flex-grow blog-content summary-content">
-                            {article.summary.includes('<') ? (
-                              <div dangerouslySetInnerHTML={{ __html: article.summary }} />
+
+                          {/* 画像 */}
+                          <div className="relative h-40 sm:h-44 md:h-48 bg-navy-50">
+                            {article.image_url ? (
+                              <img
+                                src={article.image_url}
+                                alt={article.title}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.parentElement!.innerHTML = `
+                                    <div class="flex items-center justify-center h-full bg-navy-50 text-navy-300">
+                                      <div class="text-center">
+                                        <div class="w-10 h-10 mx-auto mb-2 bg-navy-600 rounded-lg flex items-center justify-center">
+                                          <span class="text-white font-bold text-sm">Q</span>
+                                        </div>
+                                        <p class="text-xs font-medium text-navy-600">Queue株式会社</p>
+                                      </div>
+                                    </div>
+                                  `;
+                                }}
+                              />
                             ) : (
-                              <p>{article.summary}</p>
+                              <div className="flex items-center justify-center h-full bg-navy-50 text-navy-300">
+                                <div className="text-center">
+                                  <div className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-2 bg-navy-600 rounded-lg flex items-center justify-center">
+                                    <span className="text-white font-bold text-sm sm:text-lg">Q</span>
+                                  </div>
+                                  <p className="text-xs font-medium text-navy-600">Queue株式会社</p>
+                                </div>
+                              </div>
                             )}
                           </div>
-                          
-                          {/* タグ */}
-                          {article.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {article.tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="outline" className="bg-navy-50 text-navy-700 border-navy-200 text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                              {article.tags.length > 3 && (
-                                <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
-                                  +{article.tags.length - 3}
-                                </Badge>
-                              )}
+
+                          {/* コンテンツ */}
+                          <div className="p-3 sm:p-4">
+                            {/* メタ情報 */}
+                            <div className="flex items-center justify-between mb-2 sm:mb-3 text-xs text-gray-500">
+                              <div className="flex items-center">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                <time dateTime={article.published_at || article.created_at}>
+                                  {formatDate(article.published_at || article.created_at)}
+                                </time>
+                              </div>
                             </div>
-                          )}
-                          
-                          {/* 続きを読むボタン */}
-                          <div className="mt-auto">
-                            <Button asChild variant="ghost" className="w-full justify-between p-0 h-auto text-navy-600 hover:text-navy-800">
-                              <Link to={`/blog/${article.id}`} className="flex items-center justify-between w-full py-2">
-                                <span>続きを読む</span>
-                                <ArrowRight className="h-4 w-4" />
+
+                            {/* タイトル */}
+                            <h3 className="font-bold text-gray-900 mb-2 leading-tight line-clamp-2">
+                              <Link 
+                                to={`/news/${article.id}`}
+                                className="hover:text-navy-600 transition-colors duration-200 text-sm sm:text-base"
+                              >
+                                {article.title}
                               </Link>
-                            </Button>
+                            </h3>
+
+                            {/* 概要 */}
+                            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-3 mb-3">
+                              {getSafeSummary(article.summary, 80)}
+                            </p>
+
+                            {/* タグ（最大2個） */}
+                            {article.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mb-3">
+                                {article.tags.slice(0, 2).map((tag) => (
+                                  <Badge key={tag} variant="outline" className="bg-navy-50 text-navy-700 border-navy-200 text-xs px-2 py-0.5">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {article.tags.length > 2 && (
+                                  <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs px-2 py-0.5">
+                                    +{article.tags.length - 2}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                            {/* 読了時間と読むボタン */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center text-xs text-gray-500">
+                                <Clock className="h-3 w-3 mr-1" />
+                                <span>{calculateReadTime(article.content)}分</span>
+                              </div>
+                              <Button 
+                                asChild 
+                                size="sm" 
+                                className="bg-navy-700 hover:bg-navy-600 text-xs h-6 sm:h-7 px-2 sm:px-3"
+                              >
+                                <Link to={`/news/${article.id}`}>
+                                  読む
+                                  <ArrowRight className="ml-1 h-3 w-3" />
+                                </Link>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        </article>
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              )}
+              
+              {/* Pagination */}
+              {!loading && articles.length > 0 && totalPages > 1 && (
+                <div className="mt-12 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      {/* Previous Page */}
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                          className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+
+                      {/* Page Numbers */}
+                      {Array.from({ length: totalPages }, (_, index) => {
+                        const page = index + 1;
+                        
+                        // Show first page, last page, current page, and pages around current page
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                onClick={() => handlePageChange(page)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        }
+                        
+                        // Show ellipsis for gaps
+                        if (
+                          page === currentPage - 2 && currentPage > 3 ||
+                          page === currentPage + 2 && currentPage < totalPages - 2
+                        ) {
+                          return (
+                            <PaginationItem key={page}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          );
+                        }
+                        
+                        return null;
+                      })}
+
+                      {/* Next Page */}
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                          className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+
+              {/* Page Information */}
+              {!loading && articles.length > 0 && (
+                <div className="mt-6 text-center text-sm text-gray-600">
+                  <p>
+                    {totalArticles}件中 {((currentPage - 1) * ARTICLES_PER_PAGE) + 1}〜
+                    {Math.min(currentPage * ARTICLES_PER_PAGE, totalArticles)}件を表示
+                    (ページ {currentPage}/{totalPages})
+                  </p>
                 </div>
               )}
             </div>

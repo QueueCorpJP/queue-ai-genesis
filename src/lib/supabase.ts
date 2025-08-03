@@ -4,75 +4,59 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Singleton pattern to prevent multiple client instances with better instance management
-let supabaseInstance: any = null;
-let supabaseAdminInstance: any = null;
+// Prevent multiple instances with development-safe singleton
+const getSupabaseInstance = (() => {
+  let instance: any = null;
+  
+  return () => {
+    if (!instance) {
+      instance = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false, // Disable URL detection to prevent conflicts
+          storageKey: 'queue-supabase-auth-token',
+          storage: window?.localStorage
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: { 'x-application-name': 'queue-lp' }
+        }
+      });
+    }
+    return instance;
+  };
+})();
 
-// Global symbol to ensure single instance
-const SUPABASE_INSTANCE_KEY = Symbol.for('supabase_instance');
-const SUPABASE_ADMIN_INSTANCE_KEY = Symbol.for('supabase_admin_instance');
-
-// Regular client for public operations
-const createSupabaseClient = () => {
-  // Check for existing instance in global scope
-  if ((globalThis as any)[SUPABASE_INSTANCE_KEY]) {
-    return (globalThis as any)[SUPABASE_INSTANCE_KEY];
-  }
-
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        storageKey: 'queue-supabase-auth-token',
-        storage: window?.localStorage
-      },
-      db: {
-        schema: 'public'
-      },
-      global: {
-        headers: { 'x-application-name': 'queue-lp' }
-      }
-    });
-
-    // Store in global scope to prevent multiple instances
-    (globalThis as any)[SUPABASE_INSTANCE_KEY] = supabaseInstance;
-  }
-  return supabaseInstance;
-};
-
-export const supabase = createSupabaseClient();
+export const supabase = getSupabaseInstance();
 
 // Admin client with service role key (bypasses RLS)
-const createSupabaseAdminClient = () => {
-  // Check for existing admin instance in global scope
-  if ((globalThis as any)[SUPABASE_ADMIN_INSTANCE_KEY]) {
-    return (globalThis as any)[SUPABASE_ADMIN_INSTANCE_KEY];
-  }
+const getSupabaseAdminInstance = (() => {
+  let adminInstance: any = null;
+  
+  return () => {
+    if (!adminInstance) {
+      adminInstance = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+          storageKey: 'queue-supabase-admin-auth-token'
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: { 'x-application-name': 'queue-lp-admin' }
+        }
+      });
+    }
+    return adminInstance;
+  };
+})();
 
-  if (!supabaseAdminInstance) {
-    supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-        storageKey: 'queue-supabase-admin-auth-token'
-      },
-      db: {
-        schema: 'public'
-      },
-      global: {
-        headers: { 'x-application-name': 'queue-lp-admin' }
-      }
-    });
-
-    // Store in global scope to prevent multiple instances
-    (globalThis as any)[SUPABASE_ADMIN_INSTANCE_KEY] = supabaseAdminInstance;
-  }
-  return supabaseAdminInstance;
-};
-
-export const supabaseAdmin = createSupabaseAdminClient();
+export const supabaseAdmin = getSupabaseAdminInstance();
 
 // Types for the database
 export interface ChatbotConversation {

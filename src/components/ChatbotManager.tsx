@@ -163,13 +163,9 @@ const ChatbotManager: React.FC<ChatbotManagerProps> = ({ className = '' }) => {
 
   const fetchStats = async () => {
     try {
-      console.log('Fetching chatbot stats with admin client...');
-      
       const { data, error } = await supabaseAdmin
         .from('chatbot_conversations')
         .select('created_at, session_id');
-
-      console.log('Stats query result:', { data, error, count: data?.length || 0 });
 
       if (error) {
         console.error('Error fetching stats:', error);

@@ -10,17 +10,14 @@ const Admin = () => {
   useEffect(() => {
     // ローディング中は何もしない（自動ログイン処理を待つ）
     if (isLoading) {
-      console.log('Admin page: Waiting for auth state...');
       return;
     }
     
     // 管理者が認証済みの場合はダッシュボードにリダイレクト
     if (user?.isAuthenticated) {
-      console.log('Admin page: User authenticated, redirecting to dashboard');
       navigate('/admin/dashboard', { replace: true });
     } else {
       // 未認証の場合はログインページにリダイレクト
-      console.log('Admin page: User not authenticated, redirecting to login');
       navigate('/admin/login', { replace: true });
     }
   }, [user, isLoading, navigate]);

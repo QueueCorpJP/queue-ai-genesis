@@ -43,7 +43,6 @@ const CTAAnalytics: React.FC = () => {
 
   const fetchCTAStats = async () => {
     try {
-      console.log('Fetching CTA statistics...');
       
       // 記事ごとのCTAクリック統計を取得（修正されたビューから）
       const { data: stats, error: statsError } = await supabaseAdmin
@@ -57,7 +56,6 @@ const CTAAnalytics: React.FC = () => {
         return;
       }
 
-      console.log('CTA stats received:', stats);
       setCtaStats(stats || []);
 
       // 全体統計の計算（より正確に）
@@ -81,16 +79,9 @@ const CTAAnalytics: React.FC = () => {
           contactClicks: contactClicks || 0,
         };
 
-        console.log('Calculated overall stats:', calculatedStats);
         setOverallStats(calculatedStats);
 
-        // デバッグ用：CTAクリック数と記事閲覧数の比較
-        console.log('Debug - Total clicks vs total views:', { totalClicks, totalViews });
-        if (totalClicks === totalViews && totalClicks > 0) {
-          console.warn('⚠️ CTAクリック数と記事閲覧数が同じです - データの確認が必要');
-        }
       } else {
-        console.log('No CTA stats found');
         setOverallStats({
           totalClicks: 0,
           totalViews: 0,
@@ -115,8 +106,52 @@ const CTAAnalytics: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      await fetchCTAStats();
-      setLoading(false);
+      try {
+        setLoading(true);
+        
+        // CTA統計を取得
+        const { data: stats, error } = await supabaseAdmin
+          .from('cta_click_stats')
+          .select('*')
+          .order('published_at', { ascending: false });
+
+        if (error) {
+          console.error('CTAデータ取得エラー:', error);
+          return;
+        }
+
+        if (stats && stats.length > 0) {
+          setCtaStats(stats);
+          
+          // 全体統計を計算
+          const totalClicks = stats.reduce((sum, stat) => sum + stat.total_clicks, 0);
+          const totalViews = stats.reduce((sum, stat) => sum + stat.total_views, 0);
+          const avgClickRate = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+          
+          const calculatedStats = {
+            totalClicks,
+            totalViews,
+            averageClickRate: avgClickRate,
+            consultationClicks: stats.reduce((sum, stat) => sum + (stat.consultation_clicks || 0), 0),
+            contactClicks: 0 // This will be fetched separately
+          };
+          
+          setOverallStats(calculatedStats);
+        } else {
+          setCtaStats([]);
+          setOverallStats({
+            totalClicks: 0,
+            totalViews: 0,
+            averageClickRate: 0,
+            consultationClicks: 0,
+            contactClicks: 0
+          });
+        }
+      } catch (error) {
+        console.error('データ読み込みエラー:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);

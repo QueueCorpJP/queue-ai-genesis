@@ -34,7 +34,7 @@ export const ArticleCTA: React.FC<ArticleCTAProps> = ({
         clicked_at: new Date().toISOString()
       });
 
-      console.log('CTA click tracked successfully');
+
     } catch (error) {
       console.error('Failed to track CTA click:', error);
     }
