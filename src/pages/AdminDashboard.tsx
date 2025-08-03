@@ -29,7 +29,9 @@ import {
   PauseCircle,
   AlertTriangle,
   CalendarDays,
-  DollarSign
+  DollarSign,
+  User,
+  Building
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -56,6 +58,7 @@ import PayrollManager from '@/components/PayrollManager';
 import ScheduleManager from '@/components/ScheduleManager';
 import ScheduleWidget from '@/components/ScheduleWidget';
 import ExpenseManager from '@/components/ExpenseManager';
+import KPIManager from '@/components/KPIManager';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardStats {
@@ -73,6 +76,17 @@ interface DashboardStats {
   unpaidExpensesAmount: number;
   overdueExpensesCount: number;
   yearToDateExpenseTotal: number;
+  // KPI/KGI統計（役員のみ）
+  totalKPIs: number;
+  achievedKPIs: number;
+  onTrackKPIs: number;
+  atRiskKPIs: number;
+  averageAchievementRate: number;
+  personalKPIs: number;
+  teamKPIs: number;
+  kgis: number;
+  criticalAtRiskKPIs: number;
+  overdueKPIs: number;
 }
 
 interface RecentActivity {
@@ -118,7 +132,18 @@ const AdminDashboard: React.FC = () => {
     unpaidExpensesCount: 0,
     unpaidExpensesAmount: 0,
     overdueExpensesCount: 0,
-    yearToDateExpenseTotal: 0
+    yearToDateExpenseTotal: 0,
+    // KPI/KGI統計（役員のみ）
+    totalKPIs: 0,
+    achievedKPIs: 0,
+    onTrackKPIs: 0,
+    atRiskKPIs: 0,
+    averageAchievementRate: 0,
+    personalKPIs: 0,
+    teamKPIs: 0,
+    kgis: 0,
+    criticalAtRiskKPIs: 0,
+    overdueKPIs: 0
   });
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -427,6 +452,47 @@ const AdminDashboard: React.FC = () => {
         }
       }
 
+      // KPI/KGI統計の取得（役員のみ）
+      let kpiStats = {
+        totalKPIs: 0,
+        achievedKPIs: 0,
+        onTrackKPIs: 0,
+        atRiskKPIs: 0,
+        averageAchievementRate: 0,
+        personalKPIs: 0,
+        teamKPIs: 0,
+        kgis: 0,
+        criticalAtRiskKPIs: 0,
+        overdueKPIs: 0
+      };
+
+      if (user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) {
+        try {
+          // ダッシュボード用KPI概要を取得
+          const { data: kpiOverview } = await supabase
+            .from('dashboard_kpi_overview')
+            .select('*')
+            .single();
+
+          if (kpiOverview) {
+            kpiStats = {
+              totalKPIs: kpiOverview.total_kpis || 0,
+              achievedKPIs: kpiOverview.achieved_kpis || 0,
+              onTrackKPIs: kpiOverview.on_track_kpis || 0,
+              atRiskKPIs: kpiOverview.at_risk_kpis || 0,
+              averageAchievementRate: kpiOverview.current_month_avg_rate || 0,
+              personalKPIs: kpiOverview.personal_kpis || 0,
+              teamKPIs: kpiOverview.team_kpis || 0,
+              kgis: kpiOverview.kgis || 0,
+              criticalAtRiskKPIs: kpiOverview.critical_at_risk || 0,
+              overdueKPIs: kpiOverview.overdue_count || 0
+            };
+          }
+        } catch (kpiError) {
+          console.error('Error fetching KPI stats:', kpiError);
+        }
+      }
+
       const newStats = {
         todayContacts: todayContacts || 0,
         todayConsultations: todayConsultations || 0,
@@ -435,7 +501,8 @@ const AdminDashboard: React.FC = () => {
         monthlyContacts: monthlyContacts || 0,
         monthlyConsultations: monthlyConsultations || 0,
         publishedNews: publishedNews || 0,
-        ...expenseStats
+        ...expenseStats,
+        ...kpiStats
       };
 
       setStats(newStats);
@@ -456,7 +523,18 @@ const AdminDashboard: React.FC = () => {
         unpaidExpensesCount: 0,
         unpaidExpensesAmount: 0,
         overdueExpensesCount: 0,
-        yearToDateExpenseTotal: 0
+        yearToDateExpenseTotal: 0,
+        // KPI/KGI統計（役員のみ）
+        totalKPIs: 0,
+        achievedKPIs: 0,
+        onTrackKPIs: 0,
+        atRiskKPIs: 0,
+        averageAchievementRate: 0,
+        personalKPIs: 0,
+        teamKPIs: 0,
+        kgis: 0,
+        criticalAtRiskKPIs: 0,
+        overdueKPIs: 0
       });
     } finally {
       setLoading(false);
@@ -736,7 +814,59 @@ const AdminDashboard: React.FC = () => {
     }
   ] : [];
 
-  const statsCards = [...basicStatsCards, ...expenseStatsCards];
+  // 役員向けKPI/KGI統計カード
+  const kpiStatsCards = user?.role && ['executive', 'ceo', 'admin'].includes(user.role) ? [
+    {
+      title: "総KPI数",
+      value: stats.totalKPIs,
+      icon: Target,
+      color: "text-blue-600"
+    },
+    {
+      title: "達成済みKPI",
+      value: stats.achievedKPIs,
+      icon: CheckCircle,
+      color: "text-green-600"
+    },
+    {
+      title: "平均達成率",
+      value: `${stats.averageAchievementRate.toFixed(1)}%`,
+      icon: TrendingUp,
+      color: "text-green-600"
+    },
+    {
+      title: "要注意KPI",
+      value: stats.atRiskKPIs + stats.criticalAtRiskKPIs,
+      icon: AlertTriangle,
+      color: "text-red-600"
+    },
+    {
+      title: "個人KPI",
+      value: stats.personalKPIs,
+      icon: User,
+      color: "text-blue-600"
+    },
+    {
+      title: "チームKPI",
+      value: stats.teamKPIs,
+      icon: Users,
+      color: "text-green-600"
+    },
+    {
+      title: "KGI",
+      value: stats.kgis,
+      icon: Building,
+      color: "text-purple-600"
+    },
+    {
+      title: "期限切れKPI",
+      value: stats.overdueKPIs,
+      icon: ClipboardList,
+      color: "text-red-600"
+    }
+  ] : [];
+
+  const statsCards = [...basicStatsCards, ...expenseStatsCards, ...kpiStatsCards];
 
   // ローディング中またはログイン状態確認中（自動ログイン対応）
   if (isLoading) {
@@ -879,6 +1009,15 @@ const AdminDashboard: React.FC = () => {
                     >
                       <DollarSign className="w-4 h-4" />
                       <span>販管費</span>
+                    </TabsTrigger>
+                  )}
+                  {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+                    <TabsTrigger 
+                      value="kpi" 
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
+                    >
+                      <Target className="w-4 h-4" />
+                      <span>KPI/KGI</span>
                     </TabsTrigger>
                   )}
                   {user?.email === 'queue@queue-tech.jp' && (
@@ -1167,6 +1306,12 @@ const AdminDashboard: React.FC = () => {
           {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
             <TabsContent value="expenses">
               <ExpenseManager />
+            </TabsContent>
+          )}
+
+          {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+            <TabsContent value="kpi">
+              <KPIManager />
             </TabsContent>
           )}
 
@@ -1507,6 +1652,7 @@ const getTabIcon = (tab: string) => {
     attendance: <CalendarDays className="w-4 h-4" />,
     schedule: <Calendar className="w-4 h-4" />,
     expenses: <DollarSign className="w-4 h-4" />,
+    kpi: <Target className="w-4 h-4" />,
     payroll: <DollarSign className="w-4 h-4" />,
     analytics: <BarChart3 className="w-4 h-4" />,
     'cta-analytics': <MousePointer className="w-4 h-4" />,
@@ -1529,6 +1675,7 @@ const getTabLabel = (tab: string) => {
     attendance: '勤怠管理',
     schedule: 'スケジュール',
     expenses: '販管費管理',
+    kpi: 'KPI/KGI管理',
     payroll: '人件費管理',
     analytics: '基本分析',
     'cta-analytics': 'CTA分析',
