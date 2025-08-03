@@ -5,7 +5,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **プロジェクトID**: `vrpdhzbfnwljdsretjld`  
 **データベースバージョン**: PostgreSQL 17.4.1.054  
-**最終更新**: 2025年1月31日（マイグレーションファイルから最新情報を取得・更新）
+**最終更新**: 2025年2月3日（最新マイグレーション 20250201000001 適用済み）
 
 ## テーブル一覧
 
@@ -60,7 +60,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 | title | varchar(500) | NO | - | 記事タイトル |
 | summary | text | NO | - | 記事概要（HTMLリッチテキスト対応） |
 | content | text | NO | - | 記事本文（HTMLリッチテキスト対応） |
-| source_name | varchar(255) | YES | - | 情報源名（オプション） |
+| source_name | varchar(255) | NO | - | 情報源名 |
 | source_url | varchar(1000) | YES | - | 情報源URL |
 | image_url | varchar(1000) | YES | - | 画像URL |
 | tags | text[] | YES | '{}' | タグ配列 |
@@ -83,7 +83,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 ---
 
 ### 4. news_article_views（記事閲覧履歴）
-**目的**: ニュース記事の閲覧統計と閲覧時間を記録
+**目的**: ニュース記事の閲覧統計と詳細な閲覧時間を記録
 
 | カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
 |---------|---------|---------|-------------|------|
@@ -106,7 +106,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **インデックス**:
 - idx_news_article_views_session_id: session_id列
-- idx_news_article_views_reading_duration: reading_duration_seconds列
+- idx_news_article_views_reading_duration: reading_duration_seconds列  
 - idx_news_article_views_view_start_time: view_start_time列
 - idx_news_article_views_ip_created_at: (ip_address, created_at)
 
@@ -330,7 +330,7 @@ ip_address                                   (IP correlation)
 | 20240101000009 | create_cta_clicks.sql | CTAクリック追跡テーブル・ビュー作成 |
 | 20240101000010 | create_conversion_analysis.sql | コンバージョン分析ビュー・ファンクション作成 |
 | 20240131000001 | fix_cta_click_stats_view.sql | CTAクリック統計ビューの修正 |
-| 20250201000001 | add_reading_time_tracking.sql | 閲覧時間トラッキング機能追加 |
+| 20250201000001 | add_reading_time_tracking.sql | 閲覧時間トラッキング機能追加（完全実装） |
 
 ---
 
@@ -342,14 +342,15 @@ ip_address                                   (IP correlation)
 - **タグシステム**: 配列型による柔軟なタグ管理
 - **公開制御**: ドラフト・公開・アーカイブ状態管理
 
-### 2. アナリティクス・追跡
+### 2. 高度なアナリティクス・追跡
 - **閲覧統計**: 記事別閲覧数追跡
-- **閲覧時間分析**: ユーザー別・記事別の詳細な閲覧時間トラッキング
+- **詳細閲覧時間分析**: セッション別・ユーザー別の精密な閲覧時間トラッキング
 - **行動分析**: スクロール深度・直帰率・エンゲージメント分析
 - **セッション追跡**: 個別ユーザーの閲覧セッション詳細記録
 - **CTAトラッキング**: クリック率・コンバージョン率分析
 - **コンバージョン分析**: CTAクリック→相談申し込みの流れ追跡
 - **日次・月次レポート**: 自動集計ビューで統計データ提供
+- **リアルタイム分析**: 閲覧開始から終了まで完全トラッキング
 
 ### 3. 顧客管理
 - **相談申し込み**: サービス別相談管理
@@ -372,7 +373,8 @@ ip_address                                   (IP correlation)
 5. **リッチテキスト**: `summary`と`content`カラムでHTMLコンテンツ対応
 6. **CTAトラッキング**: 詳細なコンバージョン分析機能を提供
 7. **パフォーマンス**: 専用インデックスによる高速データ検索・集計
+8. **閲覧時間トラッキング**: セッション管理による精密な時間測定とユーザー行動分析
 
 ---
 
-*最終更新: 2025年2月1日（閲覧時間トラッキング機能追加・完全実装）* 
+*最終更新: 2025年2月3日（閲覧時間トラッキング機能完全実装・デバッグ機能削除・管理画面編集機能完成）* 
