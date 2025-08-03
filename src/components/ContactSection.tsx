@@ -256,8 +256,8 @@ const ContactSection: React.FC = () => {
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-5 w-5 text-navy-600 mr-3" />
-                  <a href="tel:0366870550" className="text-navy-700 hover:text-navy-900 hover:underline">
-                    03-6687-0550
+                  <a href="tel:0353242678" className="text-navy-700 hover:text-navy-900 hover:underline">
+                    03-5324-2678
                   </a>
                 </div>
               </div>
