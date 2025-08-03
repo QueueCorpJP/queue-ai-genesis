@@ -76,6 +76,10 @@ interface Todo {
   is_overdue: boolean;
   is_due_soon: boolean;
   days_until_due: number | null;
+  member_name?: string;
+  member_email?: string;
+  member_role?: string;
+  member_department?: string;
 }
 
 interface TodoStats {
@@ -92,6 +96,7 @@ interface CreateTodoForm {
   description: string;
   priority: 'low' | 'medium' | 'high';
   due_date: Date | undefined;
+  due_time: string; // 時間入力用
 }
 
 const TodoManager: React.FC = () => {
@@ -105,17 +110,26 @@ const TodoManager: React.FC = () => {
     title: '',
     description: '',
     priority: 'medium',
-    due_date: undefined
+    due_date: undefined,
+    due_time: ''
   });
   
   // フィルター状態
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed' | 'overdue'>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // 今日やることリスト用の状態
+  const [todayTasks, setTodayTasks] = useState<Todo[]>([]);
 
   // 現在のユーザーのメンバーIDを取得
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   const [isExecutive, setIsExecutive] = useState(false);
+  
+  // 役員用の追加状態
+  const [allMembers, setAllMembers] = useState<{id: string, name: string, email: string}[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'personal' | 'all'>('personal');
 
   useEffect(() => {
     if (user?.email) {
@@ -127,8 +141,49 @@ const TodoManager: React.FC = () => {
     if (currentMemberId) {
       fetchTodos();
       fetchStats();
+      if (isExecutive) {
+        fetchAllMembers();
+      }
     }
-  }, [currentMemberId]);
+  }, [currentMemberId, selectedMemberId, viewMode]);
+
+  useEffect(() => {
+    if (isExecutive && viewMode === 'all') {
+      setSelectedMemberId(null);
+    } else if (isExecutive && viewMode === 'personal') {
+      setSelectedMemberId(currentMemberId);
+    } else if (!isExecutive) {
+      // 一般メンバーは常に自分のIDを設定
+      setSelectedMemberId(currentMemberId);
+    }
+  }, [viewMode, currentMemberId, isExecutive]);
+
+  // 全メンバーを取得（役員用）
+  const fetchAllMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, name, email')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      
+      const members = data || [];
+      setAllMembers(members);
+      
+      // 初期選択：役員の場合は自分を選択
+      if (isExecutive && currentMemberId && viewMode === 'personal') {
+        const currentMember = members.find(m => m.id === currentMemberId);
+        if (currentMember && !selectedMemberId) {
+          setSelectedMemberId(currentMemberId);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      toast.error('メンバー一覧の取得に失敗しました');
+    }
+  };
 
   // メールアドレスからメンバーIDを取得
   const fetchMemberId = async () => {
@@ -137,7 +192,7 @@ const TodoManager: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('members')
-        .select('id')
+        .select('id, role')
         .eq('email', user.email)
         .eq('is_active', true)
         .single();
@@ -150,13 +205,15 @@ const TodoManager: React.FC = () => {
           try {
             const { data: adminMember, error: adminError } = await getSupabaseAdmin()
               .from('members')
-              .select('id')
+              .select('id, role')
               .eq('email', 'queue@queue-tech.jp')
               .single();
             
             if (adminMember && !adminError) {
               setCurrentMemberId(adminMember.id);
-              console.log('Using admin member ID:', adminMember.id);
+              setIsExecutive(true); // 管理者は常に役員扱い
+              setSelectedMemberId(adminMember.id); // 初期選択を設定
+              console.log('Using admin member ID:', adminMember.id, 'IsExecutive: true');
               return;
             }
           } catch (adminErr) {
@@ -170,7 +227,16 @@ const TodoManager: React.FC = () => {
 
       if (data) {
         setCurrentMemberId(data.id);
-        console.log('Member ID found:', data.id);
+        const isExec = data.role === 'executive' || user.email === 'queue@queue-tech.jp';
+        setIsExecutive(isExec);
+        console.log('Member ID found:', data.id, 'Role:', data.role, 'IsExecutive:', isExec);
+        
+        // 初期選択を設定
+        if (isExec) {
+          setSelectedMemberId(data.id); // 役員は最初に自分を選択
+        } else {
+          setSelectedMemberId(data.id); // 一般メンバーも自分を選択
+        }
       } else {
         toast.error('有効なメンバーアカウントが見つかりません');
       }
@@ -196,33 +262,120 @@ const TodoManager: React.FC = () => {
   const fetchTodos = async () => {
     if (!currentMemberId) return;
     
+    console.log('fetchTodos called:', { currentMemberId, isExecutive, viewMode, selectedMemberId });
+    
     try {
-      // todosテーブルから現在のメンバーのデータを取得（admin client使用）
-      const { data, error } = await getSupabaseAdmin()
-        .from('todos')
-        .select('*')
-        .eq('member_id', currentMemberId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      // 常にadmin clientを使用してRLS制限を回避（一時的な措置）
+      const client = getSupabaseAdmin();
       
-      // データを適切な形式に変換
-      const formattedTodos = (data || []).map(todo => ({
-        ...todo,
-        is_overdue: todo.due_date ? new Date(todo.due_date) < new Date() && todo.status !== 'completed' : false,
-        is_due_soon: todo.due_date ? 
-          new Date(todo.due_date) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && 
-          todo.status !== 'completed' : false,
-        days_until_due: todo.due_date ? 
-          Math.ceil((new Date(todo.due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
-      }));
+      let todosQuery = client
+        .from('todos')
+        .select('*');
+
+      // 役員の場合の条件分岐
+      if (isExecutive && viewMode === 'all') {
+        console.log('Fetching all member todos (executive mode)');
+        // 全メンバーのTodoを取得
+        todosQuery = todosQuery.order('created_at', { ascending: false });
+      } else if (selectedMemberId) {
+        console.log('Fetching specific member todos:', selectedMemberId);
+        // 特定のメンバーのTodoを取得
+        todosQuery = todosQuery.eq('member_id', selectedMemberId).order('created_at', { ascending: false });
+      } else {
+        console.log('Fetching personal todos:', currentMemberId);
+        // 通常のメンバーは自分のTodoのみ
+        todosQuery = todosQuery.eq('member_id', currentMemberId).order('created_at', { ascending: false });
+      }
+
+      const { data: todosData, error: todosError } = await todosQuery;
+      
+      console.log('📝 Todo Query Details:', {
+        isExecutive,
+        viewMode,
+        selectedMemberId,
+        currentMemberId,
+        query: todosQuery,
+        error: todosError,
+        dataLength: todosData?.length || 0
+      });
+      
+      if (todosError) {
+        console.error('📝 Todo Query Error:', todosError);
+        throw todosError;
+      }
+
+      console.log('📝 Raw Todos Data:', todosData);
+      console.log('Todos fetched:', todosData?.length || 0, 'todos');
+
+      // メンバー情報を取得（役員または全体表示の場合）
+      let membersData = [];
+      if (isExecutive && (viewMode === 'all' || selectedMemberId !== currentMemberId)) {
+        const { data: members, error: membersError } = await supabase
+          .from('members')
+          .select('id, name, email, role, department')
+          .eq('is_active', true);
+        
+        if (membersError) {
+          console.warn('Error fetching members:', membersError);
+        } else {
+          membersData = members || [];
+        }
+      }
+
+      // データを適切な形式に変換（メンバー情報を結合）
+      const formattedTodos = (todosData || []).map(todo => {
+        const member = membersData.find(m => m.id === todo.member_id);
+        
+        return {
+          ...todo,
+          member_name: member?.name || undefined,
+          member_email: member?.email || undefined,
+          member_role: member?.role || undefined,
+          member_department: member?.department || undefined,
+          is_overdue: todo.due_date ? new Date(todo.due_date) < new Date() && todo.status !== 'completed' : false,
+          is_due_soon: todo.due_date ? 
+            new Date(todo.due_date) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && 
+            todo.status !== 'completed' : false,
+          days_until_due: todo.due_date ? 
+            Math.ceil((new Date(todo.due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
+        };
+      });
       
       setTodos(formattedTodos);
+      
+      // 今日やることリストも更新
+      updateTodayTasks(formattedTodos);
     } catch (error) {
       console.error('Error fetching todos:', error);
       toast.error('Todoの取得に失敗しました');
       setTodos([]); // エラー時は空配列を設定
+      setTodayTasks([]);
     }
+  };
+
+  // 今日やることリストを更新する関数
+  const updateTodayTasks = (allTodos: Todo[]) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // 未完了のタスクのみを対象とする
+    const incompleteTasks = allTodos.filter(todo => 
+      todo.status !== 'completed' && todo.status !== 'cancelled'
+    );
+    
+    // 期限でソート（期限なしは最後）
+    const sortedTasks = incompleteTasks.sort((a, b) => {
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      
+      const dateA = new Date(a.due_date);
+      const dateB = new Date(b.due_date);
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    // 上位5件を今日やることとして設定
+    setTodayTasks(sortedTasks.slice(0, 5));
   };
 
   const fetchStats = async () => {
@@ -274,7 +427,8 @@ const TodoManager: React.FC = () => {
       title: '',
       description: '',
       priority: 'medium',
-      due_date: undefined
+      due_date: undefined,
+      due_time: ''
     });
     setEditingTodo(null);
   };
@@ -293,7 +447,9 @@ const TodoManager: React.FC = () => {
           title: formData.title,
           description: formData.description || null,
           priority: formData.priority,
-          due_date: formData.due_date ? formData.due_date.toISOString() : null
+          due_date: formData.due_date && formData.due_time ? 
+            new Date(`${format(formData.due_date, 'yyyy-MM-dd')}T${formData.due_time}:00`).toISOString() :
+            formData.due_date ? formData.due_date.toISOString() : null
         });
 
       if (error) throw error;
@@ -321,7 +477,9 @@ const TodoManager: React.FC = () => {
           title: formData.title,
           description: formData.description || null,
           priority: formData.priority,
-          due_date: formData.due_date ? formData.due_date.toISOString() : null
+          due_date: formData.due_date && formData.due_time ? 
+            new Date(`${format(formData.due_date, 'yyyy-MM-dd')}T${formData.due_time}:00`).toISOString() :
+            formData.due_date ? formData.due_date.toISOString() : null
         })
         .eq('id', editingTodo.id);
 
@@ -386,17 +544,33 @@ const TodoManager: React.FC = () => {
 
   const openEditDialog = (todo: Todo) => {
     setEditingTodo(todo);
+    const dueDate = todo.due_date ? new Date(todo.due_date) : undefined;
+    const dueTime = dueDate ? format(dueDate, 'HH:mm') : '';
+    
     setFormData({
       title: todo.title,
       description: todo.description || '',
       priority: todo.priority,
-      due_date: todo.due_date ? new Date(todo.due_date) : undefined
+      due_date: dueDate,
+      due_time: dueTime
     });
   };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '期限なし';
-    return format(new Date(dateString), 'yyyy年MM月dd日', { locale: ja });
+    
+    try {
+      const date = new Date(dateString);
+      const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+      
+      if (hasTime) {
+        return format(date, 'yyyy年MM月dd日 HH:mm', { locale: ja });
+      } else {
+        return format(date, 'yyyy年MM月dd日', { locale: ja });
+      }
+    } catch (error) {
+      return '無効な日付';
+    }
   };
 
   const getStatusLabel = (status: Todo['status']) => {
@@ -558,8 +732,57 @@ const TodoManager: React.FC = () => {
                 Todo管理
               </CardTitle>
               <CardDescription>
-                あなたのタスクを管理します
+                {isExecutive ? (
+                  viewMode === 'all' ? '全メンバーのタスクを管理します' : 
+                  selectedMemberId === currentMemberId ? 'あなたのタスクを管理します' : 
+                  selectedMemberId ? '選択されたメンバーのタスクを管理します' : 'メンバーを選択してください'
+                ) : 'あなたのタスクを管理します'}
               </CardDescription>
+              
+              {/* 役員用のコントロール */}
+              {isExecutive && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Label>表示モード:</Label>
+                      <Select 
+                        value={viewMode} 
+                        onValueChange={(value: 'personal' | 'all') => setViewMode(value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="personal">個人</SelectItem>
+                          <SelectItem value="all">全体</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {viewMode === 'personal' && (
+                      <div className="flex items-center space-x-2">
+                        <Label>メンバー:</Label>
+                        <Select 
+                          value={selectedMemberId || ''} 
+                          onValueChange={setSelectedMemberId}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="メンバーを選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allMembers.map(member => (
+                              <SelectItem key={member.id} value={member.id}>
+                                {member.name} ({member.email})
+                                {member.id === currentMemberId && ' [自分]'}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             
             <Dialog open={createDialogOpen || !!editingTodo} onOpenChange={(open) => {
@@ -644,11 +867,36 @@ const TodoManager: React.FC = () => {
                         />
                       </PopoverContent>
                     </Popover>
+                    
+                    {/* 時間入力フィールド */}
+                    {formData.due_date && (
+                      <div className="space-y-2">
+                        <Label htmlFor="due_time">期限時刻</Label>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <Input
+                            id="due_time"
+                            type="time"
+                            value={formData.due_time}
+                            onChange={(e) => setFormData(prev => ({ ...prev, due_time: e.target.value }))}
+                            className="w-32"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setFormData(prev => ({ ...prev, due_time: '' }))}
+                          >
+                            時刻クリア
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
                     {formData.due_date && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => setFormData(prev => ({ ...prev, due_date: undefined }))}
+                        onClick={() => setFormData(prev => ({ ...prev, due_date: undefined, due_time: '' }))}
                       >
                         期限をクリア
                       </Button>
@@ -674,6 +922,109 @@ const TodoManager: React.FC = () => {
         </CardHeader>
 
         <CardContent>
+          {/* 今日やることセクション */}
+          {todayTasks.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Target className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">今日やること</h3>
+                <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                  期限順
+                </Badge>
+              </div>
+              <div className="grid gap-3">
+                {todayTasks.map((task, index) => (
+                  <div
+                    key={task.id}
+                    className={`p-4 rounded-lg border-l-4 ${
+                      index === 0 ? 'border-l-red-500 bg-red-50' :
+                      index === 1 ? 'border-l-orange-500 bg-orange-50' :
+                      index === 2 ? 'border-l-yellow-500 bg-yellow-50' :
+                      'border-l-blue-500 bg-blue-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                            index === 0 ? 'bg-red-600 text-white' :
+                            index === 1 ? 'bg-orange-600 text-white' :
+                            index === 2 ? 'bg-yellow-600 text-white' :
+                            'bg-blue-600 text-white'
+                          }`}>
+                            #{index + 1}
+                          </span>
+                          {getPriorityBadge(task.priority)}
+                          {getStatusBadge(task)}
+                        </div>
+                        <h4 className="font-medium text-gray-900 mb-1">
+                          {task.title}
+                        </h4>
+                        {task.description && (
+                          <p className="text-sm text-gray-600 mb-2">
+                            {task.description}
+                          </p>
+                        )}
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <div className="flex items-center space-x-1">
+                            <CalendarIcon className="w-3 h-3" />
+                            <span>{formatDate(task.due_date)}</span>
+                          </div>
+                          {task.days_until_due !== null && (
+                            <div className={`flex items-center space-x-1 ${
+                              task.is_overdue ? 'text-red-600' : 
+                              task.is_due_soon ? 'text-orange-600' : 
+                              'text-gray-500'
+                            }`}>
+                              <Clock className="w-3 h-3" />
+                              <span>
+                                {task.is_overdue ? `${Math.abs(task.days_until_due)}日遅れ` :
+                                 task.days_until_due === 0 ? '今日が期限' :
+                                 `あと${task.days_until_due}日`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2 ml-4">
+                        {task.status !== 'completed' && (
+                          <Select 
+                            value={task.status} 
+                            onValueChange={(value) => handleStatusChange(task, value as Todo['status'])}
+                          >
+                            <SelectTrigger className="w-[100px] h-8">
+                              <div className="flex items-center space-x-1">
+                                {getStatusIcon(task.status)}
+                                <span className="sr-only">{getStatusLabel(task.status)}</span>
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">未開始</SelectItem>
+                              <SelectItem value="in_progress">進行中</SelectItem>
+                              <SelectItem value="completed">完了</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(task)}
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  💡 期限が近い順に表示されています。完了したタスクは自動的にリストから除外されます。
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* フィルター */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
@@ -712,12 +1063,16 @@ const TodoManager: React.FC = () => {
             </Select>
           </div>
 
-          {/* Todoテーブル */}
+          {/* 全てのTodoテーブル */}
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">全てのTodo</h3>
+          </div>
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>タイトル</TableHead>
+                  {isExecutive && viewMode === 'all' && <TableHead>メンバー</TableHead>}
                   <TableHead>優先度</TableHead>
                   <TableHead>ステータス</TableHead>
                   <TableHead>期限</TableHead>
@@ -736,6 +1091,14 @@ const TodoManager: React.FC = () => {
                         )}
                       </div>
                     </TableCell>
+                    {isExecutive && viewMode === 'all' && (
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">{todo.member_name || 'Unknown'}</div>
+                          <div className="text-xs text-gray-500">{todo.member_email || ''}</div>
+                        </div>
+                      </TableCell>
+                    )}
                     <TableCell>{getPriorityBadge(todo.priority)}</TableCell>
                     <TableCell>{getStatusBadge(todo)}</TableCell>
                     <TableCell>

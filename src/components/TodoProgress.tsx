@@ -98,6 +98,23 @@ const TodoProgress: React.FC = () => {
   const { user } = useAdmin();
   const [memberStats, setMemberStats] = useState<MemberTodoStats[]>([]);
   const [allTodos, setAllTodos] = useState<TodoWithMember[]>([]);
+  
+  // 権限チェック - 役員または管理者のみアクセス可能
+  const hasAccess = user?.role === 'executive' || user?.email === 'queue@queue-tech.jp';
+  
+  if (!hasAccess) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">アクセス権限がありません</h2>
+            <p className="text-gray-600">この機能は役員のみご利用いただけます。</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   const [insights, setInsights] = useState<TodoInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');

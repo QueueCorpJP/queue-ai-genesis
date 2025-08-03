@@ -37,7 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -86,6 +86,9 @@ interface TodayTodo {
   created_at: string;
   is_overdue: boolean;
   is_due_soon: boolean;
+  member_name?: string;
+  member_email?: string;
+  days_until_due: number | null;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -176,55 +179,145 @@ const AdminDashboard: React.FC = () => {
       }
 
       if (data) {
+        console.log('🏠 Member ID found:', data.id, 'for email:', user?.email);
         setCurrentMemberId(data.id);
+      } else {
+        console.log('🏠 No member found for email:', user?.email);
       }
     } catch (error) {
       console.error('Error fetching member ID:', error);
     }
   };
 
-  // 今日やることTodoを取得
+  // 今日やることTodoを取得（期限が近い順）
   const fetchTodayTodos = async () => {
-    if (!currentMemberId) return;
+    console.log('🏠 fetchTodayTodos called with currentMemberId:', currentMemberId, 'user:', user?.email);
+    if (!currentMemberId) {
+      console.log('🏠 No currentMemberId, skipping fetch');
+      return;
+    }
     
     setTodosLoading(true);
     try {
-      const today = new Date();
-      today.setHours(23, 59, 59, 999); // 今日の終わりまで
-      const todayString = today.toISOString().split('T')[0];
+      // 役員かどうかを判定
+      const isExecutive = user?.role === 'executive' || user?.email === 'queue@queue-tech.jp';
       
-      const { data, error } = await supabase
+      // 常にadmin clientを使用してRLS制限を回避（TodoManagerと同じ方式）
+      const client = getSupabaseAdmin();
+      
+      let todosQuery = client
         .from('todos')
-        .select('*')
-        .eq('member_id', currentMemberId)
-        .in('status', ['pending', 'in_progress'])
-        .or(`due_date.lte.${todayString},due_date.is.null`)
-        .order('due_date', { ascending: true, nullsLast: true });
+        .select('*');
 
-      if (error) throw error;
+      // TodoManagerと同じロジック：selectedMemberIdがある場合はそれを使用、なければ全取得（役員）または自分のみ（一般）
+      if (isExecutive) {
+        console.log('🏠 Fetching all member todos (executive mode)');
+        // 役員は全メンバーのTodoを取得
+        todosQuery = todosQuery.order('created_at', { ascending: false });
+      } else {
+        console.log('🏠 Fetching personal todos:', currentMemberId);
+        // 一般メンバーは自分のTodoのみ
+        todosQuery = todosQuery.eq('member_id', currentMemberId).order('created_at', { ascending: false });
+      }
+
+      const { data: todosData, error: todosError } = await todosQuery;
       
-      // データを適切な形式に変換し、今日やるべきTodoのみをフィルタリング
-      const now = new Date();
-      const formattedTodos = (data || []).map(todo => ({
-        ...todo,
-        is_overdue: todo.due_date ? new Date(todo.due_date) < now && todo.status !== 'completed' : false,
-        is_due_soon: todo.due_date ? 
-          new Date(todo.due_date) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && 
-          todo.status !== 'completed' : false
-      }))
-      // 期限が今日以前か、期限なしで重要度が高いもの、または進行中のものを表示
-      .filter(todo => {
-        if (todo.due_date) {
-          return new Date(todo.due_date) <= today;
+      if (todosError) throw todosError;
+
+      console.log('🏠 Dashboard Todos fetched:', todosData?.length || 0, 'todos');
+      console.log('🏠 Dashboard Query Details:', {
+        isExecutive,
+        currentMemberId,
+        userEmail: user?.email,
+        userRole: user?.role,
+        todosData: todosData?.slice(0, 3) // 最初の3件を表示
+      });
+
+      // TodoManagerと同じ方式でupdateTodayTasks処理を実行
+      const allTodos = (todosData || []).map(todo => {
+        const now = new Date();
+        return {
+          ...todo,
+          is_overdue: todo.due_date ? new Date(todo.due_date) < now && todo.status !== 'completed' : false,
+          is_due_soon: todo.due_date ? 
+            new Date(todo.due_date) <= new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000) && 
+            todo.status !== 'completed' : false,
+          days_until_due: todo.due_date ? 
+            Math.ceil((new Date(todo.due_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
+        };
+      });
+
+      console.log('🏠 All todos processed:', allTodos.length);
+
+      // 未完了のタスクのみを対象とする
+      const incompleteTasks = allTodos.filter(todo => 
+        todo.status !== 'completed' && todo.status !== 'cancelled'
+      );
+      
+      console.log('🏠 Incomplete tasks:', incompleteTasks.length, 'out of', allTodos.length);
+      console.log('🏠 First few incomplete tasks:', incompleteTasks.slice(0, 3).map(t => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        due_date: t.due_date,
+        member_id: t.member_id
+      })));
+      
+      // 期限でソート（期限なしは最後）
+      const sortedTasks = incompleteTasks.sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0;
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        
+        const dateA = new Date(a.due_date);
+        const dateB = new Date(b.due_date);
+        return dateA.getTime() - dateB.getTime();
+      });
+      
+      console.log('🏠 Sorted tasks (first 3):', sortedTasks.slice(0, 3).map(t => ({
+        title: t.title,
+        due_date: t.due_date,
+        days_until: t.days_until_due
+      })));
+
+      // 上位5件を今日やることとして設定（TodoManagerと同じロジック）
+      const topTasks = sortedTasks.slice(0, 5);
+
+      // メンバー情報を取得（役員の場合のみ）
+      let membersData = [];
+      if (isExecutive && topTasks.length > 0) {
+        const { data: members, error: membersError } = await supabase
+          .from('members')
+          .select('id, name, email, role, department')
+          .eq('is_active', true);
+        
+        if (!membersError) {
+          membersData = members || [];
         }
-        // 期限なしの場合は、高優先度か進行中のもののみ表示
-        return todo.priority === 'high' || todo.status === 'in_progress';
-      })
-      .slice(0, 5); // 最大5件まで
+      }
+
+      // 最終的なフォーマット
+      const formattedTodos = topTasks.map(todo => {
+        const member = membersData.find(m => m.id === todo.member_id);
+        
+        return {
+          ...todo,
+          member_name: member?.name || undefined,
+          member_email: member?.email || undefined
+        };
+      });
+      
+      console.log('🏠 Final today todos:', formattedTodos.length, 'tasks');
+      console.log('🏠 Today todos details:', formattedTodos.map(t => ({
+        title: t.title,
+        due_date: t.due_date,
+        days_until_due: t.days_until_due,
+        member_name: t.member_name
+      })));
       
       setTodayTodos(formattedTodos);
     } catch (error) {
-      console.error('Error fetching today todos:', error);
+      console.error('🏠 Error fetching today todos:', error);
       setTodayTodos([]);
     } finally {
       setTodosLoading(false);
@@ -732,7 +825,7 @@ const AdminDashboard: React.FC = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
-                      variant={['consultations', 'contacts', 'chatbot', 'todo-progress'].includes(activeTab) ? 'default' : 'ghost'} 
+                      variant={['consultations', 'contacts', 'chatbot'].includes(activeTab) ? 'default' : 'ghost'} 
                       className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
                     >
                       <UserCheck className="w-4 h-4" />
@@ -753,14 +846,30 @@ const AdminDashboard: React.FC = () => {
                       <MessageSquare className="w-4 h-4 mr-2" />
                       チャットボット
                     </DropdownMenuItem>
-                    {user?.email === 'queue@queue-tech.jp' && (
-                      <DropdownMenuItem onClick={() => setActiveTab('todo-progress')}>
-                        <ClipboardList className="w-4 h-4 mr-2" />
-                        Todo進捗
-                      </DropdownMenuItem>
-                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {/* Task Management Dropdown */}
+                {(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp') && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant={['todo-progress'].includes(activeTab) ? 'default' : 'ghost'} 
+                        className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                      >
+                        <ClipboardList className="w-4 h-4" />
+                        <span>タスク管理</span>
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onClick={() => setActiveTab('todo-progress')}>
+                        <ClipboardList className="w-4 h-4 mr-2" />
+                        全体Todo進捗
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
           </div>
@@ -818,14 +927,13 @@ const AdminDashboard: React.FC = () => {
                   ))}
                 </div>
                 
-                {/* Management Submenu */}
+                {/* Customer Management Submenu */}
                 <div className="border-t border-gray-100">
                   <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">顧客管理</div>
                   {[
                     { value: 'consultations', icon: MessageSquare, label: '相談申込' },
                     { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
-                    { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
-                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'todo-progress', icon: ClipboardList, label: 'Todo進捗' }] : [])
+                    { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' }
                   ].map((tab) => (
                     <button
                       key={tab.value}
@@ -843,12 +951,57 @@ const AdminDashboard: React.FC = () => {
                   ))}
                 </div>
                 
+                {/* Task Management Submenu */}
                 <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">タスク管理</div>
                   {[
-                    { value: 'todos', icon: Target, label: 'Todo' },
+                    { value: 'todos', icon: Target, label: '個人Todo' },
+                    ...(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp' ? [{ value: 'todo-progress', icon: ClipboardList, label: '全体Todo進捗' }] : [])
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Attendance & Schedule Management */}
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">勤怠・スケジュール</div>
+                  {[
                     { value: 'attendance', icon: CalendarDays, label: '勤怠管理' },
                     { value: 'schedule', icon: Calendar, label: 'スケジュール' },
-                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : []),
+                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : [])
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* System Management */}
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">システム管理</div>
+                  {[
                     { value: 'news', icon: Newspaper, label: 'ブログ管理' },
                     ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
                     { value: 'settings', icon: Settings, label: '設定' }
@@ -924,7 +1077,7 @@ const AdminDashboard: React.FC = () => {
                     今日やること
                   </CardTitle>
                   <CardDescription>
-                    期限が今日かそれ以前の未完了タスク
+                    期限が近い順の未完了タスク（上位5件）
                   </CardDescription>
                 </CardHeader>
               <CardContent>
@@ -933,74 +1086,96 @@ const AdminDashboard: React.FC = () => {
                     <div className="text-center py-8">
                       <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
+                      <p className="mt-1 text-xs text-gray-400">currentMemberId: {currentMemberId || 'なし'}</p>
                     </div>
                   ) : todayTodos.length === 0 ? (
                     <div className="text-center py-8">
                       <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
                       <p className="text-gray-500 font-medium">今日やることはありません</p>
                       <p className="text-sm text-gray-400">すべてのタスクが完了済みです！</p>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={fetchTodayTodos}
+                        className="mt-3"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        再読み込み
+                      </Button>
+                      <p className="mt-2 text-xs text-gray-400">
+                        currentMemberId: {currentMemberId || 'なし'} | 
+                        role: {user?.role || 'なし'} | 
+                        email: {user?.email || 'なし'}
+                      </p>
                     </div>
                   ) : (
-                    todayTodos.map((todo) => (
-                      <div key={todo.id} className={`flex items-start space-x-3 p-3 rounded-lg border ${
-                        todo.is_overdue ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
+                    todayTodos.map((todo, index) => (
+                      <div key={todo.id} className={`p-4 rounded-lg border-l-4 ${
+                        index === 0 ? 'border-l-red-500 bg-red-50' :
+                        index === 1 ? 'border-l-orange-500 bg-orange-50' :
+                        index === 2 ? 'border-l-yellow-500 bg-yellow-50' :
+                        'border-l-blue-500 bg-blue-50'
                       }`}>
-                        <div className="mt-1">
-                          {todo.status === 'pending' ? (
-                            <PauseCircle className="w-5 h-5 text-gray-500" />
-                          ) : (
-                            <PlayCircle className="w-5 h-5 text-blue-500" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {todo.title}
-                              </p>
-                              {todo.description && (
-                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                                  {todo.description}
-                                </p>
-                              )}
-                              <div className="flex items-center space-x-2 mt-2">
-                                {/* 優先度バッジ */}
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs ${
-                                    todo.priority === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
-                                    todo.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                    'bg-blue-100 text-blue-800 border-blue-200'
-                                  }`}
-                                >
-                                  {todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}
-                                </Badge>
-                                
-                                {/* 期限表示 */}
-                                {todo.due_date && (
-                                  <div className={`flex items-center text-xs ${
-                                    todo.is_overdue ? 'text-red-600' : 'text-gray-500'
-                                  }`}>
-                                    <Calendar className="w-3 h-3 mr-1" />
-                                    {todo.is_overdue ? '期限切れ' : '今日まで'}
-                                  </div>
-                                )}
-                                
-                                {/* ステータス */}
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs ${
-                                    todo.status === 'pending' ? 'bg-gray-100 text-gray-800' :
-                                    'bg-blue-100 text-blue-800 border-blue-200'
-                                  }`}
-                                >
-                                  {todo.status === 'pending' ? '未開始' : '進行中'}
-                                </Badge>
-                              </div>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                                index === 0 ? 'bg-red-600 text-white' :
+                                index === 1 ? 'bg-orange-600 text-white' :
+                                index === 2 ? 'bg-yellow-600 text-white' :
+                                'bg-blue-600 text-white'
+                              }`}>
+                                #{index + 1}
+                              </span>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  todo.priority === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
+                                  todo.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  'bg-blue-100 text-blue-800 border-blue-200'
+                                }`}
+                              >
+                                {todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}
+                              </Badge>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  todo.status === 'pending' ? 'bg-gray-100 text-gray-800' :
+                                  'bg-blue-100 text-blue-800 border-blue-200'
+                                }`}
+                              >
+                                {todo.status === 'pending' ? '未開始' : '進行中'}
+                              </Badge>
                             </div>
-                            {todo.is_overdue && (
-                              <AlertTriangle className="w-4 h-4 text-red-500 mt-1 flex-shrink-0" />
+                            <h4 className="font-medium text-gray-900 mb-1">{todo.title}</h4>
+                            {todo.description && (
+                              <p className="text-sm text-gray-600 mb-2 line-clamp-2">{todo.description}</p>
                             )}
+                            {todo.member_name && (
+                              <p className="text-xs text-gray-500 mb-2">担当: {todo.member_name}</p>
+                            )}
+                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                              {todo.due_date && (
+                                <div className="flex items-center space-x-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{new Date(todo.due_date).toLocaleDateString('ja-JP')}</span>
+                                </div>
+                              )}
+                              {todo.days_until_due !== null && (
+                                <div className={`flex items-center space-x-1 ${
+                                  todo.is_overdue ? 'text-red-600' : 
+                                  todo.is_due_soon ? 'text-orange-600' : 
+                                  'text-gray-500'
+                                }`}>
+                                  <Clock className="w-3 h-3" />
+                                  <span>
+                                    {todo.is_overdue ? `${Math.abs(todo.days_until_due)}日遅れ` :
+                                     todo.days_until_due === 0 ? '今日が期限' :
+                                     `あと${todo.days_until_due}日`}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

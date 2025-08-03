@@ -25,6 +25,7 @@ interface UpcomingEvent {
   description: string;
   schedule_type: string;
   start_date: string;
+  end_date: string | null;
   start_time: string | null;
   end_time: string | null;
   is_all_day: boolean;
@@ -121,6 +122,26 @@ const ScheduleWidget: React.FC<ScheduleWidgetProps> = ({
     return icons[type as keyof typeof icons] || <CalendarIcon className="w-4 h-4" />;
   };
 
+  const getDurationText = (startDate: string, endDate: string | null) => {
+    if (!endDate || endDate === startDate) {
+      return null;
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    if (diffDays === 1) {
+      return null; // 同日なので表示しない
+    } else if (diffDays <= 7) {
+      return `${diffDays}日間`;
+    } else {
+      const weeks = Math.floor(diffDays / 7);
+      const remainingDays = diffDays % 7;
+      return remainingDays > 0 ? `${weeks}週${remainingDays}日間` : `${weeks}週間`;
+    }
+  };
+
   const getUrgencyBadge = (urgencyLevel: string, size: 'sm' | 'xs' = 'sm') => {
     const badgeClass = size === 'xs' ? 'text-xs px-1.5 py-0.5' : '';
     
@@ -206,7 +227,19 @@ const ScheduleWidget: React.FC<ScheduleWidgetProps> = ({
                     <div className="flex items-center space-x-3 text-xs text-gray-600">
                       <div className="flex items-center space-x-1">
                         <CalendarIcon className="w-3 h-3" />
-                        <span className="font-medium">{event.date_label}</span>
+                        <span className="font-medium">
+                          {event.date_label}
+                          {event.end_date && event.end_date !== event.start_date && (
+                            <span className="text-gray-500">
+                              {' '}〜 {format(new Date(event.end_date), 'MM/dd (E)', { locale: ja })}
+                            </span>
+                          )}
+                          {getDurationText(event.start_date, event.end_date) && (
+                            <span className="text-blue-600 ml-2 font-normal">
+                              ({getDurationText(event.start_date, event.end_date)})
+                            </span>
+                          )}
+                        </span>
                       </div>
                       
                       {event.start_time && !event.is_all_day && (
@@ -218,7 +251,14 @@ const ScheduleWidget: React.FC<ScheduleWidgetProps> = ({
                       )}
                       
                       {event.is_all_day && (
-                        <Badge variant="outline" className="text-xs px-1.5 py-0.5">終日</Badge>
+                        <div className="flex items-center space-x-1">
+                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">終日</Badge>
+                          {getDurationText(event.start_date, event.end_date) && (
+                            <span className="text-blue-600 text-xs">
+                              ({getDurationText(event.start_date, event.end_date)})
+                            </span>
+                          )}
+                        </div>
                       )}
                       
                       {event.location && (

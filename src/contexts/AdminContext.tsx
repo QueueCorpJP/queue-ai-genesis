@@ -139,21 +139,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       console.log('🔐 認証開始:', { email: email.trim().toLowerCase() });
       
-      // まず、membersテーブルから直接認証を試行（より確実な方法）
-      const { data: hashedPasswordData, error: hashError } = await supabase.rpc('hash_password', {
+      // パスワードをハッシュ化
+      const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
         plain_password: password
       });
 
       if (hashError) {
-        console.error('Hash password error:', hashError);
+        console.error('🔐 パスワードハッシュエラー:', hashError);
         return null;
       }
 
+      // メンバー情報を直接取得
       const { data: member, error: memberError } = await supabase
         .from('members')
         .select('id, email, name, role, department, position, is_active, login_count')
         .eq('email', email.trim().toLowerCase())
-        .eq('password_hash', hashedPasswordData)
+        .eq('password_hash', hashedPassword)
         .eq('is_active', true)
         .single();
 
@@ -165,27 +166,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       // ログイン回数と最終ログイン時刻を更新
-      const { error: updateError } = await supabase
-        .from('members')
-        .update({
-          login_count: member.login_count ? member.login_count + 1 : 1,
-          last_login_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', member.id);
-
-      if (updateError) {
-        console.warn('Login update error:', updateError);
-      }
-
-      console.log('🔐 認証成功:', { member });
-      
-      // Supabaseの認証セッションを設定（RLS対応）
       try {
-        await setSupabaseAuthSession(member);
-      } catch (authError) {
-        console.warn('🔐 Supabase認証セッション設定に失敗:', authError);
+        const { error: updateError } = await supabase
+          .from('members')
+          .update({
+            login_count: (member.login_count || 0) + 1,
+            last_login_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', member.id);
+
+        if (updateError) {
+          console.warn('🔐 ログイン更新エラー:', updateError);
+        }
+      } catch (updateErr) {
+        console.warn('🔐 ログイン更新失敗:', updateErr);
       }
+
+      console.log('🔐 認証成功:', member);
       
       return {
         id: member.id,
@@ -196,7 +194,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         lastActivity: Date.now()
       };
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('🔐 認証処理エラー:', error);
       return null;
     }
   };
