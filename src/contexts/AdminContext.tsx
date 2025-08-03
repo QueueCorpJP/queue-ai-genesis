@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import bcrypt from 'bcryptjs';
 
 export interface AdminUser {
   id: string;
@@ -98,9 +100,44 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.removeItem(SESSION_STORAGE_KEY);
   };
 
-  // 管理者ユーザーかどうかを確認
+  // 管理者ユーザーかどうかを確認（後方互換性用）
   const isAdminUser = (email: string): boolean => {
     return email === ADMIN_CREDENTIALS.email;
+  };
+
+  // データベースからユーザー認証
+  const authenticateUser = async (email: string, password: string) => {
+    try {
+      // メンバーテーブルから認証情報を取得
+      const { data: member, error } = await supabase
+        .from('members')
+        .select('id, email, name, password_hash, role, is_active')
+        .eq('email', email.trim().toLowerCase())
+        .eq('is_active', true)
+        .single();
+
+      if (error || !member) {
+        return null;
+      }
+
+      // パスワードを検証
+      const passwordMatch = await bcrypt.compare(password, member.password_hash);
+      if (!passwordMatch) {
+        return null;
+      }
+
+      return {
+        id: member.id,
+        email: member.email,
+        name: member.name,
+        role: member.role as 'employee' | 'executive',
+        isAuthenticated: true,
+        lastActivity: Date.now()
+      };
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return null;
+    }
   };
 
   // ユーザーアクティビティを更新（デバウンス処理付き）
@@ -162,7 +199,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       const storedSession = loadSessionFromStorage();
       
-      if (storedSession && isAdminUser(storedSession.user.email)) {
+      if (storedSession) {
         // 有効なセッションがある場合、状態を更新
         setUser(storedSession.user);
         setSession(storedSession);
@@ -189,21 +226,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const expectedEmail = ADMIN_CREDENTIALS.email.trim().toLowerCase();
       const expectedPassword = ADMIN_CREDENTIALS.password.trim();
       
+      let authenticatedUser: AdminUser | null = null;
+      
       // 既存の管理者認証（後方互換性）
       if (normalizedEmail === expectedEmail && normalizedPassword === expectedPassword) {
-        const now = Date.now();
-        const adminUser: AdminUser = {
+        authenticatedUser = {
           id: '1',
           email: ADMIN_CREDENTIALS.email,
           name: 'システム管理者',
           role: 'executive',
           isAuthenticated: true,
-          lastActivity: now
+          lastActivity: Date.now()
         };
-        
+      } else {
+        // データベースベースの認証
+        authenticatedUser = await authenticateUser(normalizedEmail, normalizedPassword);
+      }
+      
+      if (authenticatedUser) {
+        const now = Date.now();
         const newSession: AdminSession = {
           id: `session_${now}`,
-          user: adminUser,
+          user: authenticatedUser,
           expiresAt: now + SESSION_DURATION,
           createdAt: now
         };
