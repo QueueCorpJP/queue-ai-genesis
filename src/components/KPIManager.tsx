@@ -168,6 +168,8 @@ const KPIManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showCreateTargetDialog, setShowCreateTargetDialog] = useState(false);
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [currentMemberInfo, setCurrentMemberInfo] = useState<{ department?: string } | null>(null);
   const [showProgressDialog, setShowProgressDialog] = useState(false);
   const [selectedTargetForProgress, setSelectedTargetForProgress] = useState<KPITarget | null>(null);
 
@@ -231,8 +233,9 @@ const KPIManager: React.FC = () => {
         .eq('target_period', selectedPeriod);
 
       // メンバーの場合は自分に関連するKPIのみ取得
-      if (isMember && !isExecutive) {
-        query = query.or(`assigned_member_id.eq.${user?.id},assigned_team.eq.${user?.department}`);
+      if (isMember && !isExecutive && currentMemberId) {
+        const teamFilter = currentMemberInfo?.department ? `,assigned_team.eq.${currentMemberInfo.department}` : '';
+        query = query.or(`assigned_member_id.eq.${currentMemberId}${teamFilter}`);
       }
 
       const { data, error } = await query.order('priority', { ascending: false });
@@ -247,7 +250,7 @@ const KPIManager: React.FC = () => {
         variant: 'destructive',
       });
     }
-  }, [selectedPeriod, isMember, isExecutive, user?.id, user?.department, toast]);
+  }, [selectedPeriod, isMember, isExecutive, currentMemberId, currentMemberInfo?.department, toast]);
 
   const fetchDashboardStats = useCallback(async () => {
     try {
@@ -435,7 +438,7 @@ const KPIManager: React.FC = () => {
 
   // 進捗記録
   const handleRecordProgress = async () => {
-    if (!selectedTargetForProgress || newProgress.recorded_value < 0) {
+    if (!selectedTargetForProgress || newProgress.recorded_value < 0 || !currentMemberId) {
       toast({
         title: 'エラー',
         description: '有効な記録値を入力してください。',
@@ -456,7 +459,7 @@ const KPIManager: React.FC = () => {
           previous_value: selectedTargetForProgress.current_value,
           comments: newProgress.comments,
           evidence_url: newProgress.evidence_url,
-          recorded_by: user?.id,
+          recorded_by: currentMemberId,
         }]);
 
       if (progressError) throw progressError;
@@ -495,9 +498,42 @@ const KPIManager: React.FC = () => {
     }
   };
 
+  // メールアドレスからメンバーIDを取得
+  const fetchMemberId = async () => {
+    if (!user?.email) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, role, department')
+        .eq('email', user.email)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching member ID:', error);
+        return;
+      }
+
+      if (data) {
+        setCurrentMemberId(data.id);
+        setCurrentMemberInfo({ department: data.department });
+        console.log('KPI Manager - Member ID found:', data.id);
+      }
+    } catch (error) {
+      console.error('Error fetching member ID:', error);
+    }
+  };
+
   // useEffect
   useEffect(() => {
-    if (user?.role && (isExecutive || isMember)) {
+    if (user?.email) {
+      fetchMemberId();
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (user?.role && (isExecutive || isMember) && currentMemberId) {
       fetchIndicators();
       fetchTargets();
       if (isExecutive) {
@@ -505,7 +541,7 @@ const KPIManager: React.FC = () => {
       }
       fetchMembers();
     }
-  }, [selectedPeriod, user, isExecutive, isMember, fetchIndicators, fetchTargets, fetchDashboardStats, fetchMembers]);
+  }, [selectedPeriod, user, isExecutive, isMember, currentMemberId, fetchIndicators, fetchTargets, fetchDashboardStats, fetchMembers]);
 
   // ヘルパー関数
   const getPerformanceIcon = (status: string) => {
