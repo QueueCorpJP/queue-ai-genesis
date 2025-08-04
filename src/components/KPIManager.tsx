@@ -950,15 +950,25 @@ const KPIManager: React.FC = () => {
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>個人KPI目標を設定</DialogTitle>
+                    <DialogTitle>
+                      {activeTab === 'personal' ? '個人KPI目標を設定' :
+                       activeTab === 'team' ? 'チームKPI目標を設定' :
+                       'KGI目標を設定'}
+                    </DialogTitle>
                     <DialogDescription>
-                      作成済みの個人KPI指標に対して具体的な目標値と期限を設定します。
+                      {activeTab === 'personal' ? '作成済みの個人KPI指標に対して具体的な目標値と期限を設定します。' :
+                       activeTab === 'team' ? '作成済みのチームKPI指標に対して具体的な目標値と期限を設定します。' :
+                       '作成済みのKGI指標に対して具体的な目標値と期限を設定します。'}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="target_indicator">KPI指標 *</Label>
+                        <Label htmlFor="target_indicator">
+                          {activeTab === 'personal' ? 'KPI指標' :
+                           activeTab === 'team' ? 'チームKPI指標' :
+                           'KGI指標'} *
+                        </Label>
                         <Select
                           value={newTarget.indicator_id}
                           onValueChange={(value) => setNewTarget({ ...newTarget, indicator_id: value })}
@@ -966,34 +976,64 @@ const KPIManager: React.FC = () => {
                           <SelectTrigger>
                             <SelectValue placeholder="指標を選択" />
                           </SelectTrigger>
-                         <SelectContent>
-                           {indicators
-                             .filter(i => i.indicator_type === 'personal_kpi')
-                             .map((indicator) => (
-                               <SelectItem key={indicator.id} value={indicator.id}>
-                                 {indicator.indicator_name} ({indicator.measurement_unit})
-                               </SelectItem>
-                             ))}
-                         </SelectContent>
+                          <SelectContent>
+                            {indicators
+                              .filter(i => i.indicator_type === (activeTab === 'personal' ? 'personal_kpi' : activeTab === 'team' ? 'team_kpi' : 'kgi'))
+                              .map((indicator) => (
+                                <SelectItem key={indicator.id} value={indicator.id}>
+                                  {indicator.indicator_name} ({indicator.measurement_unit})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="target_member">担当者 *</Label>
-                        <Select
-                          value={newTarget.assigned_member_id}
-                          onValueChange={(value) => setNewTarget({ ...newTarget, assigned_member_id: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="担当者を選択" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {members.map((member) => (
-                              <SelectItem key={member.id} value={member.id}>
-                                {member.name} ({member.department})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {activeTab === 'personal' ? (
+                          <>
+                            <Label htmlFor="target_member">担当者 *</Label>
+                            <Select
+                              value={newTarget.assigned_member_id}
+                              onValueChange={(value) => setNewTarget({ ...newTarget, assigned_member_id: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="担当者を選択" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {members.map((member) => (
+                                  <SelectItem key={member.id} value={member.id}>
+                                    {member.name} ({member.department})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </>
+                        ) : activeTab === 'team' ? (
+                          <>
+                            <Label htmlFor="target_team">担当チーム *</Label>
+                            <Select
+                              value={newTarget.assigned_team}
+                              onValueChange={(value) => setNewTarget({ ...newTarget, assigned_team: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="チームを選択" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="営業部">営業部</SelectItem>
+                                <SelectItem value="開発部">開発部</SelectItem>
+                                <SelectItem value="マーケティング部">マーケティング部</SelectItem>
+                                <SelectItem value="管理部">管理部</SelectItem>
+                                <SelectItem value="人事部">人事部</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </>
+                        ) : (
+                          <div>
+                            <Label>対象範囲</Label>
+                            <div className="p-2 bg-gray-50 rounded text-sm text-gray-600">
+                              全社目標
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1179,10 +1219,151 @@ const KPIManager: React.FC = () => {
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">チームKPI管理</h3>
             {isExecutive && (
-              <Button onClick={() => setShowCreateTargetDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                新しい目標設定
-              </Button>
+              <Dialog open={showCreateTargetDialog} onOpenChange={setShowCreateTargetDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    新しい目標設定
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>チームKPI目標を設定</DialogTitle>
+                    <DialogDescription>
+                      作成済みのチームKPI指標に対して具体的な目標値と期限を設定します。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="target_indicator">チームKPI指標 *</Label>
+                        <Select
+                          value={newTarget.indicator_id}
+                          onValueChange={(value) => setNewTarget({ ...newTarget, indicator_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="指標を選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {indicators
+                              .filter(i => i.indicator_type === 'team_kpi')
+                              .map((indicator) => (
+                                <SelectItem key={indicator.id} value={indicator.id}>
+                                  {indicator.indicator_name} ({indicator.measurement_unit})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="target_team">担当チーム *</Label>
+                        <Select
+                          value={newTarget.assigned_team}
+                          onValueChange={(value) => setNewTarget({ ...newTarget, assigned_team: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="チームを選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="営業部">営業部</SelectItem>
+                            <SelectItem value="開発部">開発部</SelectItem>
+                            <SelectItem value="マーケティング部">マーケティング部</SelectItem>
+                            <SelectItem value="管理部">管理部</SelectItem>
+                            <SelectItem value="人事部">人事部</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="target_value">目標値 *</Label>
+                        <Input
+                          id="target_value"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newTarget.target_value === 0 ? '' : newTarget.target_value}
+                          placeholder="目標値を入力"
+                          onChange={(e) => setNewTarget({ ...newTarget, target_value: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="baseline_value">ベースライン値</Label>
+                        <Input
+                          id="baseline_value"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newTarget.baseline_value === 0 ? '' : newTarget.baseline_value}
+                          placeholder="基準値を入力"
+                          onChange={(e) => setNewTarget({ ...newTarget, baseline_value: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="priority">優先度</Label>
+                        <Select
+                          value={newTarget.priority}
+                          onValueChange={(value: 'low' | 'medium' | 'high' | 'critical') =>
+                            setNewTarget({ ...newTarget, priority: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">低</SelectItem>
+                            <SelectItem value="medium">中</SelectItem>
+                            <SelectItem value="high">高</SelectItem>
+                            <SelectItem value="critical">緊急</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="start_date">開始日 *</Label>
+                        <Input
+                          id="start_date"
+                          type="date"
+                          value={newTarget.start_date}
+                          onChange={(e) => setNewTarget({ ...newTarget, start_date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="end_date">終了日 *</Label>
+                        <Input
+                          id="end_date"
+                          type="date"
+                          value={newTarget.end_date}
+                          onChange={(e) => setNewTarget({ ...newTarget, end_date: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">備考</Label>
+                      <Textarea
+                        id="notes"
+                        value={newTarget.notes}
+                        onChange={(e) => setNewTarget({ ...newTarget, notes: e.target.value })}
+                        placeholder="目標に関する備考"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setShowCreateTargetDialog(false)}>
+                        キャンセル
+                      </Button>
+                      <Button onClick={handleCreateTarget} disabled={isLoading}>
+                        {isLoading ? '設定中...' : '設定'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             )}
           </div>
 
@@ -1273,10 +1454,139 @@ const KPIManager: React.FC = () => {
           <TabsContent value="kgi" className="space-y-6">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">KGI（重要目標達成指標）管理</h3>
-              <Button onClick={() => setShowCreateTargetDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                新しい目標設定
-              </Button>
+              <Dialog open={showCreateTargetDialog} onOpenChange={setShowCreateTargetDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    新しい目標設定
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>KGI目標を設定</DialogTitle>
+                    <DialogDescription>
+                      作成済みのKGI指標に対して具体的な目標値と期限を設定します。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="target_indicator">KGI指標 *</Label>
+                        <Select
+                          value={newTarget.indicator_id}
+                          onValueChange={(value) => setNewTarget({ ...newTarget, indicator_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="指標を選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {indicators
+                              .filter(i => i.indicator_type === 'kgi')
+                              .map((indicator) => (
+                                <SelectItem key={indicator.id} value={indicator.id}>
+                                  {indicator.indicator_name} ({indicator.measurement_unit})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>対象範囲</Label>
+                        <div className="p-2 bg-gray-50 rounded text-sm text-gray-600">
+                          全社目標
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="target_value">目標値 *</Label>
+                        <Input
+                          id="target_value"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newTarget.target_value === 0 ? '' : newTarget.target_value}
+                          placeholder="目標値を入力"
+                          onChange={(e) => setNewTarget({ ...newTarget, target_value: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="baseline_value">ベースライン値</Label>
+                        <Input
+                          id="baseline_value"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newTarget.baseline_value === 0 ? '' : newTarget.baseline_value}
+                          placeholder="基準値を入力"
+                          onChange={(e) => setNewTarget({ ...newTarget, baseline_value: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="priority">優先度</Label>
+                        <Select
+                          value={newTarget.priority}
+                          onValueChange={(value: 'low' | 'medium' | 'high' | 'critical') =>
+                            setNewTarget({ ...newTarget, priority: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">低</SelectItem>
+                            <SelectItem value="medium">中</SelectItem>
+                            <SelectItem value="high">高</SelectItem>
+                            <SelectItem value="critical">緊急</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="start_date">開始日 *</Label>
+                        <Input
+                          id="start_date"
+                          type="date"
+                          value={newTarget.start_date}
+                          onChange={(e) => setNewTarget({ ...newTarget, start_date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="end_date">終了日 *</Label>
+                        <Input
+                          id="end_date"
+                          type="date"
+                          value={newTarget.end_date}
+                          onChange={(e) => setNewTarget({ ...newTarget, end_date: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">備考</Label>
+                      <Textarea
+                        id="notes"
+                        value={newTarget.notes}
+                        onChange={(e) => setNewTarget({ ...newTarget, notes: e.target.value })}
+                        placeholder="目標に関する備考"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setShowCreateTargetDialog(false)}>
+                        キャンセル
+                      </Button>
+                      <Button onClick={handleCreateTarget} disabled={isLoading}>
+                        {isLoading ? '設定中...' : '設定'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <Card>
