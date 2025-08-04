@@ -204,6 +204,8 @@ const KPIManager: React.FC = () => {
     evidence_url: '',
   });
 
+  const [recordedValueInput, setRecordedValueInput] = useState('');
+
   // データ取得関数
   const fetchIndicators = useCallback(async () => {
     try {
@@ -489,6 +491,7 @@ const KPIManager: React.FC = () => {
         comments: '',
         evidence_url: '',
       });
+      setRecordedValueInput('');
       fetchTargets();
       fetchDashboardStats();
     } catch (error) {
@@ -1146,6 +1149,7 @@ const KPIManager: React.FC = () => {
                               onClick={() => {
                                 setSelectedTargetForProgress(target);
                                 setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                                setRecordedValueInput('');
                                 setShowProgressDialog(true);
                               }}
                             >
@@ -1240,6 +1244,7 @@ const KPIManager: React.FC = () => {
                             onClick={() => {
                               setSelectedTargetForProgress(target);
                               setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                              setRecordedValueInput('');
                               setShowProgressDialog(true);
                             }}
                           >
@@ -1334,6 +1339,7 @@ const KPIManager: React.FC = () => {
                               onClick={() => {
                                 setSelectedTargetForProgress(target);
                                 setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                                setRecordedValueInput('');
                                 setShowProgressDialog(true);
                               }}
                             >
@@ -1384,9 +1390,12 @@ const KPIManager: React.FC = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={newProgress.recorded_value === 0 ? '' : newProgress.recorded_value}
+                  value={recordedValueInput}
                   placeholder="実績値を入力"
-                  onChange={(e) => setNewProgress({ ...newProgress, recorded_value: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    setRecordedValueInput(e.target.value);
+                    setNewProgress({ ...newProgress, recorded_value: parseFloat(e.target.value) || 0 });
+                  }}
                 />
               </div>
 
