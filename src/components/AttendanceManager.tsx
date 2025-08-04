@@ -946,7 +946,7 @@ const AttendanceManager: React.FC = () => {
                           <Edit className="w-4 h-4" />
                         </Button>
                         
-                        {isExecutive && (
+                        {(isExecutive || record.member_id === currentMemberId) && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
