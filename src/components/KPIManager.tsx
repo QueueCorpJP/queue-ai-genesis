@@ -450,17 +450,22 @@ const KPIManager: React.FC = () => {
     try {
       setIsLoading(true);
 
+      // 進捗記録データの検証とログ
+      const progressData = {
+        target_id: selectedTargetForProgress.id,
+        recorded_value: newProgress.recorded_value,
+        previous_value: selectedTargetForProgress.current_value,
+        comments: newProgress.comments,
+        evidence_url: newProgress.evidence_url,
+        recorded_by: currentMemberId,
+      };
+      
+      console.log('Progress data to insert:', progressData);
+
       // 進捗記録を挿入
       const { error: progressError } = await supabase
         .from('kpi_progress_records')
-        .insert([{
-          target_id: selectedTargetForProgress.id,
-          recorded_value: newProgress.recorded_value,
-          previous_value: selectedTargetForProgress.current_value,
-          comments: newProgress.comments,
-          evidence_url: newProgress.evidence_url,
-          recorded_by: currentMemberId,
-        }]);
+        .insert([progressData]);
 
       if (progressError) throw progressError;
 
@@ -995,7 +1000,8 @@ const KPIManager: React.FC = () => {
                           type="number"
                           min="0"
                           step="0.01"
-                          value={newTarget.target_value}
+                          value={newTarget.target_value === 0 ? '' : newTarget.target_value}
+                          placeholder="目標値を入力"
                           onChange={(e) => setNewTarget({ ...newTarget, target_value: parseFloat(e.target.value) || 0 })}
                         />
                       </div>
@@ -1006,7 +1012,8 @@ const KPIManager: React.FC = () => {
                           type="number"
                           min="0"
                           step="0.01"
-                          value={newTarget.baseline_value}
+                          value={newTarget.baseline_value === 0 ? '' : newTarget.baseline_value}
+                          placeholder="基準値を入力"
                           onChange={(e) => setNewTarget({ ...newTarget, baseline_value: parseFloat(e.target.value) || 0 })}
                         />
                       </div>
@@ -1138,7 +1145,7 @@ const KPIManager: React.FC = () => {
                               variant="outline"
                               onClick={() => {
                                 setSelectedTargetForProgress(target);
-                                setNewProgress({ ...newProgress, recorded_value: target.current_value });
+                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
                                 setShowProgressDialog(true);
                               }}
                             >
@@ -1232,7 +1239,7 @@ const KPIManager: React.FC = () => {
                             variant="outline"
                             onClick={() => {
                               setSelectedTargetForProgress(target);
-                              setNewProgress({ ...newProgress, recorded_value: target.current_value });
+                              setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
                               setShowProgressDialog(true);
                             }}
                           >
@@ -1326,7 +1333,7 @@ const KPIManager: React.FC = () => {
                               variant="outline"
                               onClick={() => {
                                 setSelectedTargetForProgress(target);
-                                setNewProgress({ ...newProgress, recorded_value: target.current_value });
+                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
                                 setShowProgressDialog(true);
                               }}
                             >
@@ -1377,7 +1384,8 @@ const KPIManager: React.FC = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={newProgress.recorded_value}
+                  value={newProgress.recorded_value === 0 ? '' : newProgress.recorded_value}
+                  placeholder="実績値を入力"
                   onChange={(e) => setNewProgress({ ...newProgress, recorded_value: parseFloat(e.target.value) || 0 })}
                 />
               </div>
