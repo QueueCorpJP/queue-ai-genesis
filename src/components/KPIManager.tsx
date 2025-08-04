@@ -49,6 +49,7 @@ interface KPIIndicator {
 
 interface KPITarget {
   id: string;
+  target_id: string; // Added to match the database view
   indicator_id: string;
   indicator_name: string;
   indicator_type: string;
@@ -440,7 +441,7 @@ const KPIManager: React.FC = () => {
 
   // 進捗記録
   const handleRecordProgress = async () => {
-    if (!selectedTargetForProgress || newProgress.recorded_value < 0 || !currentMemberId) {
+    if (!selectedTargetForProgress || (!selectedTargetForProgress.target_id && !selectedTargetForProgress.id) || newProgress.recorded_value < 0 || !currentMemberId) {
       toast({
         title: 'エラー',
         description: '有効な記録値を入力してください。',
@@ -454,11 +455,12 @@ const KPIManager: React.FC = () => {
 
       // 進捗記録データの検証とログ
       const progressData = {
-        target_id: selectedTargetForProgress.id,
+        target_id: selectedTargetForProgress.target_id || selectedTargetForProgress.id,
+        record_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
         recorded_value: newProgress.recorded_value,
         previous_value: selectedTargetForProgress.current_value,
-        comments: newProgress.comments,
-        evidence_url: newProgress.evidence_url,
+        comments: newProgress.comments || '',
+        evidence_url: newProgress.evidence_url || '',
         recorded_by: currentMemberId,
       };
       
@@ -475,7 +477,7 @@ const KPIManager: React.FC = () => {
       const { error: updateError } = await supabase
         .from('kpi_targets')
         .update({ current_value: newProgress.recorded_value })
-        .eq('id', selectedTargetForProgress.id);
+        .eq('id', selectedTargetForProgress.target_id || selectedTargetForProgress.id);
 
       if (updateError) throw updateError;
 
@@ -964,15 +966,15 @@ const KPIManager: React.FC = () => {
                           <SelectTrigger>
                             <SelectValue placeholder="指標を選択" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {indicators
-                              .filter(i => i.indicator_type === 'personal_kpi')
-                              .map((indicator) => (
-                                <SelectItem key={indicator.id} value={indicator.id}>
-                                  {indicator.indicator_name} ({indicator.measurement_unit})
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
+                         <SelectContent>
+                           {indicators
+                             .filter(i => i.indicator_type === 'personal_kpi')
+                             .map((indicator) => (
+                               <SelectItem key={indicator.id} value={indicator.id}>
+                                 {indicator.indicator_name} ({indicator.measurement_unit})
+                               </SelectItem>
+                             ))}
+                         </SelectContent>
                         </Select>
                       </div>
                       <div>
@@ -1108,7 +1110,7 @@ const KPIManager: React.FC = () => {
                   {targets
                     .filter(t => t.indicator_type === 'personal_kpi')
                     .map((target) => (
-                      <TableRow key={target.id}>
+                      <TableRow key={target.target_id || target.id}>
                         <TableCell className="font-medium">{target.indicator_name}</TableCell>
                         <TableCell>{target.assigned_member_name}</TableCell>
                         <TableCell>{target.target_value}</TableCell>
@@ -1204,7 +1206,7 @@ const KPIManager: React.FC = () => {
                   {targets
                     .filter(t => t.indicator_type === 'team_kpi')
                     .map((target) => (
-                      <TableRow key={target.id}>
+                      <TableRow key={target.target_id || target.id}>
                         <TableCell className="font-medium">{target.indicator_name}</TableCell>
                         <TableCell>{target.assigned_team}</TableCell>
                         <TableCell>{target.target_value}</TableCell>
@@ -1297,7 +1299,7 @@ const KPIManager: React.FC = () => {
                     {targets
                       .filter(t => t.indicator_type === 'kgi')
                       .map((target) => (
-                        <TableRow key={target.id}>
+                        <TableRow key={target.target_id || target.id}>
                           <TableCell className="font-medium">{target.indicator_name}</TableCell>
                           <TableCell>
                             {indicators.find(i => i.id === target.indicator_id)?.category || 'N/A'}
