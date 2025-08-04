@@ -140,7 +140,7 @@ const Company = () => {
                       <p className="text-navy-200 text-sm leading-relaxed">
                         〒104-0061<br />
                         東京都中央区銀座８丁目17-5<br />
-                        THE HUB 銀座 OCT nex Inc.
+                        THE HUB 銀座 OCT
                       </p>
                     </div>
                   </div>
