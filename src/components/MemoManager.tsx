@@ -77,8 +77,8 @@ const MemoManager: React.FC = () => {
   
   // フィルター・検索状態
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterPriority, setFilterPriority] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'created_at' | 'updated_at' | 'title' | 'priority'>('created_at');
 
@@ -116,10 +116,15 @@ const MemoManager: React.FC = () => {
 
   // メモ取得
   const fetchMemos = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('📝 User ID not available for memo fetch');
+      return;
+    }
 
+    console.log('📝 Fetching memos for user:', user.id);
     setIsLoading(true);
     try {
+      // まずテーブルの存在を確認するためのクエリ
       const { data, error } = await supabase
         .from('personal_memos')
         .select('*')
@@ -127,34 +132,111 @@ const MemoManager: React.FC = () => {
         .eq('is_archived', false)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('📝 Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
       
       setMemos(data || []);
-      console.log('📝 Memos fetched:', data?.length || 0);
-    } catch (error) {
+      console.log('📝 Memos fetched successfully:', data?.length || 0);
+    } catch (error: any) {
       console.error('📝 Error fetching memos:', error);
-      toast({
-        title: 'エラー',
-        description: 'メモの取得に失敗しました。',
-        variant: 'destructive',
-      });
+      
+      // テーブルが存在しない場合の具体的なエラーメッセージ
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        toast({
+          title: 'マイメモ機能は準備中です',
+          description: 'personal_memosテーブルが作成されていません。データベースのマイグレーションを実行してください。',
+          variant: 'destructive',
+        });
+      } else if (error.code === '42501' || error.message?.includes('permission denied')) {
+        toast({
+          title: '権限エラー',
+          description: 'メモへのアクセス権限がありません。RLSポリシーを確認してください。',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'エラー',
+          description: `メモの取得に失敗しました: ${error.message}`,
+          variant: 'destructive',
+        });
+      }
+      
+      // エラーの場合は空配列を設定
+      setMemos([]);
     } finally {
       setIsLoading(false);
     }
   }, [user?.id]);
 
-  // 統計情報取得
+  // 統計情報取得（RPC関数を使わずに基本クエリで取得）
   const fetchStats = useCallback(async () => {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await supabase.rpc('get_memo_insights', {
-        p_member_id: user.id
+      console.log('📊 Calculating memo stats for user:', user.id);
+      
+      // 基本的なメモデータを取得
+      const { data: memosData, error: memosError } = await supabase
+        .from('personal_memos')
+        .select('category, priority, is_favorite, created_at')
+        .eq('member_id', user.id)
+        .eq('is_archived', false);
+
+      if (memosError) {
+        throw memosError;
+      }
+
+      const memos = memosData || [];
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // 統計を計算
+      const categories_breakdown: Record<string, number> = {};
+      const priority_distribution: Record<string, number> = {};
+      let favorite_count = 0;
+      let recent_activity = 0;
+
+      memos.forEach(memo => {
+        // カテゴリ別集計
+        categories_breakdown[memo.category] = (categories_breakdown[memo.category] || 0) + 1;
+        
+        // 優先度別集計
+        priority_distribution[memo.priority] = (priority_distribution[memo.priority] || 0) + 1;
+        
+        // お気に入り数
+        if (memo.is_favorite) {
+          favorite_count++;
+        }
+        
+        // 最近の活動（1週間以内）
+        if (new Date(memo.created_at) > oneWeekAgo) {
+          recent_activity++;
+        }
       });
 
-      if (error) throw error;
+      const calculatedStats = {
+        total_memos: memos.length,
+        categories_breakdown,
+        weekly_activity: [], // 簡略化のため空配列
+        priority_distribution,
+        favorite_count,
+        recent_activity
+      };
+
+      console.log('📊 Memo stats calculated:', calculatedStats);
+      setStats(calculatedStats);
       
-      setStats(data || {
+    } catch (error) {
+      console.error('📝 Error calculating memo stats:', error);
+      // エラーの場合はデフォルト値を設定
+      setStats({
         total_memos: 0,
         categories_breakdown: {},
         weekly_activity: [],
@@ -162,8 +244,13 @@ const MemoManager: React.FC = () => {
         favorite_count: 0,
         recent_activity: 0
       });
-    } catch (error) {
-      console.error('📝 Error fetching memo stats:', error);
+      
+      // personal_memosテーブルが存在しない場合のメッセージ
+      toast({
+        title: 'マイメモ機能は準備中です',
+        description: 'データベースのマイグレーションが必要です。管理者にお問い合わせください。',
+        variant: 'destructive',
+      });
     }
   }, [user?.id]);
 
@@ -182,12 +269,12 @@ const MemoManager: React.FC = () => {
     }
 
     // カテゴリフィルター
-    if (filterCategory) {
+    if (filterCategory && filterCategory !== 'all') {
       filtered = filtered.filter(memo => memo.category === filterCategory);
     }
 
     // 優先度フィルター
-    if (filterPriority) {
+    if (filterPriority && filterPriority !== 'all') {
       filtered = filtered.filter(memo => memo.priority === filterPriority);
     }
 
@@ -269,7 +356,15 @@ const MemoManager: React.FC = () => {
         .from('personal_memos')
         .insert(memoData);
 
-      if (error) throw error;
+      if (error) {
+        console.error('📝 Create memo error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
 
       toast({
         title: '成功',
@@ -629,7 +724,7 @@ const MemoManager: React.FC = () => {
                 <SelectValue placeholder="カテゴリ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">すべて</SelectItem>
+                <SelectItem value="all">すべて</SelectItem>
                 {categoryOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -642,7 +737,7 @@ const MemoManager: React.FC = () => {
                 <SelectValue placeholder="優先度" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">すべて</SelectItem>
+                <SelectItem value="all">すべて</SelectItem>
                 {priorityOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -683,7 +778,7 @@ const MemoManager: React.FC = () => {
           <div className="col-span-full text-center py-8">
             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600">
-              {searchTerm || filterCategory || filterPriority || showFavoritesOnly
+              {searchTerm || (filterCategory && filterCategory !== 'all') || (filterPriority && filterPriority !== 'all') || showFavoritesOnly
                 ? 'フィルター条件に一致するメモがありません'
                 : 'まだメモがありません。最初のメモを作成しましょう！'
               }

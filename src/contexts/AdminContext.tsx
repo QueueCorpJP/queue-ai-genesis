@@ -6,8 +6,6 @@ export interface AdminUser {
   email: string;
   name?: string;
   role?: 'employee' | 'executive';
-  department?: string;
-  position?: string;
   isAuthenticated: boolean;
   lastActivity: number;
 }
@@ -41,7 +39,7 @@ export const useAdmin = () => {
 
 const ADMIN_CREDENTIALS = {
   email: 'queue@queue-tech.jp',
-  password: 'Ace00124'
+  password: 'Heita001225'
 } as const;
 
 const SESSION_STORAGE_KEY = 'queue_admin_session';
@@ -192,8 +190,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         email: member.email,
         name: member.name,
         role: member.role as 'employee' | 'executive',
-        department: member.department,
-        position: member.position,
         isAuthenticated: true,
         lastActivity: Date.now()
       };
@@ -293,26 +289,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       // 既存の管理者認証（後方互換性）
       if (normalizedEmail === expectedEmail && normalizedPassword === expectedPassword) {
-        // データベースからqueue@queue-tech.jpのIDを取得
-        let adminId = '1'; // デフォルト値
-        try {
-          const { data: adminMember } = await supabase
-            .from('members')
-            .select('id')
-            .eq('email', normalizedEmail)
-            .eq('is_active', true)
-            .single();
-          
-          if (adminMember?.id) {
-            adminId = adminMember.id;
-            console.log('🔐 管理者のデータベースID取得成功:', adminId);
-          }
-        } catch (error) {
-          console.warn('🔐 管理者IDの取得に失敗、デフォルトIDを使用:', error);
-        }
-        
         authenticatedUser = {
-          id: adminId,
+          id: '1',
           email: ADMIN_CREDENTIALS.email,
           name: 'システム管理者',
           role: 'executive',

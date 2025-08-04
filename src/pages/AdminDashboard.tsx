@@ -1045,7 +1045,7 @@ const AdminDashboard: React.FC = () => {
                       <span>マイメモ</span>
                     </TabsTrigger>
                   ) : null}
-                  {user?.email === 'queue@queue-tech.jp' && (
+                  {user?.role === 'executive' && (
                     <TabsTrigger 
                       value="payroll" 
                       className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
@@ -1061,7 +1061,7 @@ const AdminDashboard: React.FC = () => {
                     <Newspaper className="w-4 h-4" />
                     <span>ブログ</span>
                   </TabsTrigger>
-                  {user?.email === 'queue@queue-tech.jp' && (
+                  {user?.role === 'executive' && (
                     <TabsTrigger 
                       value="members" 
                       className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
@@ -1267,7 +1267,7 @@ const AdminDashboard: React.FC = () => {
                     { value: 'attendance', icon: Calendar, label: '勤怠管理' },
                     { value: 'schedule', icon: Calendar, label: 'スケジュール' },
                     ...(user?.role && ['executive', 'ceo', 'admin'].includes(user.role) ? [{ value: 'expenses', icon: DollarSign, label: '販管費管理' }] : []),
-                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : [])
+                    ...(user?.role === 'executive' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : [])
                   ].map((tab) => (
                     <button
                       key={tab.value}
@@ -1290,7 +1290,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">システム管理</div>
                   {[
                     { value: 'news', icon: Newspaper, label: 'ブログ管理' },
-                    ...(user?.email === 'queue@queue-tech.jp' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
+                    ...(user?.role === 'executive' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
                     { value: 'settings', icon: Settings, label: '設定' }
                   ].map((tab) => (
                     <button
@@ -1374,7 +1374,7 @@ const AdminDashboard: React.FC = () => {
             </TabsContent>
           ) : null}
 
-          {user?.email === 'queue@queue-tech.jp' && (
+          {user?.role === 'executive' && (
             <TabsContent value="payroll">
               <PayrollManager />
             </TabsContent>
@@ -1641,7 +1641,7 @@ const AdminDashboard: React.FC = () => {
             <NewsManager />
           </TabsContent>
 
-          {user?.email === 'queue@queue-tech.jp' && (
+          {user?.role === 'executive' && (
             <TabsContent value="members">
               <MemberManager />
             </TabsContent>

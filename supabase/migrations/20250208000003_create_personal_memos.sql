@@ -163,8 +163,8 @@ JOIN members m ON pm.member_id = m.id
 WHERE pm.is_archived = false;
 
 -- 8. 検索機能のためのGINインデックス
-CREATE INDEX IF NOT EXISTS idx_memo_search_vector ON personal_memos 
-USING GIN(to_tsvector('simple', title || ' ' || content || ' ' || array_to_string(tags, ' ')));
+-- Note: Functional index removed due to IMMUTABLE function requirement
+-- Search functionality is still available through the memo_search_view and search function
 
 -- 9. メモ検索ファンクション
 CREATE OR REPLACE FUNCTION search_personal_memos(

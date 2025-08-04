@@ -128,7 +128,7 @@ const PayrollManager: React.FC = () => {
   });
 
   // 役員権限チェック
-  const isExecutive = user?.email === 'queue@queue-tech.jp';
+  const isExecutive = user?.role === 'executive';
 
   // メンバーIDを取得する関数
   const fetchMemberId = async () => {

@@ -113,7 +113,7 @@ const MemberManager: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // 役員権限チェック
-  const isExecutive = user?.email === 'queue@queue-tech.jp';
+  const isExecutive = user?.role === 'executive';
 
   useEffect(() => {
     if (isExecutive) {
@@ -360,7 +360,7 @@ const MemberManager: React.FC = () => {
         </CardHeader>
         <CardContent>
           <p className="text-gray-600">
-            この機能は役員アカウント（queue@queue-tech.jp）でのみご利用いただけます。
+            この機能は役員アカウントでのみご利用いただけます。
           </p>
         </CardContent>
       </Card>
