@@ -43,7 +43,7 @@ const ADMIN_CREDENTIALS = {
 } as const;
 
 const SESSION_STORAGE_KEY = 'queue_admin_session';
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24時間
+const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30日（1ヶ月）
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -69,8 +69,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const timeSinceLastActivity = now - session.user.lastActivity;
     const sessionAge = now - session.createdAt;
     
-    // セッション全体が24時間以内、かつ最後のアクティビティが30分以内
-    return sessionAge < SESSION_DURATION && timeSinceLastActivity < 30 * 60 * 1000;
+    // セッション全体が30日以内、かつ最後のアクティビティが7日以内
+    return sessionAge < SESSION_DURATION && timeSinceLastActivity < 7 * 24 * 60 * 60 * 1000;
   };
 
   // localStorageからセッションを読み込み
