@@ -63,36 +63,36 @@ const ServicesSection: React.FC = () => {
     <section id="services" className="section bg-white relative">
       <div className="container mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-navy-800">
             🛠️ Queue株式会社のサービス
           </h2>
-          <p className="text-navy-600 max-w-3xl mx-auto">
+          <p className="text-navy-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
             Queueは、AI開発だけでなく、業務DX・業務自動化・Webシステム構築まで一気通貫で支援するテクノロジーパートナーです。
             単なる開発にとどまらず、「課題整理 → 要件設計 → 実装 → 運用」のすべてを伴走します。
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-12">
           {services.map((service, index) => (
             <Card key={index} className="border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
-              <CardHeader className="border-b border-gray-50 bg-gray-50/30 pb-4">
+              <CardHeader className="border-b border-gray-100 bg-white pb-4">
                 <div className="flex items-start gap-3 mb-3">
-                  <div className={`w-10 h-10 bg-gradient-to-br ${service.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                    <div className="w-5 h-5 bg-white/20 rounded-lg"></div>
+                  <div className={`w-10 h-10 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <div className="w-2 h-2 bg-navy-400 rounded-full"></div>
                   </div>
                   <div className="flex-1">
-                    <span className="text-navy-600 font-medium text-sm">✅ {index + 1}.</span>
-                    <CardTitle className="text-lg text-navy-800 mt-1 leading-tight">{service.title}</CardTitle>
+                    <span className="text-navy-500 font-medium text-xs sm:text-sm">{index + 1}.</span>
+                    <CardTitle className="text-base sm:text-lg text-navy-800 mt-1 leading-snug">{service.title}</CardTitle>
                   </div>
                 </div>
-                <CardDescription className="text-navy-600 italic font-medium">{service.description}</CardDescription>
+                <CardDescription className="text-navy-600 text-sm sm:text-base leading-relaxed">{service.description}</CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
-                <ul className="space-y-2">
+                <ul className="space-y-2 sm:space-y-2.5">
                   {service.features.map((feature, i) => (
-                    <li key={i} className="flex items-start">
-                      <div className="w-2 h-2 bg-navy-600 rounded-full mt-2 flex-shrink-0 mr-3"></div>
-                      <span className="text-navy-600 text-sm leading-relaxed">{feature}</span>
+                    <li key={i} className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-navy-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span className="text-navy-700 text-sm sm:text-base leading-relaxed">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -103,11 +103,11 @@ const ServicesSection: React.FC = () => {
 
         {/* CTA to full services page */}
         <div className="text-center">
-          <div className="bg-navy-50 rounded-2xl p-8 max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold text-navy-800 mb-4">
+          <div className="bg-navy-50 rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto">
+            <h3 className="text-xl sm:text-2xl font-bold text-navy-800 mb-3 sm:mb-4">
               その他のサービスも充実
             </h3>
-            <p className="text-navy-600 mb-6">
+            <p className="text-navy-600 text-sm sm:text-base leading-relaxed mb-5 sm:mb-6">
               プロンプトエンジニアリング支援、AI教育・実践トレーニング、自社製AIプロダクト提供など、
               さらに詳しいサービス内容をご覧いただけます。
             </p>
