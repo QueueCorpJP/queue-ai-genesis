@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 
 const ProcessFlowSection: React.FC = () => {
   const steps = [
@@ -82,13 +83,21 @@ const ProcessFlowSection: React.FC = () => {
         </div>
 
         <div className="mt-10 sm:mt-16 text-center bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-navy-100 max-w-3xl mx-auto">
-          <h3 className="text-xl sm:text-2xl font-bold text-navy-800 mb-4">
-            ✅ 最後に一言（安心感を伝える）
+          <h3 className="text-xl sm:text-2xl font-bold text-navy-800 mb-3 sm:mb-4">
+            ✅ 最後に一言
           </h3>
-          <p className="text-navy-600 text-base sm:text-lg leading-relaxed">
+          <p className="text-navy-600 text-base sm:text-lg leading-relaxed mb-5 sm:mb-6 px-1">
             Queueは「スピード感」と「伴走」を大切にしています。<span className="hidden sm:inline"><br /></span>
             まずはお気軽にご相談ください。その場で未来の一歩を、一緒に描きましょう。
           </p>
+          <div className="flex justify-center">
+            <Link
+              to="/contact"
+              className="queue-button w-full sm:w-auto text-center"
+            >
+              無料相談はこちら
+            </Link>
+          </div>
         </div>
       </div>
 
