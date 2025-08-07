@@ -152,7 +152,7 @@ Queue株式会社について:
     }
   }, [messages]);
 
-  const handleSend = async (e?: React.FormEvent) => {
+  const handleSend = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
     const currentInput = input.trim();
@@ -287,23 +287,23 @@ Queue株式会社について:
         }
       }, 100);
     }
-  };
+  }, [input, isLoading, messages, toast, saveConversationToDatabase]);
 
   // Handle key down
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-  };
+  }, [handleSend]);
 
   // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-  };
+  }, []);
 
   // Input form component
-  const InputForm = () => (
+  const InputForm = useCallback(() => (
     <div className="p-3 border-t bg-white shrink-0">
       <form onSubmit={handleSend} className="flex gap-2 items-end">
         <div className="relative flex-1">
@@ -334,7 +334,7 @@ Queue株式会社について:
         </div>
       </form>
     </div>
-  );
+  ), [input, isLoading, handleInputChange, handleSend, handleKeyDown]);
 
   // Chat UI component to be reused in both Drawer and Sheet
   const ChatUI = () => (
