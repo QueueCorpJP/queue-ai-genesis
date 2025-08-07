@@ -3,6 +3,18 @@ interface SitemapUrl {
   lastmod: string;
   changefreq: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
   priority: number;
+  images?: Array<{
+    loc: string;
+    caption?: string;
+    title?: string;
+  }>;
+  videos?: Array<{
+    thumbnail_loc: string;
+    title: string;
+    description: string;
+    content_loc?: string;
+    duration?: number;
+  }>;
 }
 
 interface NewsArticle {
@@ -61,16 +73,63 @@ export const generateSitemap = async (articles: NewsArticle[] = []): Promise<str
   });
 
   // Generate XML
-  const xmlUrls = urls.map(url => `
+  const xmlUrls = urls.map(url => {
+    let urlXml = `
   <url>
     <loc>${url.url}</loc>
     <lastmod>${url.lastmod}</lastmod>
     <changefreq>${url.changefreq}</changefreq>
-    <priority>${url.priority}</priority>
-  </url>`).join('');
+    <priority>${url.priority}</priority>`;
+
+    // Add image sitemap data if available
+    if (url.images && url.images.length > 0) {
+      url.images.forEach(image => {
+        urlXml += `
+    <image:image>
+      <image:loc>${image.loc}</image:loc>`;
+        if (image.caption) {
+          urlXml += `
+      <image:caption>${escapeXml(image.caption)}</image:caption>`;
+        }
+        if (image.title) {
+          urlXml += `
+      <image:title>${escapeXml(image.title)}</image:title>`;
+        }
+        urlXml += `
+    </image:image>`;
+      });
+    }
+
+    // Add video sitemap data if available
+    if (url.videos && url.videos.length > 0) {
+      url.videos.forEach(video => {
+        urlXml += `
+    <video:video>
+      <video:thumbnail_loc>${video.thumbnail_loc}</video:thumbnail_loc>
+      <video:title>${escapeXml(video.title)}</video:title>
+      <video:description>${escapeXml(video.description)}</video:description>`;
+        if (video.content_loc) {
+          urlXml += `
+      <video:content_loc>${video.content_loc}</video:content_loc>`;
+        }
+        if (video.duration) {
+          urlXml += `
+      <video:duration>${video.duration}</video:duration>`;
+        }
+        urlXml += `
+    </video:video>`;
+      });
+    }
+
+    urlXml += `
+  </url>`;
+    return urlXml;
+  }).join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   ${xmlUrls}
 </urlset>`;
 };

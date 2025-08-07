@@ -9,17 +9,27 @@ interface SEOHeadProps {
   ogImage?: string;
   canonicalUrl?: string;
   structuredData?: object;
+  articleType?: 'website' | 'article' | 'product' | 'service';
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+  breadcrumbs?: Array<{ name: string; url: string }>;
 }
 
 const SEOHead: React.FC<SEOHeadProps> = ({
   title = "Queue株式会社 | 「Queue株式会社に任せればいける」——その確信を30分で。",
-  description = "初回商談で、貴社の業務に合わせたプロトタイプ型デモをその場で提示。Queueの”即体感デモ”は、「まだ検討中」を「もう任せたい」へと変えます。",
+  description = "初回商談で、貴社の業務に合わせたプロトタイプ型デモをその場で提示。Queueの「即体感デモ」は、「まだ検討中」を「もう任せたい」へと変えます。",
   keywords = "キュー株式会社,Queue株式会社,AI駆動開発,プロンプトエンジニアリング,AI開発,プロトタイプ制作,デジタル変革,DX,人工知能,機械学習,自動化,イノベーション,テクノロジー",
   ogTitle,
   ogDescription,
   ogImage = "/Queue.png",
   canonicalUrl,
-  structuredData
+  structuredData,
+  articleType = 'website',
+  publishedTime,
+  modifiedTime,
+  author = 'Queue株式会社',
+  breadcrumbs
 }) => {
   useEffect(() => {
     const siteUrl = "https://queue-tech.jp";
@@ -55,13 +65,33 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     // 基本メタタグ
     document.head.appendChild(createMeta('description', description));
     document.head.appendChild(createMeta('keywords', keywords));
-    document.head.appendChild(createMeta('author', 'Queue株式会社'));
-    document.head.appendChild(createMeta('robots', 'index, follow'));
+    document.head.appendChild(createMeta('author', author));
+    document.head.appendChild(createMeta('robots', 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'));
     document.head.appendChild(createMeta('language', 'Japanese'));
     document.head.appendChild(createMeta('revisit-after', '7 days'));
     document.head.appendChild(createMeta('theme-color', '#2563eb'));
     document.head.appendChild(createMeta('msapplication-TileColor', '#2563eb'));
     document.head.appendChild(createMeta('application-name', 'Queue株式会社'));
+    
+    // パフォーマンス最適化のためのメタタグ
+    document.head.appendChild(createMeta('format-detection', 'telephone=no'));
+    document.head.appendChild(createMeta('mobile-web-app-capable', 'yes'));
+    document.head.appendChild(createMeta('apple-mobile-web-app-capable', 'yes'));
+    document.head.appendChild(createMeta('apple-mobile-web-app-status-bar-style', 'black-translucent'));
+    
+    // セキュリティ関連のメタタグ
+    document.head.appendChild(createMeta('referrer', 'strict-origin-when-cross-origin'));
+    
+    // 記事の時間情報
+    if (publishedTime) {
+      document.head.appendChild(createMeta('article:published_time', publishedTime, true));
+    }
+    if (modifiedTime) {
+      document.head.appendChild(createMeta('article:modified_time', modifiedTime, true));
+    }
+    if (author && articleType === 'article') {
+      document.head.appendChild(createMeta('article:author', author, true));
+    }
 
     // Canonical URL
     const canonical = document.createElement('link');
@@ -71,14 +101,28 @@ const SEOHead: React.FC<SEOHeadProps> = ({
 
     // Open Graph メタタグ
     const ogMetas = [
-      { property: 'og:type', content: 'website' },
+      { property: 'og:type', content: articleType },
       { property: 'og:url', content: fullCanonicalUrl },
       { property: 'og:title', content: ogTitle || title },
       { property: 'og:description', content: ogDescription || description },
       { property: 'og:image', content: fullOgImage },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { property: 'og:image:alt', content: ogTitle || title },
       { property: 'og:site_name', content: 'Queue株式会社' },
       { property: 'og:locale', content: 'ja_JP' }
     ];
+    
+    // 記事の場合は追加のOGタグ
+    if (articleType === 'article' && publishedTime) {
+      ogMetas.push({ property: 'article:published_time', content: publishedTime });
+    }
+    if (articleType === 'article' && modifiedTime) {
+      ogMetas.push({ property: 'article:modified_time', content: modifiedTime });
+    }
+    if (articleType === 'article' && author) {
+      ogMetas.push({ property: 'article:author', content: author });
+    }
 
     ogMetas.forEach(({ property, content }) => {
       document.head.appendChild(createMeta(property, content, true));
@@ -104,6 +148,26 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       script.setAttribute('data-seo', 'true');
       script.textContent = JSON.stringify(structuredData);
       document.head.appendChild(script);
+    }
+
+    // パンくずリストの構造化データ
+    if (breadcrumbs && breadcrumbs.length > 0) {
+      const breadcrumbData = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": breadcrumbs.map((crumb, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "name": crumb.name,
+          "item": crumb.url.startsWith('http') ? crumb.url : `${siteUrl}${crumb.url}`
+        }))
+      };
+
+      const breadcrumbScript = document.createElement('script');
+      breadcrumbScript.type = 'application/ld+json';
+      breadcrumbScript.setAttribute('data-seo', 'true');
+      breadcrumbScript.textContent = JSON.stringify(breadcrumbData);
+      document.head.appendChild(breadcrumbScript);
     }
 
     // 会社の基本構造化データ
