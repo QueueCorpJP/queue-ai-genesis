@@ -13,10 +13,8 @@ const WhyQueue = () => {
       title: "実運用に強い\"現場型\"AIエンジニアチーム",
       subtitle: "1.",
       icon: (
-        <div className="w-12 h-12 bg-gradient-to-br from-navy-600 to-navy-800 rounded-xl flex items-center justify-center">
-          <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
-            <div className="w-3 h-3 bg-navy-700 rounded"></div>
-          </div>
+        <div className="w-12 h-12 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center">
+          <div className="w-2.5 h-2.5 bg-navy-400 rounded-full"></div>
         </div>
       ),
       description: "Queueのエンジニアは、PoC止まりではなく「業務で本当に使えるAI」を開発・運用することに特化した実践型チームです。自然言語処理・画像解析・レコメンドなど多様な分野に対応し、社内に実装ノウハウと業務設計力が蓄積されています。",
@@ -32,10 +30,8 @@ const WhyQueue = () => {
       title: "初回商談で\"動くプロトタイプ\"を提示",
       subtitle: "2.",
       icon: (
-        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center">
-          <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-          </div>
+        <div className="w-12 h-12 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center">
+          <div className="w-5 h-0.5 bg-navy-400 rounded"></div>
         </div>
       ),
       description: "Queueでは、ヒアリングしたその日 or 翌営業日には、Google Meet や Zoom で実際に動作するAIチャットボットのプロトタイプを提示可能。「こんな感じです」が\"見える\"初回商談を徹底しています。",
@@ -51,11 +47,11 @@ const WhyQueue = () => {
       title: "開発〜運用まで一気通貫、\"最短\"のスピードで価値提供",
       subtitle: "3.",
       icon: (
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-          <div className="flex space-x-1">
-            <div className="w-1 h-6 bg-white rounded-full"></div>
-            <div className="w-1 h-4 bg-white rounded-full mt-2"></div>
-            <div className="w-1 h-5 bg-white rounded-full mt-1"></div>
+        <div className="w-12 h-12 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center">
+          <div className="flex gap-0.5 items-end">
+            <div className="w-0.5 h-5 bg-navy-400 rounded"></div>
+            <div className="w-0.5 h-3.5 bg-navy-400 rounded"></div>
+            <div className="w-0.5 h-4.5 bg-navy-400 rounded"></div>
           </div>
         </div>
       ),
@@ -74,14 +70,14 @@ const WhyQueue = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-1 pt-24">
-        <section className="bg-gradient-to-r from-navy-800 to-navy-900 py-16 md:py-24">
+      <main className="flex-1 pt-20 md:pt-24">
+        <section className="bg-navy-50 py-12 md:py-16">
           <Container>
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <div className="max-w-4xl mx-auto text-center px-4">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-navy-800">
                 ✅ Queueが選ばれる3つの理由
               </h1>
-              <p className="text-lg text-navy-100 max-w-3xl mx-auto">
+              <p className="text-sm md:text-base text-navy-600 max-w-3xl mx-auto leading-relaxed">
                 既製APIやノーコードツールでは届かない\"リアルな現場課題\"を解決する、
                 実運用に特化したAI開発チームです。初回商談で動くプロトタイプを体験いただき、
                 最短1週間から価値提供を開始します。
@@ -90,50 +86,49 @@ const WhyQueue = () => {
           </Container>
         </section>
         
-        <section className="py-16 md:py-24">
+        <section className="py-12 md:py-16">
           <Container>
             {reasons.map((reason, index) => (
-              <div key={index} className={`grid grid-cols-1 md:grid-cols-2 gap-12 items-center ${index < reasons.length - 1 ? 'mb-20' : ''}`}>
+              <div key={index} className={`grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center ${index < reasons.length - 1 ? 'mb-12 md:mb-20' : ''}`}>
                 <div className={index % 2 === 1 ? 'order-2 md:order-1' : ''}>
-              <div className="bg-navy-50 p-8 rounded-xl">
-                <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img 
+                  <div className="bg-navy-50 p-5 sm:p-7 md:p-8 rounded-2xl">
+                    <div className="aspect-video bg-navy-200 rounded-xl flex items-center justify-center overflow-hidden">
+                      <img 
                         src={reason.image} 
                         alt={reason.title} 
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-              </div>
-            </div>
-            
-                <div className={index % 2 === 1 ? 'order-1 md:order-2' : ''}>
-                                    <div className="flex items-center gap-4 mb-6">
-                    {reason.icon}
-                    <div>
-                      <span className="text-2xl font-bold text-navy-800">{reason.subtitle}</span>
-                      <h2 className="text-2xl md:text-3xl font-bold text-navy-800">{reason.title}</h2>
+                        className="w-full h-full object-cover rounded-xl"
+                      />
                     </div>
                   </div>
-            
-                  <p className="text-lg text-navy-600 mb-8 leading-relaxed">
+                </div>
+                
+                <div className={index % 2 === 1 ? 'order-1 md:order-2' : ''}>
+                  <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    {reason.icon}
+                    <div>
+                      <span className="text-xl sm:text-2xl font-bold text-navy-800">{reason.subtitle}</span>
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-navy-800 leading-snug">{reason.title}</h2>
+                    </div>
+                  </div>
+          
+                  <p className="text-sm sm:text-base text-navy-600 mb-5 sm:mb-6 leading-relaxed">
                     {reason.description}
                   </p>
                   
-                  <ul className="space-y-4 mb-8">
+                  <ul className="space-y-3 mb-5 sm:mb-6">
                     {reason.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-navy-600 rounded-full mt-3 flex-shrink-0"></div>
-                        <span className="text-navy-600 leading-relaxed">{feature}</span>
-                  </li>
+                      <li key={featureIndex} className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-navy-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="text-navy-700 text-sm sm:text-base leading-relaxed">{feature}</span>
+                      </li>
                     ))}
-                </ul>
+                  </ul>
                   
-                  <div className="bg-navy-50 p-6 rounded-lg border-l-4 border-navy-600">
-                    <p className="text-navy-700 font-medium flex items-start gap-2">
-                      <span className="text-navy-600 text-xl">🔍</span>
-                      <span className="leading-relaxed">{reason.conclusion}</span>
+                  <div className="bg-navy-50 p-4 rounded-lg border border-navy-100">
+                    <p className="text-navy-700 text-sm sm:text-base leading-relaxed">
+                      {reason.conclusion}
                     </p>
-                </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -141,26 +136,26 @@ const WhyQueue = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="bg-navy-800 py-16 md:py-24">
+        <section className="py-12 md:py-16 bg-navy-50">
           <Container>
-            <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+            <div className="text-center max-w-3xl mx-auto px-4">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-navy-800">
                 まずは無料デモで体験してください
               </h2>
-              <p className="text-lg text-navy-200 mb-8">
+              <p className="text-sm md:text-base text-navy-600 mb-6 md:mb-8 leading-relaxed">
                 ヒアリング当日または翌営業日には、実際に動作するプロトタイプをお見せします。
                 「説明」ではなく「体験」で、Queueの実力をご確認ください。
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <a 
                   href="/consultation" 
-                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-navy-800 font-semibold rounded-full hover:bg-navy-50 transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-navy-800 text-white font-semibold rounded-md hover:bg-navy-700 transition-colors"
                 >
                   無料相談を申し込む
                 </a>
                 <a 
                   href="/contact" 
-                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-navy-800 transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-navy-200 text-navy-800 font-semibold rounded-md hover:bg-white/60 transition-colors"
                 >
                   お問い合わせ
                 </a>
