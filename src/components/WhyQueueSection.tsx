@@ -13,10 +13,8 @@ const WhyQueueSection: React.FC = () => {
       ],
       conclusion: "だから解ける課題が違う：既製APIやノーコードツールでは届かない\"リアルな現場課題\"に踏み込めます。",
       icon: (
-        <div className="w-12 h-12 bg-gradient-to-br from-navy-600 to-navy-800 rounded-xl flex items-center justify-center">
-          <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
-            <div className="w-3 h-3 bg-navy-700 rounded"></div>
-          </div>
+        <div className="w-12 h-12 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center">
+          <div className="w-2.5 h-2.5 bg-navy-400 rounded-full"></div>
         </div>
       )
     },
@@ -31,10 +29,8 @@ const WhyQueueSection: React.FC = () => {
       ],
       conclusion: "だから発注判断が早い：「説明」ではなく「体験」で納得してもらえる営業フローを実現。",
       icon: (
-        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center">
-          <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-          </div>
+        <div className="w-12 h-12 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center">
+          <div className="w-5 h-0.5 bg-navy-400 rounded"></div>
         </div>
       )
     },
@@ -49,11 +45,11 @@ const WhyQueueSection: React.FC = () => {
       ],
       conclusion: "だから\"待たせない\"開発ができる：「すぐ出す」「しっかり仕上げる」を両立できる現実的な開発体制。",
       icon: (
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-          <div className="flex space-x-1">
-            <div className="w-1 h-6 bg-white rounded-full"></div>
-            <div className="w-1 h-4 bg-white rounded-full mt-2"></div>
-            <div className="w-1 h-5 bg-white rounded-full mt-1"></div>
+        <div className="w-12 h-12 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center">
+          <div className="flex gap-0.5 items-end">
+            <div className="w-0.5 h-5 bg-navy-400 rounded"></div>
+            <div className="w-0.5 h-3.5 bg-navy-400 rounded"></div>
+            <div className="w-0.5 h-4.5 bg-navy-400 rounded"></div>
           </div>
         </div>
       )
@@ -63,17 +59,17 @@ const WhyQueueSection: React.FC = () => {
   return (
     <section id="why-queue" className="section bg-navy-50 relative overflow-hidden">
       <div className="container mx-auto relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-navy-800">
             ✅ Queueが選ばれる3つの理由
           </h2>
-          <p className="text-navy-600 max-w-3xl mx-auto">
+          <p className="text-navy-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed px-1">
             既製APIやノーコードツールでは届かない\"リアルな現場課題\"を解決する、
             実運用に特化したAI開発チームです。
           </p>
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-8 sm:space-y-12">
           {advantages.map((item, index) => (
             <div
               key={index}
@@ -86,22 +82,22 @@ const WhyQueueSection: React.FC = () => {
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 mb-3 sm:mb-4">
                     <span className="text-xl sm:text-2xl font-bold text-navy-800">{item.subtitle}</span>
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-navy-800">{item.title}</h3>
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-navy-800 leading-snug">{item.title}</h3>
             </div>
-                  <p className="text-navy-600 mb-4 sm:mb-6 leading-relaxed">
+                  <p className="text-navy-600 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">
                     {item.description}
                   </p>
                   
                   <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                     {item.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
-                        <div className="w-2 h-2 bg-navy-600 rounded-full mt-1.5 sm:mt-2 flex-shrink-0"></div>
-                        <span className="text-navy-600 text-sm sm:text-base">{feature}</span>
+                        <div className="w-1.5 h-1.5 bg-navy-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="text-navy-700 text-sm sm:text-base leading-relaxed">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   
-                  <div className="bg-navy-50 p-3 sm:p-4 rounded-lg border-l-4 border-navy-600">
+                  <div className="bg-navy-50 p-3 sm:p-4 rounded-lg border border-navy-100">
                     <p className="text-navy-700 font-medium text-sm sm:text-base">
                       {item.conclusion}
               </p>
@@ -114,8 +110,8 @@ const WhyQueueSection: React.FC = () => {
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-1/3 h-1/3 bg-navy-100/50 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-1/4 h-1/4 bg-navy-200/30 rounded-full blur-3xl transform translate-x-1/3 translate-y-1/3"></div>
+      <div className="hidden sm:block absolute top-0 left-0 w-1/3 h-1/3 bg-navy-100/50 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="hidden sm:block absolute bottom-0 right-0 w-1/4 h-1/4 bg-navy-200/30 rounded-full blur-3xl transform translate-x-1/3 translate-y-1/3"></div>
     </section>
   );
 };
