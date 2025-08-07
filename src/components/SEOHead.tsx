@@ -205,18 +205,19 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     document.head.appendChild(orgScript);
 
     // Preconnect リンク
-    const preconnects = [
-      { href: 'https://fonts.googleapis.com' },
-      { href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' }
-    ];
-
-    preconnects.forEach(({ href, crossOrigin }) => {
+    const ensureLink = (rel: string, href: string, attrs: Record<string, string> = {}) => {
+      if (document.querySelector(`link[rel="${rel}"][href="${href}"]`)) return;
       const link = document.createElement('link');
-      link.setAttribute('rel', 'preconnect');
+      link.setAttribute('rel', rel);
       link.setAttribute('href', href);
-      if (crossOrigin) link.setAttribute('crossorigin', crossOrigin);
+      Object.entries(attrs).forEach(([k, v]) => link.setAttribute(k, v));
       document.head.appendChild(link);
-    });
+    };
+
+    ensureLink('preconnect', 'https://fonts.googleapis.com');
+    ensureLink('preconnect', 'https://fonts.gstatic.com', { crossorigin: 'anonymous' });
+    // Preload font stylesheet to improve FCP
+    ensureLink('preload', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap', { as: 'style' });
 
     // クリーンアップ関数
     return () => {

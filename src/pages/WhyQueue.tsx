@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
+import OptimizedImage from '@/components/OptimizedImage';
 
 const WhyQueue = () => {
   useEffect(() => {
@@ -93,10 +94,13 @@ const WhyQueue = () => {
                 <div className={index % 2 === 1 ? 'order-2 md:order-1' : ''}>
                   <div className="bg-navy-50 p-5 sm:p-7 md:p-8 rounded-2xl">
                     <div className="aspect-video bg-navy-200 rounded-xl flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={reason.image} 
-                        alt={reason.title} 
+                      <OptimizedImage
+                        src={reason.image}
+                        alt={reason.title}
                         className="w-full h-full object-cover rounded-xl"
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        quality={80}
                       />
                     </div>
                   </div>
