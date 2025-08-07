@@ -127,15 +127,15 @@ const Services = () => {
       
       <Navbar />
       
-      <main className="flex-1 pt-24">
+      <main className="flex-1 pt-20 md:pt-24">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-navy-800 to-navy-900 py-16 md:py-24">
+        <section className="bg-navy-50 py-12 md:py-16">
           <Container>
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <div className="max-w-4xl mx-auto text-center px-4">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-navy-800">
                 🛠️ Queue株式会社のサービス
               </h1>
-              <p className="text-lg text-navy-100 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-sm md:text-base text-navy-600 max-w-3xl mx-auto leading-relaxed">
                 Queueは、AI開発だけでなく、業務DX・業務自動化・Webシステム構築まで一気通貫で支援するテクノロジーパートナーです。
                 単なる開発にとどまらず、「課題整理 → 要件設計 → 実装 → 運用」のすべてを伴走します。
               </p>
@@ -144,49 +144,49 @@ const Services = () => {
         </section>
         
         {/* Services Grid */}
-        <section className="py-16 md:py-24">
+        <section className="py-12 md:py-16">
           <Container>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
               {services.map((service, index) => (
                 <div
                   key={index}
-                  className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
+                  className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${service.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                      <div className="w-6 h-6 bg-white/20 rounded-lg"></div>
+                  <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div className={`w-12 h-12 bg-navy-50 border border-navy-100 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                      <div className="w-2.5 h-2.5 bg-navy-400 rounded-full"></div>
                     </div>
                     <div className="flex-1">
-                      <span className="text-navy-600 font-medium">✅ {index + 1}.</span>
-                      <h3 className="text-xl font-bold text-navy-800 mt-1 leading-tight">
+                      <span className="text-navy-500 font-medium text-xs sm:text-sm">{index + 1}.</span>
+                      <h3 className="text-lg sm:text-xl font-bold text-navy-800 mt-1 leading-snug">
                         {service.title}
                       </h3>
-                </div>
-              </div>
+                    </div>
+                  </div>
 
-                  <ul className="space-y-3 mb-6">
+                  <ul className="space-y-2 sm:space-y-2.5 mb-4 sm:mb-5">
                     {service.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-navy-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span className="text-navy-600 leading-relaxed">{feature}</span>
+                      <li key={featureIndex} className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-navy-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className="text-navy-700 text-sm sm:text-base leading-relaxed">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   
-                  <p className="text-navy-700 font-medium italic">
+                  <p className="text-navy-600 text-sm sm:text-base leading-relaxed">
                     {service.description}
-                </p>
-              </div>
+                  </p>
+                </div>
               ))}
             </div>
           </Container>
         </section>
 
         {/* Value Proposition Table */}
-        <section className="bg-gray-50 py-16 md:py-24">
+        <section className="bg-gray-50 py-12 md:py-16">
           <Container>
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-navy-800">
+            <div className="max-w-4xl mx-auto px-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-navy-800">
                 ✨ 一貫対応で提供する価値
               </h2>
               
@@ -195,56 +195,55 @@ const Services = () => {
                   <table className="w-full">
                     <thead className="bg-navy-800 text-white">
                       <tr>
-                        <th className="px-6 py-4 text-left font-semibold">項目</th>
-                        <th className="px-6 py-4 text-left font-semibold">対応範囲</th>
+                        <th className="px-4 py-3 md:px-6 md:py-4 text-left font-semibold">項目</th>
+                        <th className="px-4 py-3 md:px-6 md:py-4 text-left font-semibold">対応範囲</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-navy-800">戦略設計</td>
-                        <td className="px-6 py-4 text-navy-600">ビジネス課題 × 技術適用の企画・設計</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 font-medium text-navy-800">戦略設計</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 text-navy-600">ビジネス課題 × 技術適用の企画・設計</td>
                       </tr>
                       <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-navy-800">技術実装</td>
-                        <td className="px-6 py-4 text-navy-600">AI / Web / DXツールなど複合的な開発力</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 font-medium text-navy-800">技術実装</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 text-navy-600">AI / Web / DXツールなど複合的な開発力</td>
                       </tr>
                       <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-navy-800">スピード</td>
-                        <td className="px-6 py-4 text-navy-600">初回商談でのプロトタイプ提示が可能</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 font-medium text-navy-800">スピード</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 text-navy-600">初回商談でのプロトタイプ提示が可能</td>
                       </tr>
                       <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-navy-800">継続運用</td>
-                        <td className="px-6 py-4 text-navy-600">モニタリング・改善・社内定着支援まで</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 font-medium text-navy-800">継続運用</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 text-navy-600">モニタリング・改善・社内定着支援まで</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-                </div>
+              </div>
           </Container>
         </section>
 
         {/* CTA Section */}
-        <section className="bg-navy-800 py-16 md:py-24">
+        <section className="py-12 md:py-16 bg-navy-50">
           <Container>
-            <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+            <div className="text-center max-w-3xl mx-auto px-4">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-navy-800">
                 「AIだけでなく、現場のシステムや運用も含めて相談したい」
               </h2>
-              <p className="text-lg text-navy-200 mb-8">
-                という方に、Queueは最適なパートナーです。<br />
-                まずは無料相談で、貴社の課題をお聞かせください。
+              <p className="text-sm md:text-base text-navy-600 mb-6 md:mb-8 leading-relaxed">
+                という方に、Queueは最適なパートナーです。まずは無料相談で、貴社の課題をお聞かせください。
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <a 
                   href="/consultation" 
-                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-navy-800 font-semibold rounded-full hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-navy-800 text-white font-semibold rounded-md hover:bg-navy-700 transition-colors"
                 >
                   無料相談を申し込む
                 </a>
                 <a 
                   href="/contact" 
-                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-navy-800 transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-navy-200 text-navy-800 font-semibold rounded-md hover:bg-white/60 transition-colors"
                 >
                   お問い合わせ
                 </a>
