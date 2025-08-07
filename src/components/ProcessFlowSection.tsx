@@ -55,18 +55,18 @@ const ProcessFlowSection: React.FC = () => {
               key={index} 
               className="border-none bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
             >
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gradient-to-br from-navy-600 to-navy-800 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-navy-600 to-navy-800 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg">
                       {step.number}
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-navy-800 mb-3">
+                    <h3 className="text-lg sm:text-xl font-bold text-navy-800 mb-3">
                       {step.title}
                     </h3>
-                    <div className="text-navy-600 leading-relaxed whitespace-pre-line">
+                    <div className="text-navy-600 leading-relaxed whitespace-pre-line text-sm sm:text-base">
                       {step.description.split(/(\*\*.*?\*\*)/).map((part, i) => {
                         if (part.startsWith('**') && part.endsWith('**')) {
                           return <strong key={i} className="font-bold text-navy-800">{part.slice(2, -2)}</strong>;
@@ -81,12 +81,12 @@ const ProcessFlowSection: React.FC = () => {
           ))}
         </div>
 
-        <div className="mt-16 text-center bg-white p-8 rounded-2xl shadow-sm border border-navy-100 max-w-3xl mx-auto">
-          <h3 className="text-2xl font-bold text-navy-800 mb-4">
+        <div className="mt-10 sm:mt-16 text-center bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-navy-100 max-w-3xl mx-auto">
+          <h3 className="text-xl sm:text-2xl font-bold text-navy-800 mb-4">
             ✅ 最後に一言（安心感を伝える）
           </h3>
-          <p className="text-navy-600 text-lg leading-relaxed">
-            Queueは「スピード感」と「伴走」を大切にしています。<br />
+          <p className="text-navy-600 text-base sm:text-lg leading-relaxed">
+            Queueは「スピード感」と「伴走」を大切にしています。<span className="hidden sm:inline"><br /></span>
             まずはお気軽にご相談ください。その場で未来の一歩を、一緒に描きましょう。
           </p>
         </div>

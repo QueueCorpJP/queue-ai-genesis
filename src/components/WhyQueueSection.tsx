@@ -77,32 +77,32 @@ const WhyQueueSection: React.FC = () => {
           {advantages.map((item, index) => (
             <div
               key={index}
-              className="bg-white p-8 md:p-10 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
+              className="bg-white p-6 sm:p-8 md:p-10 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
             >
-              <div className="flex items-start gap-6 mb-6">
-                <div className="flex-shrink-0 transform transition-transform duration-500 hover:scale-110">
+              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-6">
+                <div className="sm:flex-shrink-0 transform transition-transform duration-500 hover:scale-110">
                 {item.icon}
               </div>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-2xl font-bold text-navy-800">{item.subtitle}</span>
-                    <h3 className="text-xl md:text-2xl font-bold text-navy-800">{item.title}</h3>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 mb-3 sm:mb-4">
+                    <span className="text-xl sm:text-2xl font-bold text-navy-800">{item.subtitle}</span>
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-navy-800">{item.title}</h3>
             </div>
-                  <p className="text-navy-600 mb-6 leading-relaxed">
+                  <p className="text-navy-600 mb-4 sm:mb-6 leading-relaxed">
                     {item.description}
                   </p>
                   
-                  <ul className="space-y-3 mb-6">
+                  <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                     {item.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-navy-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span className="text-navy-600">{feature}</span>
+                      <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
+                        <div className="w-2 h-2 bg-navy-600 rounded-full mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                        <span className="text-navy-600 text-sm sm:text-base">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   
-                  <div className="bg-navy-50 p-4 rounded-lg border-l-4 border-navy-600">
-                    <p className="text-navy-700 font-medium">
+                  <div className="bg-navy-50 p-3 sm:p-4 rounded-lg border-l-4 border-navy-600">
+                    <p className="text-navy-700 font-medium text-sm sm:text-base">
                       {item.conclusion}
               </p>
             </div>
