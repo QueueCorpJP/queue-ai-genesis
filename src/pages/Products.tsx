@@ -17,7 +17,7 @@ const Products = () => {
       "name": "Queue株式会社",
       "url": "https://queue-tech.jp"
     },
-    "description": "Prompty・Workmateなど、Queue株式会社が開発するAI製品とソリューション",
+    "description": "Workmateなど、Queue株式会社が開発するAI製品とソリューション",
     "category": "AI Software",
     "offers": {
       "@type": "Offer",
@@ -37,9 +37,9 @@ const Products = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SEOHead
-        title="AI製品・ソリューション | Queue株式会社 - Prompty・Workmate"
-        description="キュー株式会社が開発するAI製品・ソリューション。Prompty、Workmateなど革新的なAI技術を活用した製品をご紹介します。"
-        keywords="AI製品,AIソリューション,Prompty,Workmate,Queue株式会社,キュー株式会社,AI技術,生成AI,プロンプトエンジニアリング,AI開発ツール"
+        title="AI製品・ソリューション | Queue株式会社 - Workmate"
+        description="キュー株式会社が開発するAI製品・ソリューション。Workmateなど革新的なAI技術を活用した製品をご紹介します。"
+        keywords="AI製品,AIソリューション,Workmate,Queue株式会社,キュー株式会社,AI技術,生成AI,プロンプトエンジニアリング,AI開発ツール"
         canonicalUrl="/products"
         structuredData={structuredData}
       />
@@ -146,63 +146,7 @@ const Products = () => {
                   </div>
                 </div>
               </div>
-              
-              {/* Prompty Product */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="bg-navy-50 p-8 rounded-xl">
-                  <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src="/prompty_logo.avif" 
-                      alt="Prompty製品イメージ" 
-                      className="w-full h-full object-contain rounded-lg"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <h2 className="text-3xl font-bold mb-3 text-navy-800">Prompty</h2>
-                  <p className="text-lg font-medium text-navy-600 mb-6">
-                    生成AI活用を、もっと自由に。もっと創造的に。
-                  </p>
-                  <p className="text-navy-600 mb-6">
-                    ChatGPTなどの生成AIを活用した"プロンプト（指示文）"を売買・共有できるプラットフォーム。
-                    AIを使いこなすにはプロンプトの質がすべて。Promptyでは、優れたプロンプトを使えば、誰でもプロのようなアウトプットが可能になります。
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-navy-50 p-4 rounded-lg">
-                      <h3 className="font-bold text-navy-800 mb-2">プロンプトマーケット</h3>
-                      <p className="text-sm text-navy-600">
-                        デザイン・マーケ・コーディング・企画など、目的別に最適なプロンプトを検索＆活用。
-                      </p>
-                    </div>
-                    
-                    <div className="bg-navy-50 p-4 rounded-lg">
-                      <h3 className="font-bold text-navy-800 mb-2">収益化</h3>
-                      <p className="text-sm text-navy-600">
-                        自作のプロンプトを販売して副収入を得ることも可能。
-                      </p>
-                    </div>
-                    
-                    <div className="bg-navy-50 p-4 rounded-lg">
-                      <h3 className="font-bold text-navy-800 mb-2">使いやすいUI</h3>
-                      <p className="text-sm text-navy-600">
-                        検索性、保存機能、タグ分類で誰でも簡単に目的のプロンプトにたどり着けます。
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-4">
-                    <Button asChild className="bg-navy-800 hover:bg-navy-700">
-                      <Link to="/product/prompty">詳細を見る</Link>
-                    </Button>
-                    
-                    <Button variant="outline" className="border-navy-300 text-navy-700 hover:bg-navy-50">
-                      <Link to="/consultation">お問い合わせ</Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
+
               
               {/* Future Product Placeholder */}
               <div className="border border-dashed border-navy-300 rounded-xl p-10 text-center">

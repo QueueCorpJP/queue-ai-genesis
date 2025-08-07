@@ -22,7 +22,8 @@ const About = () => {
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">Queue株式会社について</h1>
               <p className="text-xl text-navy-100">
-                AI駆動で、圧倒的スピードと品質を。
+                「Queue株式会社に任せればいける」<br />
+                ——その確信を30分で。
               </p>
             </div>
           </Container>
@@ -110,10 +111,10 @@ const About = () => {
                       <div className="h-16 w-16 rounded-lg bg-navy-100 flex items-center justify-center mb-4">
                         <span className="text-2xl font-bold text-navy-600">1</span>
                       </div>
-                      <h3 className="text-xl font-bold mb-3 text-navy-800">1/3デモ戦略</h3>
+                      <h3 className="text-xl font-bold mb-3 text-navy-800">即体感デモ戦略</h3>
                       <p className="text-navy-600">
-                        プロジェクト開始からわずか1/3の期間でワーキングデモをご提供。
-                        素早くプロジェクトの方向性を確認し、臨機応変に調整することが可能です。
+                        初回商談で課題解決のイメージを湧かせる無料デモをご提供。
+                        海外大出身のグローバルチームが、貴社の課題を即座に体感いただける実演で、ビジネス成功への道筋を明確化します。
                       </p>
                     </CardContent>
                   </Card>

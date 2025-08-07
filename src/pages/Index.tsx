@@ -4,8 +4,8 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import ServicesSection from '@/components/ServicesSection';
 import WhyQueueSection from '@/components/WhyQueueSection';
-import ProductsSection from '@/components/ProductsSection';
-import CaseStudiesSection from '@/components/CaseStudiesSection';
+
+import ProcessFlowSection from '@/components/ProcessFlowSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import ParticleBackground from '@/components/ParticleBackground';
@@ -76,9 +76,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
       <SEOHead
-        title="Queue株式会社 | AI駆動で、圧倒的スピードと品質を。"
+        title="Queue株式会社 | AI・DX・ウェブで課題を最速解決！初回商談で無料デモ"
         description="キュー株式会社は、AI駆動開発でビジネスを革新します。プロンプトエンジニアリング、AI開発、プロトタイプ制作を通じて、お客様のデジタル変革を支援。AI技術で圧倒的なスピードと品質を実現します。"
-        keywords="キュー株式会社,Queue株式会社,AI駆動開発,プロンプトエンジニアリング,AI開発,プロトタイプ制作,デジタル変革,DX,人工知能,機械学習,自動化,イノベーション,テクノロジー,キュー,Queue,AI受託開発,生成AI,LLM,GenAI,AI導入支援,Prompty,Workmate"
+        keywords="キュー株式会社,Queue株式会社,AI駆動開発,プロンプトエンジニアリング,AI開発,プロトタイプ制作,デジタル変革,DX,人工知能,機械学習,自動化,イノベーション,テクノロジー,キュー,Queue,AI受託開発,生成AI,LLM,GenAI,AI導入支援,Workmate"
         canonicalUrl="/"
         structuredData={structuredData}
       />
@@ -96,8 +96,7 @@ const Index = () => {
         
         <ServicesSection />
         <WhyQueueSection />
-        <ProductsSection />
-        <CaseStudiesSection />
+        <ProcessFlowSection />
         <ContactSection />
       </main>
 

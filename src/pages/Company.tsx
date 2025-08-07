@@ -37,7 +37,7 @@ const Company = () => {
   };
 
   useEffect(() => {
-    document.title = "会社概要 | Queue株式会社 - AI駆動で、圧倒的スピードと品質を";
+    document.title = "会社概要 | Queue株式会社 - AI・DX・ウェブで課題を最速解決！初回商談で無料デモ";
     
     // Update meta description for this specific page
     document.querySelector('meta[name="description"]')?.setAttribute('content', 'Queue株式会社の会社概要。ミッション・ビジョン・バリューと共に、所在地、代表者、設立日、資本金など企業情報を掲載。');
@@ -222,10 +222,11 @@ const Company = () => {
                   <div className="w-12 h-12 bg-gradient-to-br from-navy-600 to-navy-800 rounded-xl flex items-center justify-center mb-6">
                     <CheckCircle className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-4 text-navy-800">AI受託開発</h3>
+                  <h3 className="text-xl font-bold mb-4 text-navy-800">AI・DX受託開発</h3>
                   <p className="text-navy-600 leading-relaxed">
-                    最新のAI技術を活用したカスタムソリューションの企画・設計・開発。
-                    企業のニーズに合わせた高品質なAIシステムをスピーディに提供します。
+                    Queueは、AIエージェントやRAGによる業務自動化をはじめ、<br />
+                    業務DX支援・Webシステム開発・LLMO（生成AIの運用最適化）まで、<br />
+                    貴社の課題に応じて"動く仕組み"として実装・運用まで一気通貫で支援します。
                   </p>
                 </div>
                 
@@ -235,7 +236,7 @@ const Company = () => {
                   </div>
                   <h3 className="text-xl font-bold mb-4 text-navy-800">自社プロダクト開発</h3>
                   <p className="text-navy-600 leading-relaxed">
-                    Prompty、Workmate aiをはじめとする革新的なAIプロダクトの開発・運営。
+                    Workmate aiをはじめとする革新的なAIプロダクトの開発・運営。
                     高度なプロンプトエンジニアリングと生成AIを組み合わせた独自のソリューションを提供します。
                   </p>
                 </div>

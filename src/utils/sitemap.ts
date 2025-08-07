@@ -23,7 +23,7 @@ export const generateSitemap = async (articles: NewsArticle[] = []): Promise<str
     { path: '/about', changefreq: 'monthly' as const, priority: 0.8 },
     { path: '/services', changefreq: 'weekly' as const, priority: 0.9 },
     { path: '/products', changefreq: 'weekly' as const, priority: 0.9 },
-    { path: '/products/prompty', changefreq: 'monthly' as const, priority: 0.7 },
+  
     { path: '/products/workmate', changefreq: 'monthly' as const, priority: 0.7 },
     { path: '/news', changefreq: 'daily' as const, priority: 0.8 },
     { path: '/case-studies', changefreq: 'weekly' as const, priority: 0.7 },

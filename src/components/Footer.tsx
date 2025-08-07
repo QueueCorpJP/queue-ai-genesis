@@ -20,7 +20,8 @@ const Footer: React.FC = () => {
               </Link>
             </div>
             <p className="text-navy-300 mb-4">
-              AI駆動で、圧倒的スピードと品質を。
+              「Queue株式会社に任せればいける」<br />
+              ——その確信を30分で。
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-white hover:text-navy-300 transition-colors">
@@ -42,26 +43,31 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">AI開発サービス</h3>
+            <h3 className="text-lg font-semibold mb-4">AI・DX・Web開発サービス</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
-                  AI受託開発
+                  AIエージェント受託開発
                 </Link>
               </li>
               <li>
                 <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
-                  プロンプトエンジニアリング
+                  業務DX・自動化開発
                 </Link>
               </li>
               <li>
                 <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
-                  高速プロトタイピング
+                  Webサービス・業務システム開発
                 </Link>
               </li>
               <li>
-                <Link to="/products" className="text-navy-300 hover:text-white transition-colors">
-                  AI製品・ソリューション
+                <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
+                  高速プロトタイピング & PoC開発
+                </Link>
+              </li>
+              <li>
+                <Link to="/services" className="text-navy-300 hover:text-white transition-colors">
+                  AI導入コンサルティング
                 </Link>
               </li>
             </ul>

@@ -12,8 +12,8 @@ interface SEOHeadProps {
 }
 
 const SEOHead: React.FC<SEOHeadProps> = ({
-  title = "Queue株式会社 | AI駆動で、圧倒的スピードと品質を。",
-  description = "キュー株式会社は、AI駆動開発でビジネスを革新します。プロンプトエンジニアリング、AI開発、プロトタイプ制作を通じて、お客様のデジタル変革を支援。AI技術で圧倒的なスピードと品質を実現します。",
+  title = "Queue株式会社 | 「Queue株式会社に任せればいける」——その確信を30分で。",
+  description = "初回商談で、貴社の業務に合わせたプロトタイプ型デモをその場で提示。Queueの”即体感デモ”は、「まだ検討中」を「もう任せたい」へと変えます。",
   keywords = "キュー株式会社,Queue株式会社,AI駆動開発,プロンプトエンジニアリング,AI開発,プロトタイプ制作,デジタル変革,DX,人工知能,機械学習,自動化,イノベーション,テクノロジー",
   ogTitle,
   ogDescription,

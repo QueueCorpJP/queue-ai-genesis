@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -6,8 +5,70 @@ import { Container } from '@/components/ui/container';
 
 const WhyQueue = () => {
   useEffect(() => {
-    document.title = "Why Queue? | Queue株式会社";
+    document.title = "Queueが選ばれる3つの理由 | Queue株式会社";
   }, []);
+
+  const reasons = [
+    {
+      title: "実運用に強い\"現場型\"AIエンジニアチーム",
+      subtitle: "1.",
+      icon: (
+        <div className="w-12 h-12 bg-gradient-to-br from-navy-600 to-navy-800 rounded-xl flex items-center justify-center">
+          <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
+            <div className="w-3 h-3 bg-navy-700 rounded"></div>
+          </div>
+        </div>
+      ),
+      description: "Queueのエンジニアは、PoC止まりではなく「業務で本当に使えるAI」を開発・運用することに特化した実践型チームです。自然言語処理・画像解析・レコメンドなど多様な分野に対応し、社内に実装ノウハウと業務設計力が蓄積されています。",
+      features: [
+        "ChatGPT / Claude / Gemini 等のAPI活用 + RAG構成の知見も豊富",
+        "Supabase / BigQuery / GCPなど本番運用に耐えるインフラ設計も一気通貫で対応",
+        "クライアントの業務要件に沿った「AI導入 × ビジネス設計」を支援"
+      ],
+      conclusion: "だから解ける課題が違う：既製APIやノーコードツールでは届かない\"リアルな現場課題\"に踏み込めます。",
+      image: "/first.png"
+    },
+    {
+      title: "初回商談で\"動くプロトタイプ\"を提示",
+      subtitle: "2.",
+      icon: (
+        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center">
+          <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+          </div>
+        </div>
+      ),
+      description: "Queueでは、ヒアリングしたその日 or 翌営業日には、Google Meet や Zoom で実際に動作するAIチャットボットのプロトタイプを提示可能。「こんな感じです」が\"見える\"初回商談を徹底しています。",
+      features: [
+        "ヒアリング内容から即座にMVP（最小構成）を構築・共有",
+        "「とりあえず話してみたら、もう動いてた」と驚かれるスピード感",
+        "技術仕様の前に「使う側の目線で体験できる」商談設計"
+      ],
+      conclusion: "だから発注判断が早い：「説明」ではなく「体験」で納得してもらえる営業フローを実現。",
+      image: "/second.png"
+    },
+    {
+      title: "開発〜運用まで一気通貫、\"最短\"のスピードで価値提供",
+      subtitle: "3.",
+      icon: (
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+          <div className="flex space-x-1">
+            <div className="w-1 h-6 bg-white rounded-full"></div>
+            <div className="w-1 h-4 bg-white rounded-full mt-2"></div>
+            <div className="w-1 h-5 bg-white rounded-full mt-1"></div>
+          </div>
+        </div>
+      ),
+      description: "Queueでは、要件定義から設計・開発・運用までを内製体制で担うことで、案件ごとの難易度や要件に応じて最適なスピードと品質のバランスを設計しています。小規模PoCであれば最短1週間〜のプロトタイプ提供も可能で、早期にユーザー価値を届ける設計思想を重視しています。",
+      features: [
+        "案件規模や要件に応じて開発計画を柔軟に最適化",
+        "自社開発のMCPチャットボット「Workmate」など再利用可能な基盤も活用",
+        "アジャイル開発体制により、改善サイクルも高速に実行可能"
+      ],
+      conclusion: "だから\"待たせない\"開発ができる：「すぐ出す」「しっかり仕上げる」を両立できる現実的な開発体制。",
+      image: "/third.png"
+    }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -16,10 +77,14 @@ const WhyQueue = () => {
       <main className="flex-1 pt-24">
         <section className="bg-gradient-to-r from-navy-800 to-navy-900 py-16 md:py-24">
           <Container>
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">なぜQueue？</h1>
-              <p className="text-lg text-navy-100 max-w-2xl mx-auto">
-                AI開発のパートナーとして私たちが選ばれる理由をご紹介します。技術力、スピード、クオリティ、すべてにおいて最高水準を追求しています。
+            <div className="max-w-4xl mx-auto text-center">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+                ✅ Queueが選ばれる3つの理由
+              </h1>
+              <p className="text-lg text-navy-100 max-w-3xl mx-auto">
+                既製APIやノーコードツールでは届かない\"リアルな現場課題\"を解決する、
+                実運用に特化したAI開発チームです。初回商談で動くプロトタイプを体験いただき、
+                最短1週間から価値提供を開始します。
               </p>
             </div>
           </Container>
@@ -27,117 +92,78 @@ const WhyQueue = () => {
         
         <section className="py-16 md:py-24">
           <Container>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
-              <div>
-                <h2 className="text-3xl font-bold mb-6 text-navy-800">圧倒的な技術力</h2>
-                <p className="text-lg text-navy-600 mb-6">
-                  Queueのエンジニアチームは、AI研究の最前線で活躍してきた専門家で構成されています。最新のAI技術を理解し、実装する能力は国内トップクラス。研究開発から実用化まで、一貫して高いレベルでサポートします。
-                </p>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">自然言語処理、コンピュータビジョン、強化学習など専門分野ごとのエキスパートが在籍</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">国内外のAI学会で発表実績のあるリサーチャーを抱え、最先端技術を活用</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">大企業からスタートアップまで、多様なAIプロジェクト実績</span>
-                  </li>
-                </ul>
-              </div>
+            {reasons.map((reason, index) => (
+              <div key={index} className={`grid grid-cols-1 md:grid-cols-2 gap-12 items-center ${index < reasons.length - 1 ? 'mb-20' : ''}`}>
+                <div className={index % 2 === 1 ? 'order-2 md:order-1' : ''}>
               <div className="bg-navy-50 p-8 rounded-xl">
                 <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
                   <img 
-                    src="/first.png" 
-                    alt="圧倒的な技術力" 
+                        src={reason.image} 
+                        alt={reason.title} 
                     className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
-              <div className="order-2 md:order-1 bg-navy-50 p-8 rounded-xl">
-                <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img 
-                    src="/second.png" 
-                    alt="圧倒的なスピード" 
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-              </div>
-              <div className="order-1 md:order-2">
-                <h2 className="text-3xl font-bold mb-6 text-navy-800">圧倒的なスピード</h2>
-                <p className="text-lg text-navy-600 mb-6">
-                  従来の開発手法に比べ、AIを活用した高速開発手法で、開発期間を大幅に短縮。プロトタイプから本番環境まで、スピーディーに構築します。時間はビジネスの成功に直結する重要な要素。Queueはそれを理解しています。
-                </p>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">最短1週間でのプロトタイプ開発</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">独自の高速開発フレームワークを活用し、従来の半分の期間で開発完了</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">アジャイル開発手法で、フィードバックを素早く反映</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+                <div className={index % 2 === 1 ? 'order-1 md:order-2' : ''}>
+                                    <div className="flex items-center gap-4 mb-6">
+                    {reason.icon}
+                    <div>
+                      <span className="text-2xl font-bold text-navy-800">{reason.subtitle}</span>
+                      <h2 className="text-2xl md:text-3xl font-bold text-navy-800">{reason.title}</h2>
+                    </div>
+                  </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold mb-6 text-navy-800">圧倒的な品質</h2>
-                <p className="text-lg text-navy-600 mb-6">
-                  スピードだけではなく、品質にもこだわります。厳格なテスト体制と品質管理プロセスで、高品質なAIソリューションを提供。継続的なモニタリングと改善で、長期的な価値を創出します。
-                </p>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">AIモデルの精度と信頼性を徹底検証する独自のテスト手法</span>
+                  <p className="text-lg text-navy-600 mb-8 leading-relaxed">
+                    {reason.description}
+                  </p>
+                  
+                  <ul className="space-y-4 mb-8">
+                    {reason.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-navy-600 rounded-full mt-3 flex-shrink-0"></div>
+                        <span className="text-navy-600 leading-relaxed">{feature}</span>
                   </li>
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">モデルドリフトを防ぐための継続的監視システム</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-navy-700 mr-2 flex-shrink-0">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-navy-600">品質に関する明確なSLAを設定し、確実な品質保証</span>
-                  </li>
+                    ))}
                 </ul>
-              </div>
-              <div className="bg-navy-50 p-8 rounded-xl">
-                <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img 
-                    src="/third.png" 
-                    alt="圧倒的な品質" 
-                    className="w-full h-full object-cover rounded-lg"
-                  />
+                  
+                  <div className="bg-navy-50 p-6 rounded-lg border-l-4 border-navy-600">
+                    <p className="text-navy-700 font-medium flex items-start gap-2">
+                      <span className="text-navy-600 text-xl">🔍</span>
+                      <span className="leading-relaxed">{reason.conclusion}</span>
+                    </p>
                 </div>
+                </div>
+              </div>
+            ))}
+          </Container>
+        </section>
+
+        {/* CTA Section */}
+        <section className="bg-navy-800 py-16 md:py-24">
+          <Container>
+            <div className="text-center max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+                まずは無料デモで体験してください
+              </h2>
+              <p className="text-lg text-navy-200 mb-8">
+                ヒアリング当日または翌営業日には、実際に動作するプロトタイプをお見せします。
+                「説明」ではなく「体験」で、Queueの実力をご確認ください。
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a 
+                  href="/consultation" 
+                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-navy-800 font-semibold rounded-full hover:bg-navy-50 transition-colors"
+                >
+                  無料相談を申し込む
+                </a>
+                <a 
+                  href="/contact" 
+                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-navy-800 transition-colors"
+                >
+                  お問い合わせ
+                </a>
               </div>
             </div>
           </Container>

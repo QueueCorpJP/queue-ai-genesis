@@ -20,7 +20,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./components/AdminLogin";
 import NotFound from "./pages/NotFound";
 import ProductWorkmate from "./pages/ProductWorkmate";
-import ProductPrompty from "./pages/ProductPrompty";
+
 import CaseStudies from "./pages/CaseStudies";
 import ScrollToTop from "./components/ScrollToTop";
 import Services from "./pages/Services";
@@ -56,7 +56,7 @@ const App = () => (
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/workmate" element={<ProductWorkmate />} />
-            <Route path="/products/prompty" element={<ProductPrompty />} />
+    
             <Route path="/case-studies" element={<CaseStudies />} />
             <Route path="/services" element={<Services />} />
             <Route path="/why-queue" element={<WhyQueue />} />

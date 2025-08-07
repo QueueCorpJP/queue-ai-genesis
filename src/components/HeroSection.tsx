@@ -25,13 +25,13 @@ const HeroSection: React.FC = () => {
       <div className="container mx-auto relative z-10 px-4 md:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6 leading-tight gradient-text drop-shadow-lg">
-            AI駆動で、圧倒的スピードと品質を。
+            「Queue株式会社に任せればいける」<br />
+            ——その確信を30分で。
           </h1>
           
-          <p className="text-base md:text-lg lg:text-xl text-navy-600 mb-8 md:mb-10 max-w-2xl mx-auto px-2 drop-shadow-lg">
-            最先端のAI技術とアジャイル開発で、アイデアを最短で形にします。
-            Queueは開発初期段階から価値を提供する「1/3デモ戦略」で、
-            お客様のビジネス成功に貢献します。
+          <p className="text-base md:text-lg lg:text-xl text-navy-600 mb-8 md:mb-10 max-w-3xl mx-auto px-2 drop-shadow-lg">
+            初回商談で、貴社の業務に合わせたプロトタイプ型デモをその場で提示。<br />
+            Queueの"即体感デモ"は、「まだ検討中」を「もう任せたい」へと変えます。
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
