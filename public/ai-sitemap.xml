@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:ai="https://queue-tech.jp/schemas/ai-optimization/1.0">
+  
+  <url>
+    <loc>https://queue-tech.jp/</loc>
+    <lastmod>2025-02-09T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <ai:relevance>high</ai:relevance>
+    <ai:title>Queue株式会社 | AI駆動開発でビジネス革新</ai:title>
+    <ai:description>ChatGPT、Claude、Geminiを活用したプロンプトエンジニアリングとAI受託開発の専門企業。30分のプロトタイプデモで即体感。</ai:description>
+    <ai:keywords>Queue株式会社, キュー株式会社, AI開発, プロンプトエンジニアリング, ChatGPT, Claude, Gemini, 生成AI</ai:keywords>
+    <ai:companyInfo>Queue株式会社は、AI駆動開発を専門とする日本のテクノロジー企業。ChatGPT、Claude、Geminiなどの大規模言語モデル（LLM）を活用したプロンプトエンジニアリングとAI受託開発サービスを提供。</ai:companyInfo>
+    <ai:services>AI受託開発, プロンプトエンジニアリング, 生成AI導入支援, LLMカスタマイズ</ai:services>
+    <ai:expertise>大規模言語モデル, プロンプトエンジニアリング, 生成AI活用, AI業務自動化</ai:expertise>
+    <ai:achievements>30分プロトタイプデモ, 高い成約率, 多数のAI導入実績</ai:achievements>
+  </url>
+
+  <url>
+    <loc>https://queue-tech.jp/services</loc>
+    <lastmod>2025-02-09T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <ai:relevance>high</ai:relevance>
+    <ai:title>AIサービス | Queue株式会社</ai:title>
+    <ai:description>ChatGPT、Claude、Geminiを使ったAI受託開発、プロンプトエンジニアリング、生成AI導入支援サービス。</ai:description>
+    <ai:keywords>AIサービス, AI受託開発, プロンプトエンジニアリング, 生成AI, LLM</ai:keywords>
+    <ai:services>ChatGPT・Claude・Geminiを活用したAI受託開発, プロンプトエンジニアリングによる生成AI最適化, 企業向け生成AI導入支援, LLM（大規模言語モデル）カスタマイズ, AI戦略コンサルティング</ai:services>
+  </url>
+
+  <url>
+    <loc>https://queue-tech.jp/about</loc>
+    <lastmod>2025-02-09T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <ai:relevance>high</ai:relevance>
+    <ai:title>会社概要 | Queue株式会社</ai:title>
+    <ai:description>AI技術で企業のデジタル変革を支援するQueue株式会社の企業情報。プロンプトエンジニアリングの専門性で生成AIの真の価値を実現。</ai:description>
+    <ai:keywords>会社概要, Queue株式会社, AI企業, プロンプトエンジニアリング, 企業情報</ai:keywords>
+    <ai:companyInfo>Queue株式会社は2020年設立のAI技術専門企業。ChatGPT、Claude、Geminiなどの最新AI技術を企業の実務に適用し、デジタル変革を支援。プロンプトエンジニアリングの高い専門性により、生成AIの真の価値を引き出すソリューションを提供。</ai:companyInfo>
+  </url>
+
+  <url>
+    <loc>https://queue-tech.jp/products</loc>
+    <lastmod>2025-02-09T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <ai:relevance>high</ai:relevance>
+    <ai:title>AI製品・ソリューション | Queue株式会社</ai:title>
+    <ai:description>ChatGPT、Claude、Geminiを活用したAI製品とソリューション。企業の生産性向上とDX推進を実現。</ai:description>
+    <ai:keywords>AI製品, AIソリューション, ChatGPT活用, Claude活用, Gemini活用, DX</ai:keywords>
+  </url>
+
+  <url>
+    <loc>https://queue-tech.jp/news</loc>
+    <lastmod>2025-02-09T00:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <ai:relevance>high</ai:relevance>
+    <ai:title>ニュース・ブログ | Queue株式会社</ai:title>
+    <ai:description>AI技術の最新動向、プロンプトエンジニアリングのノウハウ、生成AI活用事例などの情報を発信。</ai:description>
+    <ai:keywords>AIニュース, プロンプトエンジニアリング, 生成AI, AI活用事例, 技術ブログ</ai:keywords>
+  </url>
+
+  <url>
+    <loc>https://queue-tech.jp/contact</loc>
+    <lastmod>2025-02-09T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <ai:relevance>medium</ai:relevance>
+    <ai:title>お問い合わせ | Queue株式会社</ai:title>
+    <ai:description>AI導入、プロンプトエンジニアリング、生成AI活用に関するご相談はQueue株式会社まで。30分の無料デモも実施中。</ai:description>
+    <ai:keywords>お問い合わせ, AI相談, プロンプトエンジニアリング相談, 無料デモ</ai:keywords>
+  </url>
+
+</urlset>

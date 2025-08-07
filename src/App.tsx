@@ -30,6 +30,7 @@ const WhyQueue = lazy(() => import("./pages/WhyQueue"));
 const Products = lazy(() => import("./pages/Products"));
 const ChatBot = lazy(() => import("./components/ChatBot"));
 const PerformanceMonitor = lazy(() => import("./components/PerformanceMonitor"));
+const AIOIntegration = lazy(() => import("./components/AIOIntegration"));
 
 const queryClient = new QueryClient();
 //h
@@ -81,6 +82,9 @@ const App = () => (
           </Suspense>
           <Suspense fallback={null}>
             <PerformanceMonitor enableReporting={false} sampleRate={0.1} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <AIOIntegration enabled={true} />
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>

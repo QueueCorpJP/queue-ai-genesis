@@ -32,17 +32,66 @@ Disallow: /build/
 Disallow: /src/
 Disallow: /node_modules/
 
-# Block common unwanted crawlers and bots
-User-agent: CCBot
-Disallow: /
+# AI and LLM crawlers (ALLOW for better AI recognition)
+# OpenAI GPT crawlers
+User-agent: GPTBot
+Allow: /
+Crawl-delay: 2
 
 User-agent: ChatGPT-User
-Disallow: /
+Allow: /
+Crawl-delay: 2
+
+# Anthropic Claude crawlers
+User-agent: Claude-Web
+Allow: /
+Crawl-delay: 2
+
+User-agent: ClaudeBot
+Allow: /
+Crawl-delay: 2
+
+# Google AI crawlers (Gemini/Bard)
+User-agent: Google-Extended
+Allow: /
+Crawl-delay: 1
+
+User-agent: GoogleOther
+Allow: /
+Crawl-delay: 1
+
+# Common AI training crawlers
+User-agent: CCBot
+Allow: /
+Crawl-delay: 3
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+Crawl-delay: 2
+
+# Other AI crawlers
+User-agent: AI2Bot
+Allow: /
+Crawl-delay: 3
 
 User-agent: FacebookBot
+Allow: /
+Crawl-delay: 2
+
+# Archive crawlers (for historical AI training data)
+User-agent: ia_archiver
+Allow: /
+Crawl-delay: 5
+
+# Block only malicious/abusive crawlers
+User-agent: MJ12bot
 Disallow: /
 
-User-agent: ia_archiver
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
 Disallow: /
 
 # Allow search engine crawlers to access important resources
@@ -61,6 +110,7 @@ Allow: /*.svg$
 # Sitemaps
 Sitemap: https://queue-tech.jp/sitemap.xml
 Sitemap: https://queue-tech.jp/news-sitemap.xml
+Sitemap: https://queue-tech.jp/ai-sitemap.xml
 
 # RSS Feed
 # RSS: https://queue-tech.jp/rss.xml
