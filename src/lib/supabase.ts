@@ -215,6 +215,31 @@ export interface Database {
           table_of_contents: any[] | null
           auto_generate_toc: boolean
           toc_style: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
+          // SEO関連フィールド
+          seo_title: string | null
+          meta_description: string | null
+          meta_keywords: string | null
+          slug: string | null
+          canonical_url: string | null
+          focus_keyword: string | null
+          reading_time_minutes: number | null
+          article_type: string
+          author_name: string
+          author_url: string
+          // Open Graph フィールド
+          og_title: string | null
+          og_description: string | null
+          og_image: string | null
+          og_type: string
+          // Twitter Cards フィールド
+          twitter_title: string | null
+          twitter_description: string | null
+          twitter_image: string | null
+          twitter_card_type: string
+          // SEO管理フィールド
+          meta_robots: string
+          structured_data: any | null
+          last_seo_update: string
           status: 'draft' | 'published' | 'archived'
           published_at: string | null
           created_at: string
@@ -232,6 +257,31 @@ export interface Database {
           table_of_contents?: any[] | null
           auto_generate_toc?: boolean
           toc_style?: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
+          // SEO関連フィールド
+          seo_title?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          slug?: string | null
+          canonical_url?: string | null
+          focus_keyword?: string | null
+          reading_time_minutes?: number | null
+          article_type?: string
+          author_name?: string
+          author_url?: string
+          // Open Graph フィールド
+          og_title?: string | null
+          og_description?: string | null
+          og_image?: string | null
+          og_type?: string
+          // Twitter Cards フィールド
+          twitter_title?: string | null
+          twitter_description?: string | null
+          twitter_image?: string | null
+          twitter_card_type?: string
+          // SEO管理フィールド
+          meta_robots?: string
+          structured_data?: any | null
+          last_seo_update?: string
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           created_at?: string
@@ -249,6 +299,31 @@ export interface Database {
           table_of_contents?: any[] | null
           auto_generate_toc?: boolean
           toc_style?: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
+          // SEO関連フィールド
+          seo_title?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          slug?: string | null
+          canonical_url?: string | null
+          focus_keyword?: string | null
+          reading_time_minutes?: number | null
+          article_type?: string
+          author_name?: string
+          author_url?: string
+          // Open Graph フィールド
+          og_title?: string | null
+          og_description?: string | null
+          og_image?: string | null
+          og_type?: string
+          // Twitter Cards フィールド
+          twitter_title?: string | null
+          twitter_description?: string | null
+          twitter_image?: string | null
+          twitter_card_type?: string
+          // SEO管理フィールド
+          meta_robots?: string
+          structured_data?: any | null
+          last_seo_update?: string
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           created_at?: string
