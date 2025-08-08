@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import './pages/blog-content.css'
+import { initQuillPolyfill, suppressQuillWarnings } from './utils/quillPolyfill'
 
 // Suppress Chrome extension errors in development and production
 const suppressChromeExtensionErrors = () => {
@@ -66,8 +67,10 @@ const suppressChromeExtensionErrors = () => {
   };
 };
 
-// Apply error suppression
+// Apply error suppression and polyfills
 suppressChromeExtensionErrors();
+initQuillPolyfill();
+suppressQuillWarnings();
 
 // Set global meta description for SEO
 const setMetaDescription = () => {

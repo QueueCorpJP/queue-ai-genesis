@@ -603,8 +603,26 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
       }
 
       const now = new Date().toISOString();
-      const articleData = {
+      
+      // SEOフィールドの空文字をnullに変換（データベース制約対応）
+      const cleanFormData = {
         ...formData,
+        seo_title: formData.seo_title?.trim() || null,
+        meta_description: formData.meta_description?.trim() || null,
+        meta_keywords: formData.meta_keywords?.trim() || null,
+        slug: formData.slug?.trim() || null,
+        canonical_url: formData.canonical_url?.trim() || null,
+        focus_keyword: formData.focus_keyword?.trim() || null,
+        og_title: formData.og_title?.trim() || null,
+        og_description: formData.og_description?.trim() || null,
+        og_image: formData.og_image?.trim() || null,
+        twitter_title: formData.twitter_title?.trim() || null,
+        twitter_description: formData.twitter_description?.trim() || null,
+        twitter_image: formData.twitter_image?.trim() || null,
+      };
+      
+      const articleData = {
+        ...cleanFormData,
         image_url: finalImageUrl,
         published_at: formData.status === 'published' ? now : null,
         updated_at: now
