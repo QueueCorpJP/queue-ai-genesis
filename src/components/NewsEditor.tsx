@@ -398,29 +398,51 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         twitter_image: formData.twitter_image?.trim() || null,
       };
       
+      // Calculate reading time from content (approximately 200 words per minute)
+      const wordCount = formData.content.replace(/<[^>]*>/g, '').split(/\s+/).length;
+      const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+      
       const articleData = {
         ...cleanFormData,
         image_url: finalImageUrl,
+        reading_time_minutes: readingTimeMinutes,
+        structured_data: null, // Can be null initially
+        last_seo_update: now,
         published_at: formData.status === 'published' ? now : null,
-        updated_at: now
+        updated_at: now,
+        // Ensure required fields are explicitly set
+        auto_generate_toc: formData.auto_generate_toc ?? false,
+        toc_style: formData.toc_style || 'numbered'
       };
 
       if (article) {
         // 既存記事の更新
-        const { error } = await supabase
+        console.log('📝 Updating article with data:', articleData);
+        const { error, data } = await supabase
           .from('news_articles')
           .update(articleData)
-          .eq('id', article.id);
+          .eq('id', article.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('📝 Database error:', error);
+          throw error;
+        }
+        console.log('📝 Article updated successfully:', data);
         toast.success('記事を更新しました');
       } else {
         // 新規記事の作成
-        const { error } = await supabase
+        console.log('📝 Creating article with data:', articleData);
+        const { error, data } = await supabase
           .from('news_articles')
-          .insert(articleData);
+          .insert(articleData)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('📝 Database error:', error);
+          throw error;
+        }
+        console.log('📝 Article created successfully:', data);
         toast.success('記事を作成しました');
       }
 
