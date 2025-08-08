@@ -32,6 +32,9 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
     source_url: '',
     image_url: '',
     tags: [] as string[],
+    table_of_contents: [] as any[],
+    auto_generate_toc: false,
+    toc_style: 'numbered' as 'numbered' | 'bulleted' | 'plain' | 'hierarchical',
     status: 'draft' as 'draft' | 'published' | 'archived'
   });
   const [newTag, setNewTag] = useState('');
@@ -68,6 +71,45 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
       userOnly: true
     }
   }), []);
+
+  // 目次自動生成機能
+  const generateTableOfContents = () => {
+    const content = formData.content;
+    if (!content) return;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    const tocItems: any[] = [];
+    
+    headings.forEach((heading, index) => {
+      const level = parseInt(heading.tagName.charAt(1));
+      const title = heading.textContent?.trim() || '';
+      const anchor = `heading-${index + 1}`;
+      
+      if (title) {
+        tocItems.push({
+          level,
+          title,
+          anchor,
+          order: index + 1
+        });
+      }
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      table_of_contents: tocItems,
+      auto_generate_toc: true
+    }));
+    
+    if (tocItems.length > 0) {
+      toast.success(`目次を生成しました（${tocItems.length}項目）`);
+    } else {
+      toast.warning('見出しタグ（H1〜H6）が見つかりませんでした');
+    }
+  };
 
   // 概要用Quillツールバーの設定（シンプル版）
   const summaryModules = useMemo(() => ({
@@ -107,6 +149,9 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         source_url: article.source_url || '',
         image_url: article.image_url || '',
         tags: article.tags || [],
+        table_of_contents: article.table_of_contents || [],
+        auto_generate_toc: article.auto_generate_toc || false,
+        toc_style: article.toc_style || 'numbered',
         status: article.status || 'draft'
       });
       setImagePreview(article.image_url || '');
@@ -119,6 +164,9 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         source_url: '',
         image_url: '',
         tags: [],
+        table_of_contents: [],
+        auto_generate_toc: false,
+        toc_style: 'numbered',
         status: 'draft'
       });
       setImagePreview('');
@@ -491,6 +539,68 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
                 style={{ minHeight: '300px' }}
               />
             </div>
+          </div>
+
+          {/* 目次設定 */}
+          <div className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-semibold">目次設定</Label>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={generateTableOfContents}
+                disabled={!formData.content}
+              >
+                目次を自動生成
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>目次スタイル</Label>
+                <Select 
+                  value={formData.toc_style} 
+                  onValueChange={(value: any) => setFormData(prev => ({ ...prev, toc_style: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="numbered">番号付き (1. 2. 3.)</SelectItem>
+                    <SelectItem value="bulleted">箇条書き (● ○ ▪)</SelectItem>
+                    <SelectItem value="plain">プレーン</SelectItem>
+                    <SelectItem value="hierarchical">階層表示</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>目次項目数</Label>
+                <div className="text-sm text-gray-600 bg-white border rounded-md px-3 py-2">
+                  {formData.table_of_contents.length > 0 ? `${formData.table_of_contents.length} 項目` : '目次未設定'}
+                </div>
+              </div>
+            </div>
+            
+            {formData.table_of_contents.length > 0 && (
+              <div className="space-y-2">
+                <Label>目次プレビュー</Label>
+                <div className="bg-white border rounded-md p-3 max-h-32 overflow-y-auto">
+                  <ol className="space-y-1 text-sm">
+                    {formData.table_of_contents.map((item: any, index: number) => (
+                      <li key={index} className={`ml-${(item.level - 1) * 4} flex items-center`}>
+                        <span className="text-blue-600 mr-2">
+                          {formData.toc_style === 'numbered' && `${index + 1}.`}
+                          {formData.toc_style === 'bulleted' && (item.level === 1 ? '●' : item.level === 2 ? '○' : '▪')}
+                        </span>
+                        <span className="text-gray-700">{item.title}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
