@@ -47,18 +47,43 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [items]);
 
-  // スムーズスクロール
+  // スムーズスクロール（改良版）
   const scrollToAnchor = (anchor: string) => {
+    console.log(`Scrolling to anchor: ${anchor}`);
     const element = document.getElementById(anchor);
+    
     if (element) {
-      const headerOffset = 100; // ナビゲーションヘッダーの高さを考慮
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
+      console.log(`Found element with ID: ${anchor}`);
+      
+      // scroll-margin-topが設定されている場合はそれを使用、なければデフォルト値
+      const scrollMarginTop = parseInt(
+        window.getComputedStyle(element).scrollMarginTop || '120px'
+      );
+      
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
       });
+      
+      // 確実にスクロール位置を調整
+      setTimeout(() => {
+        const currentScrollY = window.scrollY;
+        const elementTop = element.getBoundingClientRect().top + currentScrollY;
+        const finalPosition = Math.max(0, elementTop - scrollMarginTop);
+        
+        if (Math.abs(window.scrollY - finalPosition) > 10) {
+          window.scrollTo({
+            top: finalPosition,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    } else {
+      console.warn(`Element with ID "${anchor}" not found`);
+      
+      // フォールバック: URLハッシュを使用
+      window.location.hash = anchor;
     }
   };
 
@@ -78,29 +103,32 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     }
   };
 
-  // インデントレベルの計算
-  const getIndentClass = (level: number) => {
-    const baseIndent = style === 'hierarchical' ? (level - 1) * 4 : 0;
-    return `ml-${baseIndent}`;
+  // インデントレベルの計算（Tailwindの動的クラス問題を解決）
+  const getIndentStyle = (level: number) => {
+    if (style === 'hierarchical') {
+      const indentSize = (level - 1) * 16; // 16px = 1rem
+      return { marginLeft: `${indentSize}px` };
+    }
+    return {};
   };
 
-  // 見出しレベルに応じたスタイル
+  // 見出しレベルに応じたスタイル（改善版）
   const getLevelStyle = (level: number) => {
     switch (level) {
       case 1:
-        return 'text-base font-semibold text-gray-900';
+        return 'text-base font-bold text-gray-900 leading-6';
       case 2:
-        return 'text-sm font-medium text-gray-800';
+        return 'text-sm font-semibold text-gray-800 leading-5';
       case 3:
-        return 'text-sm text-gray-700';
+        return 'text-sm font-medium text-gray-700 leading-5';
       case 4:
-        return 'text-xs text-gray-600';
+        return 'text-sm text-gray-600 leading-5';
       case 5:
-        return 'text-xs text-gray-500';
+        return 'text-xs text-gray-500 leading-4';
       case 6:
-        return 'text-xs text-gray-500';
+        return 'text-xs text-gray-500 leading-4';
       default:
-        return 'text-sm text-gray-700';
+        return 'text-sm text-gray-700 leading-5';
     }
   };
 
@@ -132,37 +160,44 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       </CardHeader>
       
       {!isCollapsed && (
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 pb-4">
           <nav>
-            <ol className={`space-y-1 ${getListStyle()}`}>
+            <ol className={`space-y-0 ${getListStyle()}`}>
               {items.map((item, index) => (
                 <li
                   key={`${item.anchor}-${index}`}
-                  className={`${getIndentClass(item.level)}`}
+                  style={getIndentStyle(item.level)}
+                  className="mb-1"
                 >
                   <button
                     onClick={() => scrollToAnchor(item.anchor)}
                     className={`
-                      w-full text-left p-2 rounded-md transition-all duration-200 hover:bg-blue-50 hover:text-blue-700
-                      ${activeAnchor === item.anchor ? 'bg-blue-100 text-blue-800 font-medium' : ''}
+                      w-full text-left px-3 py-2.5 rounded-lg transition-all duration-300 
+                      hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+                      ${activeAnchor === item.anchor 
+                        ? 'bg-blue-100 text-blue-800 font-medium shadow-sm border-l-4 border-blue-500' 
+                        : 'hover:border-l-4 hover:border-blue-200'
+                      }
                       ${getLevelStyle(item.level)}
+                      border-l-4 border-transparent
                     `}
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-3">
                       {style === 'numbered' && (
-                        <span className="text-blue-600 font-medium text-xs mt-0.5">
+                        <span className="text-blue-600 font-bold text-sm mt-0.5 min-w-[20px]">
                           {item.order}.
                         </span>
                       )}
                       {style === 'bulleted' && item.level <= 3 && (
-                        <span className="text-blue-600 mt-1">
+                        <span className="text-blue-600 text-sm mt-1 min-w-[16px]">
                           {item.level === 1 ? '●' : item.level === 2 ? '○' : '▪'}
                         </span>
                       )}
                       {style === 'hierarchical' && (
-                        <Hash className="h-3 w-3 text-blue-600 mt-1 flex-shrink-0" />
+                        <Hash className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       )}
-                      <span className="flex-1 leading-relaxed">
+                      <span className="flex-1 leading-relaxed break-words">
                         {item.title}
                       </span>
                     </div>

@@ -119,7 +119,7 @@ const BlogPost: React.FC = () => {
     return Math.max(1, Math.ceil(textOnly.length / wordsPerMinute));
   };
 
-  // 記事コンテンツにアンカーIDを挿入する関数
+  // 記事コンテンツにアンカーIDを挿入する関数（改良版）
   const insertAnchorsIntoContent = (content: string, tocItems: TableOfContentsItem[] | null) => {
     if (!tocItems || tocItems.length === 0) {
       return content;
@@ -127,23 +127,32 @@ const BlogPost: React.FC = () => {
 
     let processedContent = content;
     
+    // DOMパーサーを使用してより確実に処理
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = processedContent;
+    
     // 見出しタグを順番に処理してアンカーIDを追加
     tocItems.forEach((item) => {
-      const headingPattern = new RegExp(`<h${item.level}([^>]*)>([^<]+)</h${item.level}>`, 'i');
-      const match = processedContent.match(headingPattern);
+      // すべての該当レベルの見出しを取得
+      const headings = tempDiv.querySelectorAll(`h${item.level}`);
       
-      if (match && match[2].trim() === item.title.trim()) {
-        const existingAttributes = match[1];
-        const hasId = existingAttributes.includes('id=');
+      headings.forEach((heading) => {
+        const headingText = heading.textContent?.trim() || '';
+        const itemTitle = item.title.trim();
         
-        if (!hasId) {
-          const replacement = `<h${item.level}${existingAttributes} id="${item.anchor}">${item.title}</h${item.level}>`;
-          processedContent = processedContent.replace(match[0], replacement);
+        // テキストが一致し、まだIDが設定されていない場合
+        if (headingText === itemTitle && !heading.getAttribute('id')) {
+          heading.setAttribute('id', item.anchor);
+          
+          // スクロール位置調整のためのスタイルを追加
+          heading.style.scrollMarginTop = '120px';
+          
+          console.log(`Added anchor: ${item.anchor} to heading: ${itemTitle}`);
         }
-      }
+      });
     });
 
-    return processedContent;
+    return tempDiv.innerHTML;
   };
 
   // SEOデータ生成
