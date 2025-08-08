@@ -86,6 +86,41 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     }
   };
 
+  // 記事データ初期化
+  useEffect(() => {
+    if (article) {
+      setFormData({
+        title: article.title || '',
+        summary: article.summary || '',
+        content: article.content || '',
+        source_name: article.source_name || '',
+        source_url: article.source_url || '',
+        image_url: article.image_url || '',
+        tags: article.tags || [],
+        table_of_contents: article.table_of_contents || [],
+        auto_generate_toc: article.auto_generate_toc || false,
+        toc_style: article.toc_style || 'numbered',
+        status: article.status || 'draft'
+      });
+      setImagePreview(article.image_url || '');
+    } else {
+      setFormData({
+        title: '',
+        summary: '',
+        content: '',
+        source_name: '',
+        source_url: '',
+        image_url: '',
+        tags: [],
+        table_of_contents: [],
+        auto_generate_toc: false,
+        toc_style: 'numbered',
+        status: 'draft'
+      });
+      setImagePreview('');
+    }
+  }, [article]);
+
   // ハンドラー関数を先に定義
   const insertConsultationLink = () => {
     const quill = quillRef.current?.getEditor();
@@ -802,12 +837,12 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           <div className="space-y-2">
             <Label>目次項目数</Label>
             <div className="text-sm text-gray-600 bg-white border rounded-md px-3 py-2">
-              {formData.table_of_contents.length > 0 ? `${formData.table_of_contents.length} 項目` : '目次未設定'}
+              {formData.table_of_contents && formData.table_of_contents.length > 0 ? `${formData.table_of_contents.length} 項目` : '目次未設定'}
             </div>
           </div>
         </div>
         
-        {formData.table_of_contents.length > 0 && (
+        {formData.table_of_contents && formData.table_of_contents.length > 0 && (
           <div className="space-y-2">
             <Label>目次プレビュー</Label>
             <div className="bg-white border rounded-md p-3 max-h-32 overflow-y-auto">

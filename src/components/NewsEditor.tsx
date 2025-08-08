@@ -578,12 +578,12 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
               <div className="space-y-2">
                 <Label>目次項目数</Label>
                 <div className="text-sm text-gray-600 bg-white border rounded-md px-3 py-2">
-                  {formData.table_of_contents.length > 0 ? `${formData.table_of_contents.length} 項目` : '目次未設定'}
+                  {formData.table_of_contents && formData.table_of_contents.length > 0 ? `${formData.table_of_contents.length} 項目` : '目次未設定'}
                 </div>
               </div>
             </div>
             
-            {formData.table_of_contents.length > 0 && (
+            {formData.table_of_contents && formData.table_of_contents.length > 0 && (
               <div className="space-y-2">
                 <Label>目次プレビュー</Label>
                 <div className="bg-white border rounded-md p-3 max-h-32 overflow-y-auto">
