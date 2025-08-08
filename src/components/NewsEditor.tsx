@@ -59,10 +59,13 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         [{ 'align': [] }],
         ['link', 'image', 'video'],
         ['consultation-link'], // カスタムボタン
+        ['undo', 'redo'], // 元に戻す・やり直し
         ['clean']
       ],
       handlers: {
-        'consultation-link': insertConsultationLink
+        'consultation-link': insertConsultationLink,
+        'undo': handleContentUndo,
+        'redo': handleContentRedo
       }
     },
     history: {
@@ -111,6 +114,35 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
     }
   };
 
+  // 元に戻す・やり直し機能
+  const handleContentUndo = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.undo();
+    }
+  };
+
+  const handleContentRedo = () => {
+    const quill = quillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.redo();
+    }
+  };
+
+  const handleSummaryUndo = () => {
+    const quill = summaryQuillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.undo();
+    }
+  };
+
+  const handleSummaryRedo = () => {
+    const quill = summaryQuillRef.current?.getEditor();
+    if (quill && quill.history) {
+      quill.history.redo();
+    }
+  };
+
   // 概要用Quillツールバーの設定（シンプル版）
   const summaryModules = useMemo(() => ({
     toolbar: {
@@ -120,8 +152,13 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         ['bold', 'italic', 'underline', 'strike'],
         [{ 'color': [] }, { 'background': [] }],
         [{ 'align': [] }],
+        ['undo', 'redo'], // 元に戻す・やり直し
         ['clean']
-      ]
+      ],
+      handlers: {
+        'undo': handleSummaryUndo,
+        'redo': handleSummaryRedo
+      }
     },
     history: {
       delay: 1000,
@@ -364,6 +401,52 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
     setFormData(prev => ({ ...prev, image_url: '' }));
   };
 
+  // Quillツールバーのカスタムスタイルを追加
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const style = document.createElement('style');
+      style.textContent = `
+        .ql-undo::before {
+          content: "↶";
+          font-size: 14px;
+        }
+        .ql-redo::before {
+          content: "↷";
+          font-size: 14px;
+        }
+        
+        /* ツールバーボタンのホバー効果 */
+        .ql-toolbar .ql-undo,
+        .ql-toolbar .ql-redo {
+          width: 28px !important;
+          height: 28px !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 4px !important;
+          margin: 1px !important;
+          background-color: white !important;
+          cursor: pointer !important;
+          transition: all 0.2s ease !important;
+        }
+        
+        .ql-toolbar .ql-undo:hover,
+        .ql-toolbar .ql-redo:hover {
+          background-color: #f1f5f9 !important;
+          border-color: #cbd5e1 !important;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      return () => {
+        if (document.head.contains(style)) {
+          document.head.removeChild(style);
+        }
+      };
+    }
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -417,7 +500,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
               <div className="bg-blue-50 border-b px-4 py-2 text-sm text-blue-800">
                 <div className="flex items-center space-x-2">
                   <MessageCircle className="h-4 w-4" />
-                  <span>フォント・サイズ・色・斜体の変更が可能 | 元に戻す機能付き</span>
+                  <span>フォント・サイズ・色・斜体の変更が可能 | 元に戻す・やり直し機能付き</span>
                 </div>
               </div>
               <ReactQuill
@@ -535,7 +618,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
                 onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                 modules={contentModules}
                 formats={formats}
-                placeholder="記事の本文を入力してください。ツールバーから文字装飾や無料相談リンクの挿入ができます。"
+                placeholder="記事の本文を入力してください。ツールバーから文字装飾や無料相談リンクの挿入、元に戻す・やり直しができます。"
                 style={{ minHeight: '300px' }}
               />
             </div>
