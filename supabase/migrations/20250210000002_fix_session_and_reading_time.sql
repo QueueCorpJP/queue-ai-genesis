@@ -155,7 +155,9 @@ END;
 $$;
 
 -- 5. 詳細閲覧セッションビューの修正
-CREATE OR REPLACE VIEW detailed_reading_sessions AS
+-- 既存のビューをドロップしてから再作成（カラム構造変更のため）
+DROP VIEW IF EXISTS detailed_reading_sessions;
+CREATE VIEW detailed_reading_sessions AS
 SELECT 
     nav.id,
     nav.session_id,
@@ -206,7 +208,9 @@ GROUP BY DATE(nav.created_at)
 ORDER BY date DESC;
 
 -- 7. 既存ビューの修正（reading_time_stats）
-CREATE OR REPLACE VIEW reading_time_stats AS
+-- 既存のビューをドロップしてから再作成（カラム構造変更のため）
+DROP VIEW IF EXISTS reading_time_stats;
+CREATE VIEW reading_time_stats AS
 SELECT 
     na.id as article_id,
     na.title as article_title,
