@@ -15,6 +15,26 @@ ALTER COLUMN session_id SET NOT NULL;
 ALTER TABLE news_article_views 
 ALTER COLUMN session_id SET DEFAULT 'session_' || gen_random_uuid()::text;
 
+-- updated_atカラムを追加（存在しない場合）
+ALTER TABLE news_article_views 
+ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+
+-- updated_at自動更新トリガーの追加
+CREATE OR REPLACE FUNCTION update_news_article_views_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- トリガーの作成
+DROP TRIGGER IF EXISTS trigger_update_news_article_views_updated_at ON news_article_views;
+CREATE TRIGGER trigger_update_news_article_views_updated_at
+  BEFORE UPDATE ON news_article_views
+  FOR EACH ROW
+  EXECUTE FUNCTION update_news_article_views_updated_at();
+
 -- 2. 閲覧時間計算の整合性修正
 -- view_end_timeとreading_duration_secondsの制約改善
 ALTER TABLE news_article_views 

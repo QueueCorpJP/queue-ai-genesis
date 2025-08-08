@@ -18,8 +18,8 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 **KPI/KGI管理テーブル**: 4個（完全実装済み）  
 **マイメモ管理テーブル**: 1個（完全実装済み）  
 **ビュー数**: 33個（基本8個 + Todo管理3個 + 閲覧時間4個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個 + 目次機能2個）  
-**ファンクション数**: 27個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個 + 目次機能4個 + セッション管理3個）  
-**トリガー数**: 19個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個 + セッション管理1個）
+**ファンクション数**: 28個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個 + 目次機能4個 + セッション管理4個）  
+**トリガー数**: 20個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個 + セッション管理2個）
 
 #### 最新テーブル一覧（Supabase MCP同期）
 取得時点: 2025-08-08 / ソース: Supabase Management MCP
@@ -148,7 +148,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 | referrer_url | text | YES | - | 参照元URL |
 | exit_url | text | YES | - | 離脱先URL |
 | created_at | timestamptz | NO | now() | 閲覧日時 |
-| updated_at | timestamptz | NO | now() | 更新日時 |
+| updated_at | timestamptz | NO | now() | 更新日時（自動更新） |
 
 **外部キー制約**:
 - article_id → news_articles.id
@@ -166,6 +166,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **トリガー**:
 - trigger_calculate_reading_duration: 閲覧時間自動計算（view_end_time設定時）
+- trigger_update_news_article_views_updated_at: updated_at自動更新（レコード更新時）
 
 **RLS（行レベルセキュリティ）**: 有効
 
