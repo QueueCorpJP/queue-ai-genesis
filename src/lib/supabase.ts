@@ -212,6 +212,9 @@ export interface Database {
           source_url: string | null
           image_url: string | null
           tags: string[]
+          table_of_contents: any[] | null
+          auto_generate_toc: boolean
+          toc_style: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
           status: 'draft' | 'published' | 'archived'
           published_at: string | null
           created_at: string
@@ -226,6 +229,9 @@ export interface Database {
           source_url?: string | null
           image_url?: string | null
           tags?: string[]
+          table_of_contents?: any[] | null
+          auto_generate_toc?: boolean
+          toc_style?: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           created_at?: string
@@ -240,6 +246,9 @@ export interface Database {
           source_url?: string | null
           image_url?: string | null
           tags?: string[]
+          table_of_contents?: any[] | null
+          auto_generate_toc?: boolean
+          toc_style?: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           created_at?: string

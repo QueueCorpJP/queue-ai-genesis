@@ -41,25 +41,6 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     table_of_contents: [] as any[],
     auto_generate_toc: false,
     toc_style: 'numbered' as 'numbered' | 'bulleted' | 'plain' | 'hierarchical',
-    // SEO関連フィールド
-    seo_title: '',
-    meta_description: '',
-    meta_keywords: '',
-    slug: '',
-    canonical_url: '',
-    focus_keyword: '',
-    article_type: 'article' as string,
-    author_name: 'Queue株式会社',
-    author_url: 'https://queue-tech.jp',
-    og_title: '',
-    og_description: '',
-    og_image: '',
-    og_type: 'article' as string,
-    twitter_title: '',
-    twitter_description: '',
-    twitter_image: '',
-    twitter_card_type: 'summary_large_image' as string,
-    meta_robots: 'index, follow',
     status: 'draft' as 'draft' | 'published' | 'archived'
   });
   const [newTag, setNewTag] = useState('');
@@ -604,26 +585,19 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
 
       const now = new Date().toISOString();
       
-      // SEOフィールドの空文字をnullに変換（データベース制約対応）
-      const cleanFormData = {
-        ...formData,
-        seo_title: formData.seo_title?.trim() || null,
-        meta_description: formData.meta_description?.trim() || null,
-        meta_keywords: formData.meta_keywords?.trim() || null,
-        slug: formData.slug?.trim() || null,
-        canonical_url: formData.canonical_url?.trim() || null,
-        focus_keyword: formData.focus_keyword?.trim() || null,
-        og_title: formData.og_title?.trim() || null,
-        og_description: formData.og_description?.trim() || null,
-        og_image: formData.og_image?.trim() || null,
-        twitter_title: formData.twitter_title?.trim() || null,
-        twitter_description: formData.twitter_description?.trim() || null,
-        twitter_image: formData.twitter_image?.trim() || null,
-      };
-      
+      // 基本的な記事データのみをデータベースに送信
       const articleData = {
-        ...cleanFormData,
-        image_url: finalImageUrl,
+        title: formData.title,
+        summary: formData.summary,
+        content: formData.content,
+        source_name: formData.source_name || 'Queue株式会社',
+        source_url: formData.source_url || null,
+        image_url: finalImageUrl || null,
+        tags: formData.tags || [],
+        table_of_contents: formData.table_of_contents || null,
+        auto_generate_toc: formData.auto_generate_toc || false,
+        toc_style: formData.toc_style || 'numbered',
+        status: formData.status,
         published_at: formData.status === 'published' ? now : null,
         updated_at: now
       };
@@ -635,7 +609,10 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           .update(articleData)
           .eq('id', article.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('記事更新エラー:', error);
+          throw error;
+        }
         toast.success('記事を更新しました');
       } else {
         // 新規記事の作成
@@ -643,14 +620,32 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           .from('news_articles')
           .insert(articleData);
 
-        if (error) throw error;
+        if (error) {
+          console.error('記事作成エラー:', error);
+          throw error;
+        }
         toast.success('記事を作成しました');
       }
 
       onSave();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving article:', error);
-      toast.error('記事の保存に失敗しました');
+      
+      // エラーメッセージを詳細化
+      let errorMessage = '記事の保存に失敗しました';
+      if (error?.message) {
+        if (error.message.includes('duplicate key')) {
+          errorMessage = 'スラッグが重複しています。タイトルを変更してください。';
+        } else if (error.message.includes('violates not-null')) {
+          errorMessage = '必須項目が入力されていません。';
+        } else if (error.message.includes('violates check constraint')) {
+          errorMessage = '入力値に問題があります。';
+        } else {
+          errorMessage = `保存エラー: ${error.message}`;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
