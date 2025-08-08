@@ -326,20 +326,19 @@ const BlogPost: React.FC = () => {
 
                 {/* Article Body */}
                 <div className="p-4 sm:p-6 md:p-8">
-                  <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-                    {/* Table of Contents - Desktop Side, Mobile Top */}
-                    {article.table_of_contents && article.table_of_contents.length > 0 && (
-                      <div className="lg:w-1/4 lg:order-2">
-                        <TableOfContents 
-                          items={article.table_of_contents}
-                          style={article.toc_style}
-                          className="lg:max-w-xs"
-                        />
-                      </div>
-                    )}
-                    
-                    {/* Article Content */}
-                    <div className={`${article.table_of_contents && article.table_of_contents.length > 0 ? 'lg:w-3/4' : 'w-full'} lg:order-1`}>
+                  {/* Table of Contents - Full Width Header Style */}
+                  {article.table_of_contents && article.table_of_contents.length > 0 && (
+                    <div className="mb-8">
+                      <TableOfContents 
+                        items={article.table_of_contents}
+                        style={article.toc_style}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Article Content - Full Width */}
+                  <div className="w-full">
                       <div 
                         className="blog-content prose prose-sm sm:prose-base lg:prose-lg max-w-none [&>*]:max-w-full
                                  [&_h1]:text-lg [&_h1]:sm:text-xl [&_h1]:md:text-2xl [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4

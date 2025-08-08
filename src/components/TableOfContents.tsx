@@ -22,6 +22,8 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   style = 'numbered', 
   className = '' 
 }) => {
+  // 横幅いっぱい表示かどうかを判定
+  const isFullWidth = className?.includes('w-full');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeAnchor, setActiveAnchor] = useState<string>('');
 
@@ -137,42 +139,44 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
   }
 
   return (
-    <Card className={`sticky top-20 ${className}`}>
+    <Card className={`${isFullWidth ? '' : 'sticky top-20'} ${className}`}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold text-gray-900 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <List className="h-5 w-5 text-blue-600" />
             目次
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 p-0"
-          >
-            {isCollapsed ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronUp className="h-4 w-4" />
-            )}
-          </Button>
+          {!isFullWidth && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="h-8 w-8 p-0"
+            >
+              {isCollapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       
       {!isCollapsed && (
         <CardContent className="pt-0 pb-4">
           <nav>
-            <ol className={`space-y-0 ${getListStyle()}`}>
+            <ol className={`${getListStyle()} ${isFullWidth ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1' : 'space-y-0'}`}>
               {items.map((item, index) => (
                 <li
                   key={`${item.anchor}-${index}`}
-                  style={getIndentStyle(item.level)}
-                  className="mb-1"
+                  style={!isFullWidth ? getIndentStyle(item.level) : {}}
+                  className={`${isFullWidth ? 'break-inside-avoid' : 'mb-1'}`}
                 >
                   <button
                     onClick={() => scrollToAnchor(item.anchor)}
                     className={`
-                      w-full text-left px-3 py-2.5 rounded-lg transition-all duration-300 
+                      w-full text-left transition-all duration-300 
                       hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
                       ${activeAnchor === item.anchor 
@@ -181,23 +185,24 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
                       }
                       ${getLevelStyle(item.level)}
                       border-l-4 border-transparent
+                      ${isFullWidth ? 'px-2 py-1.5 rounded-md' : 'px-3 py-2.5 rounded-lg'}
                     `}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className={`flex items-start ${isFullWidth ? 'gap-2' : 'gap-3'}`}>
                       {style === 'numbered' && (
-                        <span className="text-blue-600 font-bold text-sm mt-0.5 min-w-[20px]">
+                        <span className={`text-blue-600 font-bold mt-0.5 ${isFullWidth ? 'text-xs min-w-[16px]' : 'text-sm min-w-[20px]'}`}>
                           {item.order}.
                         </span>
                       )}
                       {style === 'bulleted' && item.level <= 3 && (
-                        <span className="text-blue-600 text-sm mt-1 min-w-[16px]">
+                        <span className={`text-blue-600 mt-1 ${isFullWidth ? 'text-xs min-w-[12px]' : 'text-sm min-w-[16px]'}`}>
                           {item.level === 1 ? '●' : item.level === 2 ? '○' : '▪'}
                         </span>
                       )}
                       {style === 'hierarchical' && (
-                        <Hash className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <Hash className={`text-blue-600 mt-0.5 flex-shrink-0 ${isFullWidth ? 'h-3 w-3' : 'h-4 w-4'}`} />
                       )}
-                      <span className="flex-1 leading-relaxed break-words">
+                      <span className={`flex-1 leading-relaxed break-words ${isFullWidth && item.level > 1 ? 'pl-2' : ''}`}>
                         {item.title}
                       </span>
                     </div>
