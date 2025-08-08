@@ -5,21 +5,49 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **プロジェクトID**: `vrpdhzbfnwljdsretjld`  
 **データベースバージョン**: PostgreSQL 17.4.1.054  
-**最終更新**: 2025年2月8日（マイメモ機能実装完了・個人KPI・チームKPI・KGI管理・進捗追跡・達成率分析・可視化機能・個人メモ管理完全実装）  
-**Supabaseリージョン**: US East (N. Virginia)  
+**最終更新**: 2025年8月8日（Supabase MCPでテーブル定義を同期）  
+**Supabaseリージョン**: Asia Pacific (Tokyo) / ap-northeast-1  
 **認証システム**: 有効（Row Level Security対応・社員アカウントログイン対応）  
 **実装ステータス**: Todo管理システム完全実装済み、勤怠管理システム完全実装済み、社員認証システム完全実装済み、会社スケジュール管理システム完全実装済み
 
 ## テーブル一覧
 
-**実装済みテーブル数**: 16個（基本4個 + Todo管理2個 + メンバー管理1個 + 勤怠管理2個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理4個 + マイメモ管理1個）  
+**実装済みテーブル数（最新）**: 20個（基本4個 + Todo管理2個 + メンバー管理1個 + 勤怠管理2個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理4個 + マイメモ管理1個 + 監査ログ1個 + マイグレーションログ1個）  
 **勤怠管理テーブル**: 2個（完全実装済み）  
 **販管費管理テーブル**: 1個（完全実装済み）  
 **KPI/KGI管理テーブル**: 4個（完全実装済み）  
 **マイメモ管理テーブル**: 1個（完全実装済み）  
-**ビュー数**: 30個（基本8個 + Todo管理3個 + 閲覧時間3個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個）  
-**ファンクション数**: 20個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個）  
-**トリガー数**: 17個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個）
+**ビュー数**: 32個（基本8個 + Todo管理3個 + 閲覧時間3個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個 + 目次機能2個）  
+**ファンクション数**: 24個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個 + 目次機能4個）  
+**トリガー数**: 18個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個）
+
+#### 最新テーブル一覧（Supabase MCP同期）
+取得時点: 2025-08-08 / ソース: Supabase Management MCP
+
+| テーブル名 | スキーマ | RLS | 備考 |
+|---|---|---|---|
+| consultation_requests | public | 無効 | 相談依頼 |
+| contact_requests | public | 無効 | お問い合わせ |
+| news_articles | public | 無効 | 記事本体 |
+| news_article_views | public | 有効 | 記事閲覧履歴 |
+| chatbot_conversations | public | 有効 | チャット会話ログ |
+| cta_clicks | public | 有効 | CTAクリック履歴 |
+| members | public | 無効 | メンバー管理（アプリ側で権限制御） |
+| member_activity_logs | public | 無効 | メンバー操作監査ログ |
+| todos | public | 有効 | Todo管理 |
+| todo_progress_logs | public | 有効 | Todo進捗ログ |
+| member_hourly_rates | public | 無効 | 時給設定（役員向け） |
+| attendance_records | public | 無効 | 勤怠記録 |
+| company_schedules | public | 有効 | 会社スケジュール |
+| migration_log | public | 無効 | マイグレーション実行ログ |
+| monthly_expenses | public | 無効 | 月次販管費（アプリ側で権限制御） |
+| kpi_indicators | public | 無効 | KPI/KGI指標マスター |
+| kpi_targets | public | 無効 | KPI/KGI目標 |
+| kpi_progress_records | public | 無効 | KPI進捗記録 |
+| kpi_evaluations | public | 無効 | KPI評価 |
+| personal_memos | public | 無効 | 個人メモ |
+
+注: RLSが「無効」のテーブルについても、アプリケーションレイヤーで厳格なロール・権限制御を実装済みです（本書各セクション参照）。
 
 ### 1. consultation_requests（相談依頼）
 **目的**: お客様からの相談・問い合わせ依頼を管理
@@ -64,7 +92,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 ---
 
 ### 3. news_articles（ニュース記事）
-**目的**: ニュース記事やブログ投稿を管理
+**目的**: ニュース記事やブログ投稿を管理（目次機能付き）
 
 | カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
 |---------|---------|---------|-------------|------|
@@ -76,6 +104,9 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 | source_url | varchar(1000) | YES | - | 情報源URL |
 | image_url | varchar(1000) | YES | - | 画像URL |
 | tags | text[] | YES | '{}' | タグ配列 |
+| table_of_contents | jsonb | YES | NULL | 目次構造データ（JSON形式） |
+| auto_generate_toc | boolean | NO | false | 目次自動生成フラグ |
+| toc_style | varchar(20) | NO | 'numbered' | 目次スタイル |
 | status | varchar(20) | NO | 'draft' | 公開状況 |
 | published_at | timestamptz | YES | - | 公開日時 |
 | created_at | timestamptz | NO | now() | 作成日時 |
@@ -83,12 +114,17 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **制約条件**:
 - status: 'draft', 'published', 'archived' のいずれか
+- toc_style: 'numbered', 'bulleted', 'plain', 'hierarchical' のいずれか
+- table_of_contents: 有効なJSON形式（level, title, anchor, orderを含む配列）
 
 **インデックス**:
 - idx_news_articles_status: status列
 - idx_news_articles_published_at: published_at列
 - idx_news_articles_created_at: created_at列
 - idx_news_articles_tags: tags列（GINインデックス）
+- idx_news_articles_toc_content: table_of_contents列（GINインデックス）
+- idx_news_articles_auto_toc: auto_generate_toc列
+- idx_news_articles_toc_style: toc_style列
 
 **自動更新トリガー**: updated_atが更新時に自動設定
 
@@ -780,12 +816,64 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - favorite_count: お気に入り数
 - recent_activity: 最近7日間の活動数
 
+### 37. news_articles_toc_stats（目次統計ビュー）
+**目的**: 記事の目次機能利用統計を提供
+
+**取得データ**:
+- total_articles: 総記事数
+- articles_with_toc: 目次付き記事数
+- auto_generated_toc: 自動生成目次数
+- manual_toc: 手動作成目次数
+- toc_coverage_percentage: 目次カバー率（%）
+- toc_style_distribution: 目次スタイル別分布（JSON形式）
+
+### 38. news_articles_with_toc（目次付き記事ビュー）
+**目的**: 目次情報を含む記事データの統合表示
+
+**取得データ**:
+- 記事基本情報（id, title, summary, content, status等）
+- table_of_contents: 目次構造データ
+- auto_generate_toc: 自動生成フラグ
+- toc_style: 目次スタイル
+- toc_items_count: 目次項目数
+- max_heading_level: 最大見出しレベル
+- min_heading_level: 最小見出しレベル
+
+### 39. validate_table_of_contents()（目次バリデーション関数）
+**目的**: 目次データの形式をバリデーション
+**パラメータ**: toc_data（jsonb形式の目次データ）
+**戻り値**: boolean（有効性判定）
+
+### 40. generate_toc_from_content()（目次自動生成関数）
+**目的**: HTML内容から見出しタグを抽出して目次を自動生成
+**パラメータ**: content_html（HTML形式の記事内容）
+**戻り値**: jsonb（生成された目次データ）
+
+### 41. get_article_toc_data()（記事目次データ取得関数）
+**目的**: 指定記事の目次データを取得
+**パラメータ**: article_id（記事ID）
+**戻り値**: 
+- article_id: 記事ID
+- article_title: 記事タイトル
+- toc_style: 目次スタイル
+- auto_generate: 自動生成フラグ
+- toc_items: 目次項目（JSON配列）
+- items_count: 目次項目数
+- suggested_toc: 自動生成提案（該当時のみ）
+
+### 42. search_articles_by_toc()（目次検索関数）
+**目的**: 目次内容で記事を検索
+**パラメータ**: search_term（検索語句）、limit_count（取得件数、デフォルト20）
+**戻り値**: 
+- 記事基本情報とともに関連性スコアを含む検索結果
+- 目次内での検索語マッチ度に基づくランキング
+
 ---
 
 ## 実装状況レポート（2025年8月6日現在）
 
 ### 完全実装済みシステム ✅
-1. **ニュース・ブログ管理システム**: 完全動作中
+1. **ニュース・ブログ管理システム**: 完全動作中（目次機能追加済み）
 2. **お問い合わせ・相談管理システム**: 完全動作中  
 3. **アナリティクス・トラッキングシステム**: 完全動作中
 4. **Todo管理システム**: 完全動作中（メンバー・役員アクセス制御含む）
@@ -1072,9 +1160,9 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
 
 ## マイグレーション履歴
 
-**総マイグレーション数**: 20個  
+**総マイグレーション数**: 21個  
 **基本セットアップ**: 4個  
-**機能追加**: 16個
+**機能追加**: 17個
 
 | バージョン | ファイル名 | 内容 | サイズ |
 |-----------|----------|------|--------|
@@ -1101,6 +1189,7 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
 | - | fix_schedule_rls.sql | スケジュールRLS修正 | 1.6KB |
 | - | disable_schedule_rls.sql | スケジュールRLS一時無効化 | 725B |
 | 20250207000001 | create_expense_management.sql | 販管費管理システム実装（テーブル・ビュー・ファンクション・RLS） | 18KB |
+| 20250210000001 | add_table_of_contents.sql | 記事目次機能追加（table_of_contents, auto_generate_toc, toc_style カラム、関連ビュー・ファンクション） | 22KB |
 
 ---
 
@@ -1111,6 +1200,12 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
 - **画像管理**: アップロード・URL指定両対応
 - **タグシステム**: 配列型による柔軟なタグ管理
 - **公開制御**: ドラフト・公開・アーカイブ状態管理
+- **目次機能**: 記事内ナビゲーション用の構造化目次システム
+  - **自動目次生成**: HTML見出しタグから目次を自動抽出
+  - **手動目次作成**: カスタム目次の作成・編集機能
+  - **目次スタイル**: numbered（番号付き）、bulleted（箇条書き）、plain（プレーン）、hierarchical（階層表示）
+  - **アンカーリンク**: 目次項目から記事内の該当箇所へのスムーズスクロール
+  - **目次検索**: 目次内容による記事検索・フィルタリング機能
 
 ### 2. 高度なアナリティクス・追跡
 - **閲覧統計**: 記事別閲覧数追跡
@@ -1261,6 +1356,28 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
   - レスポンシブ対応のカード形式メモ表示
   - 高度な検索・フィルタリング・ソート機能
 
+### 2025年2月10日 - 記事目次機能追加・記事内ナビゲーション強化・自動目次生成機能実装
+- **記事目次機能のフルスタック実装**
+  - news_articlesテーブルに目次関連カラム追加（table_of_contents, auto_generate_toc, toc_style）
+  - JSON形式による構造化目次データ（階層レベル・タイトル・アンカー・順序）
+  - 4種類の目次スタイル（numbered, bulleted, plain, hierarchical）
+  - 目次データのバリデーション機能とセキュリティ制約
+  - HTMLコンテンツから見出しタグを自動抽出する目次生成機能
+  - 記事内アンカーリンクによるスムーズナビゲーション実装
+
+- **統計・分析・検索機能**
+  - news_articles_toc_statsビューによる目次利用統計
+  - news_articles_with_tocビューによる目次情報統合表示
+  - get_article_toc_data()ファンクションによる目次データAPI
+  - search_articles_by_toc()ファンクションによる目次検索機能
+  - 目次カバー率・スタイル分布・項目数の統計表示
+
+- **自動化機能**
+  - HTML見出しタグからの目次自動生成（H1〜H6対応）
+  - 記事保存時の目次自動更新トリガー
+  - 目次データの整合性チェックとエラーハンドリング
+  - GINインデックスによる高速目次検索
+
 ### 2025年8月7日 - ダッシュボード改善・販管費管理機能強化・管理者パスワード更新
 - **管理ダッシュボード「今日やること」セクション修正**
   - 役員アカウントでも自分のタスクのみを表示するように変更
@@ -1289,6 +1406,6 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
 
 ---
 
-*最終更新: 2025年2月8日（マイメモ機能実装完了・個人生産性向上・日本語全文検索・統計分析機能完全実装）*  
-*実装完了: 勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
-*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・個人生産性分析強化* 
+*最終更新: 2025年2月10日（記事目次機能実装完了・記事内ナビゲーション強化・自動目次生成機能完全実装）*  
+*実装完了: ニュース・ブログ管理（目次機能付き）・勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
+*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・記事エディターの目次UI実装・検索機能強化* 

@@ -17,8 +17,16 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from '@/components/ui/pagination';
-import { Calendar, Clock, ArrowRight, Image as ImageIcon } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, Image as ImageIcon, List } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+// 目次項目の型定義
+type TableOfContentsItem = {
+  level: number;
+  title: string;
+  anchor: string;
+  order: number;
+};
 
 // ブログ記事のタイプ定義
 type BlogArticle = {
@@ -30,6 +38,9 @@ type BlogArticle = {
   source_url: string | null;
   image_url: string | null;
   tags: string[];
+  table_of_contents: TableOfContentsItem[] | null;
+  auto_generate_toc: boolean;
+  toc_style: 'numbered' | 'bulleted' | 'plain' | 'hierarchical';
   status: 'draft' | 'published' | 'archived';
   published_at: string | null;
   created_at: string;
@@ -284,6 +295,13 @@ const Blog: React.FC = () => {
                                   {formatDate(article.published_at || article.created_at)}
                                 </time>
                             </div>
+                            {/* 目次アイコン */}
+                            {article.table_of_contents && article.table_of_contents.length > 0 && (
+                              <div className="flex items-center" title="目次付き記事">
+                                <List className="h-3 w-3 text-blue-600" />
+                                <span className="ml-1 text-blue-600 text-xs">目次</span>
+                              </div>
+                            )}
                           </div>
                           
                           {/* タイトル */}
