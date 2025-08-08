@@ -43,7 +43,26 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
     table_of_contents: [] as any[],
     auto_generate_toc: false,
     toc_style: 'numbered' as 'numbered' | 'bulleted' | 'plain' | 'hierarchical',
-    status: 'draft' as 'draft' | 'published' | 'archived'
+    status: 'draft' as 'draft' | 'published' | 'archived',
+    // SEO関連フィールド
+    seo_title: '',
+    meta_description: '',
+    meta_keywords: '',
+    slug: '',
+    canonical_url: '',
+    focus_keyword: '',
+    article_type: 'article',
+    author_name: 'Queue株式会社',
+    author_url: 'https://queue-tech.jp',
+    og_title: '',
+    og_description: '',
+    og_image: '',
+    og_type: 'article',
+    twitter_title: '',
+    twitter_description: '',
+    twitter_image: '',
+    twitter_card_type: 'summary_large_image',
+    meta_robots: 'index, follow'
   });
   const [newTag, setNewTag] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -223,7 +242,26 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         table_of_contents: article.table_of_contents || [],
         auto_generate_toc: article.auto_generate_toc || false,
         toc_style: article.toc_style || 'numbered',
-        status: article.status || 'draft'
+        status: article.status || 'draft',
+        // SEO関連フィールド
+        seo_title: article.seo_title || '',
+        meta_description: article.meta_description || '',
+        meta_keywords: article.meta_keywords || '',
+        slug: article.slug || '',
+        canonical_url: article.canonical_url || '',
+        focus_keyword: article.focus_keyword || '',
+        article_type: article.article_type || 'article',
+        author_name: article.author_name || 'Queue株式会社',
+        author_url: article.author_url || 'https://queue-tech.jp',
+        og_title: article.og_title || '',
+        og_description: article.og_description || '',
+        og_image: article.og_image || '',
+        og_type: article.og_type || 'article',
+        twitter_title: article.twitter_title || '',
+        twitter_description: article.twitter_description || '',
+        twitter_image: article.twitter_image || '',
+        twitter_card_type: article.twitter_card_type || 'summary_large_image',
+        meta_robots: article.meta_robots || 'index, follow'
       });
       setImagePreview(article.image_url || '');
     } else {
@@ -238,7 +276,26 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         table_of_contents: [],
         auto_generate_toc: false,
         toc_style: 'numbered',
-        status: 'draft'
+        status: 'draft',
+        // SEO関連フィールド
+        seo_title: '',
+        meta_description: '',
+        meta_keywords: '',
+        slug: '',
+        canonical_url: '',
+        focus_keyword: '',
+        article_type: 'article',
+        author_name: 'Queue株式会社',
+        author_url: 'https://queue-tech.jp',
+        og_title: '',
+        og_description: '',
+        og_image: '',
+        og_type: 'article',
+        twitter_title: '',
+        twitter_description: '',
+        twitter_image: '',
+        twitter_card_type: 'summary_large_image',
+        meta_robots: 'index, follow'
       });
       setImagePreview('');
     }
@@ -323,8 +380,26 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
       }
 
       const now = new Date().toISOString();
-      const articleData = {
+      
+      // SEOフィールドの空文字をnullに変換（データベース制約対応）
+      const cleanFormData = {
         ...formData,
+        seo_title: formData.seo_title?.trim() || null,
+        meta_description: formData.meta_description?.trim() || null,
+        meta_keywords: formData.meta_keywords?.trim() || null,
+        slug: formData.slug?.trim() || null,
+        canonical_url: formData.canonical_url?.trim() || null,
+        focus_keyword: formData.focus_keyword?.trim() || null,
+        og_title: formData.og_title?.trim() || null,
+        og_description: formData.og_description?.trim() || null,
+        og_image: formData.og_image?.trim() || null,
+        twitter_title: formData.twitter_title?.trim() || null,
+        twitter_description: formData.twitter_description?.trim() || null,
+        twitter_image: formData.twitter_image?.trim() || null,
+      };
+      
+      const articleData = {
+        ...cleanFormData,
         image_url: finalImageUrl,
         published_at: formData.status === 'published' ? now : null,
         updated_at: now

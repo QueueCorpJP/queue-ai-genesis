@@ -5,39 +5,52 @@
  * DOMNodeInserted警告を抑制し、Mutation Observerで代替する
  */
 export const initQuillPolyfill = () => {
-  // 開発環境でのみ実行
-  if (process.env.NODE_ENV !== 'development') return;
-
   // すでにポリフィルが適用されている場合はスキップ
   if ((window as any).__quillPolyfillApplied) return;
 
   // DOMNodeInsertedイベントリスナーの追加を無効化
   const originalAddEventListener = Element.prototype.addEventListener;
   Element.prototype.addEventListener = function(type: string, listener: any, options?: any) {
-    // DOMNodeInsertedイベントの場合は警告を出さずにMutation Observerで代替
-    if (type === 'DOMNodeInserted') {
-      console.warn('[Quill Polyfill] DOMNodeInserted event blocked and replaced with MutationObserver');
-      
-      // MutationObserverで代替実装
+    // DOMNodeInsertedイベントの場合は静かに代替実装
+    if (type === 'DOMNodeInserted' || type === 'DOMNodeRemoved') {
+      // MutationObserverで代替実装（警告なし）
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              // DOMNodeInsertedイベントをシミュレート
-              const event = new CustomEvent('DOMNodeInserted', {
-                detail: { target: node, relatedNode: mutation.target }
-              });
-              
-              // リスナーが関数の場合は実行
-              if (typeof listener === 'function') {
-                try {
-                  listener.call(this, event);
-                } catch (error) {
-                  console.warn('[Quill Polyfill] Error in DOMNodeInserted listener:', error);
+          if (type === 'DOMNodeInserted') {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // DOMNodeInsertedイベントをシミュレート
+                const event = new CustomEvent('DOMNodeInserted', {
+                  detail: { target: node, relatedNode: mutation.target }
+                });
+                
+                // リスナーが関数の場合は実行
+                if (typeof listener === 'function') {
+                  try {
+                    listener.call(this, event);
+                  } catch (error) {
+                    // エラーも静かに処理
+                  }
                 }
               }
-            }
-          });
+            });
+          } else if (type === 'DOMNodeRemoved') {
+            mutation.removedNodes.forEach((node) => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                const event = new CustomEvent('DOMNodeRemoved', {
+                  detail: { target: node, relatedNode: mutation.target }
+                });
+                
+                if (typeof listener === 'function') {
+                  try {
+                    listener.call(this, event);
+                  } catch (error) {
+                    // エラーも静かに処理
+                  }
+                }
+              }
+            });
+          }
         });
       });
       
@@ -87,9 +100,9 @@ export const initQuillPolyfill = () => {
  * コンソール警告フィルター（開発環境用）
  */
 export const suppressQuillWarnings = () => {
-  if (process.env.NODE_ENV !== 'development') return;
-
   const originalConsoleWarn = console.warn;
+  const originalConsoleError = console.error;
+  
   console.warn = function(...args: any[]) {
     const message = args.join(' ');
     
@@ -97,7 +110,10 @@ export const suppressQuillWarnings = () => {
     if (
       message.includes('DOMNodeInserted') ||
       message.includes('mutation event') ||
-      message.includes('findDOMNode is deprecated')
+      message.includes('findDOMNode is deprecated') ||
+      message.includes('findDOMNode') ||
+      message.includes('StrictMode') ||
+      message.includes('ReactQuill')
     ) {
       // 重要でない警告は表示しない
       return;
@@ -105,6 +121,24 @@ export const suppressQuillWarnings = () => {
     
     // その他の警告は通常通り表示
     return originalConsoleWarn.apply(console, args);
+  };
+
+  // console.error も同様にフィルター
+  console.error = function(...args: any[]) {
+    const message = args.join(' ');
+    
+    // ReactQuill関連のエラーを抑制
+    if (
+      message.includes('findDOMNode is deprecated') ||
+      message.includes('ReactQuill') ||
+      message.includes('StrictMode')
+    ) {
+      // 重要でないエラーは表示しない
+      return;
+    }
+    
+    // その他のエラーは通常通り表示
+    return originalConsoleError.apply(console, args);
   };
 };
 
