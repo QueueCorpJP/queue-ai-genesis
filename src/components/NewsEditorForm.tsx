@@ -6,12 +6,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Upload, Image as ImageIcon, MessageCircle } from 'lucide-react';
+import { X, Plus, Upload, Image as ImageIcon, MessageCircle, Table } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 // @ts-ignore - react-quillのタイプ定義が存在しないため
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import 'quill-better-table/dist/quill-better-table.css';
+import Quill from 'quill';
+import QuillBetterTable from 'quill-better-table';
+
+// Quillにテーブルモジュールを登録
+Quill.register({
+  'modules/better-table': QuillBetterTable
+}, true);
 
 interface NewsEditorFormProps {
   article?: any;
@@ -316,6 +324,39 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         'redo': handleContentRedo
       }
     },
+    'better-table': {
+      operationMenu: {
+        items: {
+          unmergeCells: {
+            text: 'セルの結合を解除'
+          },
+          mergeCells: {
+            text: 'セルを結合'
+          },
+          insertColumnRight: {
+            text: '右に列を追加'
+          },
+          insertColumnLeft: {
+            text: '左に列を追加'
+          },
+          insertRowUp: {
+            text: '上に行を追加'
+          },
+          insertRowDown: {
+            text: '下に行を追加'
+          },
+          deleteColumn: {
+            text: '列を削除'
+          },
+          deleteRow: {
+            text: '行を削除'
+          },
+          deleteTable: {
+            text: 'テーブルを削除'
+          }
+        }
+      }
+    },
     history: {
       delay: 1000,
       maxStack: 50,
@@ -338,6 +379,39 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
       handlers: {
         'undo': handleSummaryUndo,
         'redo': handleSummaryRedo
+      }
+    },
+    'better-table': {
+      operationMenu: {
+        items: {
+          unmergeCells: {
+            text: 'セルの結合を解除'
+          },
+          mergeCells: {
+            text: 'セルを結合'
+          },
+          insertColumnRight: {
+            text: '右に列を追加'
+          },
+          insertColumnLeft: {
+            text: '左に列を追加'
+          },
+          insertRowUp: {
+            text: '上に行を追加'
+          },
+          insertRowDown: {
+            text: '下に行を追加'
+          },
+          deleteColumn: {
+            text: '列を削除'
+          },
+          deleteRow: {
+            text: '行を削除'
+          },
+          deleteTable: {
+            text: 'テーブルを削除'
+          }
+        }
       }
     },
     history: {

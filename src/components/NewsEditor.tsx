@@ -7,12 +7,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Upload, Image as ImageIcon, ExternalLink, MessageCircle } from 'lucide-react';
+import { X, Plus, Upload, Image as ImageIcon, ExternalLink, MessageCircle, Table } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 // @ts-ignore - react-quillのタイプ定義が存在しないため
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import 'quill-better-table/dist/quill-better-table.css';
+import Quill from 'quill';
+import QuillBetterTable from 'quill-better-table';
+
+// Quillにテーブルモジュールを登録
+Quill.register({
+  'modules/better-table': QuillBetterTable
+}, true);
 
 interface NewsEditorProps {
   article?: any;
@@ -83,6 +91,18 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
     }
   }
 
+  // テーブル挿入機能
+  function insertTable() {
+    const quill = quillRef.current?.getEditor();
+    if (quill) {
+      const tableModule = quill.getModule('better-table');
+      if (tableModule) {
+        tableModule.insertTable(3, 3); // 3x3のテーブルを挿入
+        toast.success('テーブルを挿入しました');
+      }
+    }
+  }
+
   // 本文用Quillツールバーの設定
   const contentModules = useMemo(() => ({
     toolbar: {
@@ -98,14 +118,49 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         [{ 'direction': 'rtl' }],
         [{ 'align': [] }],
         ['link', 'image', 'video'],
+        ['table-insert'], // テーブル挿入ボタン
         ['consultation-link'], // カスタムボタン
         ['undo', 'redo'], // 元に戻す・やり直し
         ['clean']
       ],
       handlers: {
+        'table-insert': insertTable,
         'consultation-link': insertConsultationLink,
         'undo': handleContentUndo,
         'redo': handleContentRedo
+      }
+    },
+    'better-table': {
+      operationMenu: {
+        items: {
+          unmergeCells: {
+            text: 'セルの結合を解除'
+          },
+          mergeCells: {
+            text: 'セルを結合'
+          },
+          insertColumnRight: {
+            text: '右に列を追加'
+          },
+          insertColumnLeft: {
+            text: '左に列を追加'
+          },
+          insertRowUp: {
+            text: '上に行を追加'
+          },
+          insertRowDown: {
+            text: '下に行を追加'
+          },
+          deleteColumn: {
+            text: '列を削除'
+          },
+          deleteRow: {
+            text: '行を削除'
+          },
+          deleteTable: {
+            text: 'テーブルを削除'
+          }
+        }
       }
     },
     history: {
@@ -223,8 +278,40 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
 
   // Quillエディタの初期化後にカスタムボタンを追加
   useEffect(() => {
-    const addCustomButton = () => {
+    const addCustomButtons = () => {
       const toolbarContainer = document.querySelector('.ql-toolbar');
+      
+      // テーブル挿入ボタンを追加
+      if (toolbarContainer && !document.querySelector('.ql-table-insert')) {
+        const tableButton = document.createElement('button');
+        tableButton.className = 'ql-table-insert';
+        tableButton.innerHTML = '📊';
+        tableButton.title = 'テーブルを挿入';
+        tableButton.type = 'button';
+        tableButton.style.background = '#10b981';
+        tableButton.style.color = 'white';
+        tableButton.style.border = 'none';
+        tableButton.style.borderRadius = '4px';
+        tableButton.style.padding = '6px 8px';
+        tableButton.style.margin = '0 2px';
+        tableButton.style.cursor = 'pointer';
+        
+        tableButton.addEventListener('click', insertTable);
+        
+        // consultation-linkボタンの前に追加
+        const consultationButton = toolbarContainer.querySelector('.ql-consultation-link');
+        if (consultationButton && consultationButton.parentNode) {
+          consultationButton.parentNode.insertBefore(tableButton, consultationButton);
+        } else {
+          // consultationボタンがまだない場合はcleanボタンの前に追加
+          const cleanButton = toolbarContainer.querySelector('.ql-clean');
+          if (cleanButton && cleanButton.parentNode) {
+            cleanButton.parentNode.insertBefore(tableButton, cleanButton);
+          }
+        }
+      }
+      
+      // 無料相談リンクボタンを追加
       if (toolbarContainer && !document.querySelector('.ql-consultation-link')) {
         const customButton = document.createElement('button');
         customButton.className = 'ql-consultation-link';
@@ -251,7 +338,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
 
     if (open) {
       // ダイアログが開いた後に少し遅延してボタンを追加
-      setTimeout(addCustomButton, 500);
+      setTimeout(addCustomButtons, 500);
     }
   }, [open]);
 
