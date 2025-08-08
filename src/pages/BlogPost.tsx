@@ -145,7 +145,7 @@ const BlogPost: React.FC = () => {
           heading.setAttribute('id', item.anchor);
           
           // スクロール位置調整のためのスタイルを追加
-          heading.style.scrollMarginTop = '120px';
+          (heading as HTMLElement).style.scrollMarginTop = '120px';
           
           console.log(`Added anchor: ${item.anchor} to heading: ${itemTitle}`);
         }
@@ -338,29 +338,26 @@ const BlogPost: React.FC = () => {
                   )}
                   
                   {/* Article Content - Full Width */}
-                  <div className="w-full">
-                      <div 
-                        className="blog-content prose prose-sm sm:prose-base lg:prose-lg max-w-none [&>*]:max-w-full
-                                 [&_h1]:text-lg [&_h1]:sm:text-xl [&_h1]:md:text-2xl [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4
-                                 [&_h2]:text-base [&_h2]:sm:text-lg [&_h2]:md:text-xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-6 [&_h2]:mb-3
-                                 [&_h3]:text-sm [&_h3]:sm:text-base [&_h3]:md:text-lg [&_h3]:font-semibold [&_h3]:text-gray-900 [&_h3]:mt-4 [&_h3]:mb-2
-                                 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_p]:mb-4
-                                 [&_a]:text-navy-600 [&_a]:no-underline hover:[&_a]:underline
-                                 [&_strong]:text-gray-900 [&_strong]:font-semibold
-                                 [&_ul]:space-y-2 [&_ol]:space-y-2 [&_li]:text-gray-700 [&_li]:leading-relaxed
-                                 [&_blockquote]:border-l-4 [&_blockquote]:border-navy-200 [&_blockquote]:bg-navy-50 [&_blockquote]:p-4 [&_blockquote]:rounded-r [&_blockquote]:my-4
-                                 [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm
-                                 [&_pre]:bg-gray-900 [&_pre]:text-gray-100 [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-4
-                                 [&_img]:rounded-lg [&_img]:shadow-sm [&_img]:max-w-full [&_img]:h-auto [&_img]:my-4
-                                 [&_table]:text-sm [&_table]:border-collapse [&_table]:w-full [&_table]:overflow-x-auto [&_table]:block [&_table]:sm:table
-                                 [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-50 [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold
-                                 [&_td]:border [&_td]:border-gray-300 [&_td]:p-2"
-                        dangerouslySetInnerHTML={{ 
-                          __html: insertAnchorsIntoContent(article.content, article.table_of_contents) 
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <div 
+                    className="blog-content prose prose-sm sm:prose-base lg:prose-lg max-w-none [&>*]:max-w-full
+                             [&_h1]:text-lg [&_h1]:sm:text-xl [&_h1]:md:text-2xl [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4
+                             [&_h2]:text-base [&_h2]:sm:text-lg [&_h2]:md:text-xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-6 [&_h2]:mb-3
+                             [&_h3]:text-sm [&_h3]:sm:text-base [&_h3]:md:text-lg [&_h3]:font-semibold [&_h3]:text-gray-900 [&_h3]:mt-4 [&_h3]:mb-2
+                             [&_p]:text-gray-700 [&_p]:leading-relaxed [&_p]:mb-4
+                             [&_a]:text-navy-600 [&_a]:no-underline hover:[&_a]:underline
+                             [&_strong]:text-gray-900 [&_strong]:font-semibold
+                             [&_ul]:space-y-2 [&_ol]:space-y-2 [&_li]:text-gray-700 [&_li]:leading-relaxed
+                             [&_blockquote]:border-l-4 [&_blockquote]:border-navy-200 [&_blockquote]:bg-navy-50 [&_blockquote]:p-4 [&_blockquote]:rounded-r [&_blockquote]:my-4
+                             [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm
+                             [&_pre]:bg-gray-900 [&_pre]:text-gray-100 [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-4
+                             [&_img]:rounded-lg [&_img]:shadow-sm [&_img]:max-w-full [&_img]:h-auto [&_img]:my-4
+                             [&_table]:text-sm [&_table]:border-collapse [&_table]:w-full [&_table]:overflow-x-auto [&_table]:block [&_table]:sm:table
+                             [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-50 [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold
+                             [&_td]:border [&_td]:border-gray-300 [&_td]:p-2"
+                    dangerouslySetInnerHTML={{ 
+                      __html: insertAnchorsIntoContent(article.content, article.table_of_contents) 
+                    }}
+                  />
                   
                   {/* Main CTA after article content */}
                   <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
