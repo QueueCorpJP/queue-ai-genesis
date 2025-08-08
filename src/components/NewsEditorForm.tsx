@@ -140,132 +140,132 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     }
   };
 
-  // テーブル挿入機能
+  // テーブル挿入機能（一時的に無効化）
   // const insertTable = (rows: number = 3, cols: number = 3) => {
-    const quill = quillRef.current?.getEditor();
-    if (quill) {
-      const range = quill.getSelection(true);
-      
-      // テーブルHTMLを生成
-      let tableHTML = '<table style="border-collapse: collapse; width: 100%; margin: 16px 0;">';
-      
-      // ヘッダー行
-      tableHTML += '<thead><tr>';
-      for (let j = 0; j < cols; j++) {
-        tableHTML += `<th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: left;">ヘッダー ${j + 1}</th>`;
-      }
-      tableHTML += '</tr></thead>';
-      
-      // データ行
-      tableHTML += '<tbody>';
-      for (let i = 1; i < rows; i++) {
-        tableHTML += '<tr>';
-        for (let j = 0; j < cols; j++) {
-          tableHTML += `<td style="border: 1px solid #e2e8f0; padding: 12px;">データ ${i}-${j + 1}</td>`;
-        }
-        tableHTML += '</tr>';
-      }
-      tableHTML += '</tbody></table><p><br></p>';
-      
-      quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
-      quill.setSelection(range.index + tableHTML.length);
-    }
-  };
+  //   const quill = quillRef.current?.getEditor();
+  //   if (quill) {
+  //     const range = quill.getSelection(true);
+  //     
+  //     // テーブルHTMLを生成
+  //     let tableHTML = '<table style="border-collapse: collapse; width: 100%; margin: 16px 0;">';
+  //     
+  //     // ヘッダー行
+  //     tableHTML += '<thead><tr>';
+  //     for (let j = 0; j < cols; j++) {
+  //       tableHTML += `<th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: left;">ヘッダー ${j + 1}</th>`;
+  //     }
+  //     tableHTML += '</tr></thead>';
+  //     
+  //     // データ行
+  //     tableHTML += '<tbody>';
+  //     for (let i = 1; i < rows; i++) {
+  //       tableHTML += '<tr>';
+  //       for (let j = 0; j < cols; j++) {
+  //         tableHTML += `<td style="border: 1px solid #e2e8f0; padding: 12px;">データ ${i}-${j + 1}</td>`;
+  //       }
+  //       tableHTML += '</tr>';
+  //     }
+  //     tableHTML += '</tbody></table><p><br></p>';
+  //     
+  //     quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
+  //     quill.setSelection(range.index + tableHTML.length);
+  //   }
+  // };
 
-  // 比較表テンプレート挿入
-  const insertComparisonTable = () => {
-    const quill = quillRef.current?.getEditor();
-    if (quill) {
-      const range = quill.getSelection(true);
-      
-      const comparisonTableHTML = `
-        <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
-          <thead>
-            <tr>
-              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: left;">項目</th>
-              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランA</th>
-              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランB</th>
-              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランC</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">価格</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥10,000</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥20,000</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥30,000</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">機能数</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">5個</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">10個</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">無制限</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">サポート</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">メール</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">メール + チャット</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">24時間対応</td>
-            </tr>
-            <tr style="background-color: #f0f9ff;">
-              <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">おすすめ度</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐⭐</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐</td>
-            </tr>
-          </tbody>
-        </table>
-        <p><br></p>
-      `;
-      
-      quill.clipboard.dangerouslyPasteHTML(range.index, comparisonTableHTML);
-      quill.setSelection(range.index + comparisonTableHTML.length);
-    }
-  };
+  // 比較表テンプレート挿入（一時的に無効化）
+  // const insertComparisonTable = () => {
+  //   const quill = quillRef.current?.getEditor();
+  //   if (quill) {
+  //     const range = quill.getSelection(true);
+  //     
+  //     const comparisonTableHTML = `
+  //       <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+  //         <thead>
+  //           <tr>
+  //             <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: left;">項目</th>
+  //             <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランA</th>
+  //             <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランB</th>
+  //             <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: bold; text-align: center;">プランC</th>
+  //           </tr>
+  //         </thead>
+  //         <tbody>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">価格</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥10,000</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥20,000</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">¥30,000</td>
+  //           </tr>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">機能数</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">5個</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">10個</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">無制限</td>
+  //           </tr>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">サポート</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">メール</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">メール + チャット</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">24時間対応</td>
+  //           </tr>
+  //           <tr style="background-color: #f0f9ff;">
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">おすすめ度</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐⭐</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐</td>
+  //           </tr>
+  //         </tbody>
+  //       </table>
+  //       <p><br></p>
+  //     `;
+  //     
+  //     quill.clipboard.dangerouslyPasteHTML(range.index, comparisonTableHTML);
+  //     quill.setSelection(range.index + comparisonTableHTML.length);
+  //   }
+  // };
 
-  // 仕様表テンプレート挿入
-  const insertSpecTable = () => {
-    const quill = quillRef.current?.getEditor();
-    if (quill) {
-      const range = quill.getSelection(true);
-      
-      const specTableHTML = `
-        <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
-          <thead>
-            <tr>
-              <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #1e3a8a; color: white; font-weight: bold; text-align: left;" colspan="2">製品仕様</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600; width: 30%;">プロセッサー</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px;">Intel Core i7-12700K</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">メモリ</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px;">32GB DDR4</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">ストレージ</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px;">1TB NVMe SSD</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">OS</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px;">Windows 11 Pro</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">保証期間</td>
-              <td style="border: 1px solid #e2e8f0; padding: 12px;">3年間</td>
-            </tr>
-          </tbody>
-        </table>
-        <p><br></p>
-      `;
-      
-      quill.clipboard.dangerouslyPasteHTML(range.index, specTableHTML);
-      quill.setSelection(range.index + specTableHTML.length);
-    }
-  };
+  // 仕様表テンプレート挿入（一時的に無効化）
+  // const insertSpecTable = () => {
+  //   const quill = quillRef.current?.getEditor();
+  //   if (quill) {
+  //     const range = quill.getSelection(true);
+  //     
+  //     const specTableHTML = `
+  //       <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+  //         <thead>
+  //           <tr>
+  //             <th style="border: 1px solid #e2e8f0; padding: 12px; background-color: #1e3a8a; color: white; font-weight: bold; text-align: left;" colspan="2">製品仕様</th>
+  //           </tr>
+  //         </thead>
+  //         <tbody>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600; width: 30%;">プロセッサー</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px;">Intel Core i7-12700K</td>
+  //           </tr>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">メモリ</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px;">32GB DDR4</td>
+  //           </tr>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">ストレージ</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px;">1TB NVMe SSD</td>
+  //           </tr>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">OS</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px;">Windows 11 Pro</td>
+  //           </tr>
+  //           <tr>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; background-color: #f8fafc; font-weight: 600;">保証期間</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px;">3年間</td>
+  //           </tr>
+  //         </tbody>
+  //       </table>
+  //       <p><br></p>
+  //     `;
+  //     
+  //     quill.clipboard.dangerouslyPasteHTML(range.index, specTableHTML);
+  //     quill.setSelection(range.index + specTableHTML.length);
+  //   }
+  // };
 
   const handleContentUndo = () => {
     const quill = quillRef.current?.getEditor();
@@ -310,53 +310,53 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         [{ 'direction': 'rtl' }],
         [{ 'align': [] }],
         ['link', 'image', 'video'],
-        ['table', 'comparison-table', 'spec-table'], // テーブル関連ボタン
+        // ['table', 'comparison-table', 'spec-table'], // テーブル関連ボタン（一時的に無効化）
         ['consultation-link'], // カスタムボタン
         ['undo', 'redo'], // 元に戻す・やり直し
         ['clean']
       ],
       handlers: {
-        'table': () => insertTable(3, 3),
-        'comparison-table': insertComparisonTable,
-        'spec-table': insertSpecTable,
+        // 'table': () => insertTable(3, 3),  // 一時的に無効化
+        // 'comparison-table': insertComparisonTable,  // 一時的に無効化
+        // 'spec-table': insertSpecTable,  // 一時的に無効化
         'consultation-link': insertConsultationLink,
         'undo': handleContentUndo,
         'redo': handleContentRedo
       }
     },
-    'better-table': {
-      operationMenu: {
-        items: {
-          unmergeCells: {
-            text: 'セルの結合を解除'
-          },
-          mergeCells: {
-            text: 'セルを結合'
-          },
-          insertColumnRight: {
-            text: '右に列を追加'
-          },
-          insertColumnLeft: {
-            text: '左に列を追加'
-          },
-          insertRowUp: {
-            text: '上に行を追加'
-          },
-          insertRowDown: {
-            text: '下に行を追加'
-          },
-          deleteColumn: {
-            text: '列を削除'
-          },
-          deleteRow: {
-            text: '行を削除'
-          },
-          deleteTable: {
-            text: 'テーブルを削除'
-          }
-        }
-      }
-    },
+    // 'better-table': {  // 一時的に無効化
+      // operationMenu: {
+        // items: {
+          // unmergeCells: {
+          //   text: 'セルの結合を解除'
+          // },
+          // mergeCells: {
+          //   text: 'セルを結合'
+          // },
+          // insertColumnRight: {
+          //   text: '右に列を追加'
+          // },
+          // insertColumnLeft: {
+          //   text: '左に列を追加'
+          // },
+          // insertRowUp: {
+          //   text: '上に行を追加'
+          // },
+          // insertRowDown: {
+          //   text: '下に行を追加'
+          // },
+          // deleteColumn: {
+          //   text: '列を削除'
+          // },
+          // deleteRow: {
+          //   text: '行を削除'
+          // },
+          // deleteTable: {
+          //   text: 'テーブルを削除'
+          // }
+        // }
+      // }
+    // },
     history: {
       delay: 1000,
       maxStack: 50,
@@ -381,39 +381,39 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         'redo': handleSummaryRedo
       }
     },
-    'better-table': {
-      operationMenu: {
-        items: {
-          unmergeCells: {
-            text: 'セルの結合を解除'
-          },
-          mergeCells: {
-            text: 'セルを結合'
-          },
-          insertColumnRight: {
-            text: '右に列を追加'
-          },
-          insertColumnLeft: {
-            text: '左に列を追加'
-          },
-          insertRowUp: {
-            text: '上に行を追加'
-          },
-          insertRowDown: {
-            text: '下に行を追加'
-          },
-          deleteColumn: {
-            text: '列を削除'
-          },
-          deleteRow: {
-            text: '行を削除'
-          },
-          deleteTable: {
-            text: 'テーブルを削除'
-          }
-        }
-      }
-    },
+    // 'better-table': {  // 一時的に無効化
+      // operationMenu: {
+        // items: {
+          // unmergeCells: {
+          //   text: 'セルの結合を解除'
+          // },
+          // mergeCells: {
+          //   text: 'セルを結合'
+          // },
+          // insertColumnRight: {
+          //   text: '右に列を追加'
+          // },
+          // insertColumnLeft: {
+          //   text: '左に列を追加'
+          // },
+          // insertRowUp: {
+          //   text: '上に行を追加'
+          // },
+          // insertRowDown: {
+          //   text: '下に行を追加'
+          // },
+          // deleteColumn: {
+          //   text: '列を削除'
+          // },
+          // deleteRow: {
+          //   text: '行を削除'
+          // },
+          // deleteTable: {
+          //   text: 'テーブルを削除'
+          // }
+        // }
+      // }
+    // },
     history: {
       delay: 1000,
       maxStack: 50,
@@ -440,6 +440,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         source_url: article.source_url || '',
         image_url: article.image_url || '',
         tags: article.tags || [],
+        table_of_contents: article.table_of_contents || [],
+        auto_generate_toc: article.auto_generate_toc || false,
+        toc_style: article.toc_style || 'numbered',
         status: article.status || 'draft'
       });
       setImagePreview(article.image_url || '');
@@ -452,6 +455,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         source_url: '',
         image_url: '',
         tags: [],
+        table_of_contents: [],
+        auto_generate_toc: false,
+        toc_style: 'numbered',
         status: 'draft'
       });
       setImagePreview('');

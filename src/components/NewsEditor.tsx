@@ -273,11 +273,11 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         // } else {
           // consultationボタンがまだない場合はcleanボタンの前に追加
           // const cleanButton = toolbarContainer.querySelector('.ql-clean');
-          if (cleanButton && cleanButton.parentNode) {
-            cleanButton.parentNode.insertBefore(tableButton, cleanButton);
-          }
-        }
-      }
+          // if (cleanButton && cleanButton.parentNode) {
+          //   cleanButton.parentNode.insertBefore(tableButton, cleanButton);
+          // }
+        // }
+      // }
       
       // 無料相談リンクボタンを追加
       if (toolbarContainer && !document.querySelector('.ql-consultation-link')) {
