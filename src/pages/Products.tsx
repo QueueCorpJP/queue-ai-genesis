@@ -139,7 +139,7 @@ const Products = () => {
                 <div className="order-1 lg:order-2 bg-navy-50 p-8 rounded-xl">
                   <div className="aspect-video bg-navy-200 rounded-lg flex items-center justify-center overflow-hidden">
                     <img 
-                      src="/public/work_mate.png" 
+                      src="/work_mate.png" 
                       alt="Workmate製品イメージ" 
                       className="w-full h-full object-cover rounded-lg"
                     />
