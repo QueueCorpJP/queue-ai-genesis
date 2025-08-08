@@ -5,7 +5,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **プロジェクトID**: `vrpdhzbfnwljdsretjld`  
 **データベースバージョン**: PostgreSQL 17.4.1.054  
-**最終更新**: 2025年8月8日（Supabase MCPでテーブル定義を同期）  
+**最終更新**: 2025年2月10日（セッション管理・閲覧時間計算バグ修正・セッション統計機能強化）  
 **Supabaseリージョン**: Asia Pacific (Tokyo) / ap-northeast-1  
 **認証システム**: 有効（Row Level Security対応・社員アカウントログイン対応）  
 **実装ステータス**: Todo管理システム完全実装済み、勤怠管理システム完全実装済み、社員認証システム完全実装済み、会社スケジュール管理システム完全実装済み
@@ -17,9 +17,9 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 **販管費管理テーブル**: 1個（完全実装済み）  
 **KPI/KGI管理テーブル**: 4個（完全実装済み）  
 **マイメモ管理テーブル**: 1個（完全実装済み）  
-**ビュー数**: 32個（基本8個 + Todo管理3個 + 閲覧時間3個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個 + 目次機能2個）  
-**ファンクション数**: 24個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個 + 目次機能4個）  
-**トリガー数**: 18個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個）
+**ビュー数**: 33個（基本8個 + Todo管理3個 + 閲覧時間4個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個 + 目次機能2個）  
+**ファンクション数**: 27個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個 + 目次機能4個 + セッション管理3個）  
+**トリガー数**: 19個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個 + セッション管理1個）
 
 #### 最新テーブル一覧（Supabase MCP同期）
 取得時点: 2025-08-08 / ソース: Supabase Management MCP
@@ -131,7 +131,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 ---
 
 ### 4. news_article_views（記事閲覧履歴）
-**目的**: ニュース記事の閲覧統計と詳細な閲覧時間を記録
+**目的**: ニュース記事の閲覧統計と詳細な閲覧時間を記録（セッション管理機能強化済み）
 
 | カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
 |---------|---------|---------|-------------|------|
@@ -139,24 +139,33 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 | article_id | uuid | NO | - | 記事ID（外部キー） |
 | ip_address | text | NO | - | 閲覧者IPアドレス |
 | user_agent | text | YES | - | ユーザーエージェント |
-| session_id | text | YES | - | ブラウザセッションID |
+| session_id | text | NO | 'session_' + gen_random_uuid() | ブラウザセッションID（必須） |
 | view_start_time | timestamptz | YES | now() | 記事閲覧開始時刻 |
 | view_end_time | timestamptz | YES | - | 記事閲覧終了時刻 |
-| reading_duration_seconds | integer | YES | - | 閲覧時間（秒） |
+| reading_duration_seconds | integer | YES | - | 閲覧時間（秒）※自動計算 |
 | scroll_depth_percentage | integer | YES | 0 | スクロール深度（%） |
 | is_bounce | boolean | YES | false | 直帰フラグ |
 | referrer_url | text | YES | - | 参照元URL |
 | exit_url | text | YES | - | 離脱先URL |
 | created_at | timestamptz | NO | now() | 閲覧日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
 
 **外部キー制約**:
 - article_id → news_articles.id
+
+**制約条件**:
+- check_reading_duration_consistency: view_end_timeとreading_duration_secondsの整合性保証
 
 **インデックス**:
 - idx_news_article_views_session_id: session_id列
 - idx_news_article_views_reading_duration: reading_duration_seconds列  
 - idx_news_article_views_view_start_time: view_start_time列
 - idx_news_article_views_ip_created_at: (ip_address, created_at)
+- idx_news_article_views_session_end_time: (session_id, view_end_time)
+- idx_news_article_views_active_sessions: (article_id, view_end_time) WHERE view_end_time IS NULL
+
+**トリガー**:
+- trigger_calculate_reading_duration: 閲覧時間自動計算（view_end_time設定時）
 
 **RLS（行レベルセキュリティ）**: 有効
 
@@ -486,7 +495,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - bounce_rate_percentage: 直帰率
 
 ### 10. detailed_reading_sessions（詳細閲覧セッションビュー）
-**目的**: 個別の閲覧セッション詳細情報
+**目的**: 個別の閲覧セッション詳細情報（セッション管理機能強化済み）
 
 **取得データ**:
 - session_id: セッションID
@@ -496,18 +505,58 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - view_start_time: 閲覧開始時刻
 - view_end_time: 閲覧終了時刻
 - reading_duration_seconds: 閲覧時間（秒）
-- reading_category: 閲覧カテゴリ（短時間/通常/中程度/長時間/詳細）
+- reading_category: 閲覧カテゴリ（瞬間/短時間/通常/中程度/長時間/詳細/深い閲覧、セッション継続中）
 - scroll_depth_percentage: スクロール深度
 - is_bounce: 直帰フラグ
 - referrer_url: 参照元URL
 - exit_url: 離脱先URL
+- user_agent: ユーザーエージェント
+- created_at: 作成日時
+- updated_at: 更新日時
 
-### 11. get_reading_insights()（閲覧時間分析ファンクション）
+### 11. session_analytics（セッション統計ビュー）
+**目的**: 日別セッション統計分析
+
+**取得データ**:
+- date: 日付
+- total_sessions: 総セッション数
+- unique_sessions: ユニークセッション数
+- active_sessions: アクティブセッション数（継続中）
+- completed_sessions: 完了セッション数
+- avg_session_duration: 平均セッション継続時間（秒）
+- avg_scroll_depth: 平均スクロール深度（%）
+- bounce_count: 直帰数
+- bounce_rate_percentage: 直帰率（%）
+
+### 12. get_reading_insights()（閲覧時間分析ファンクション）
 **目的**: 閲覧時間の詳細インサイトを取得
 **パラメータ**: article_id（特定記事分析用、オプション）、days_back（分析期間、デフォルト30日）
 **戻り値**: 総閲覧数、ユニーク訪問者数、平均閲覧時間、最長閲覧時間、スクロール深度、直帰率、エンゲージメント率
 
-### 12. todo_management_view（Todo管理ビュー）
+### 13. start_reading_session()（閲覧セッション開始ファンクション）
+**目的**: 記事閲覧セッションの開始
+**パラメータ**: 
+- p_article_id (UUID): 記事ID
+- p_ip_address (TEXT): 閲覧者IPアドレス  
+- p_user_agent (TEXT): ユーザーエージェント（オプション）
+- p_session_id (TEXT): セッションID（オプション、未指定時は自動生成）
+- p_referrer_url (TEXT): 参照元URL（オプション）
+**戻り値**: UUID（閲覧レコードID）
+
+### 14. end_reading_session()（閲覧セッション終了ファンクション）
+**目的**: 記事閲覧セッションの終了
+**パラメータ**: 
+- p_view_id (UUID): 閲覧レコードID
+- p_scroll_depth_percentage (INTEGER): スクロール深度（オプション）
+- p_exit_url (TEXT): 離脱先URL（オプション）
+- p_is_bounce (BOOLEAN): 直帰フラグ（デフォルト: FALSE）
+**戻り値**: BOOLEAN（成功/失敗）
+
+### 15. calculate_reading_duration()（閲覧時間計算ファンクション）
+**目的**: 閲覧時間の自動計算（トリガー関数）
+**概要**: view_end_time設定時にreading_duration_secondsを自動計算、異常値の補正
+
+### 16. todo_management_view（Todo管理ビュー）
 **目的**: Todoとメンバー情報を統合した包括的なビュー
 
 **取得データ**:
@@ -519,7 +568,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - is_overdue, is_due_soon, days_until_due
 - completion_hours（完了時間）
 
-### 13. member_todo_stats（メンバー別Todo統計ビュー）
+### 17. member_todo_stats（メンバー別Todo統計ビュー）
 **目的**: 各メンバーのTodo進捗状況統計
 
 **取得データ**:
@@ -530,7 +579,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - completion_rate_percentage, avg_completion_hours
 - last_todo_activity, todos_this_month, completed_this_month
 
-### 14. daily_todo_progress（日別Todo進捗ビュー）
+### 18. daily_todo_progress（日別Todo進捗ビュー）
 **目的**: 日次のTodo作成・完了統計
 
 **取得データ**:
@@ -540,7 +589,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - high_priority_todos: 高優先度Todo数
 - overdue_todos: 期限切れTodo数
 
-### 15. get_todo_insights()（Todo分析ファンクション）
+### 19. get_todo_insights()（Todo分析ファンクション）
 **目的**: 役員向けの総合的なTodo分析データを取得
 **パラメータ**: start_date（開始日、デフォルト30日前）、end_date（終了日、デフォルト今日）
 **戻り値**: 
@@ -553,7 +602,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - most_productive_member: 最も生産的なメンバー
 - department_with_most_overdue: 最も遅れが目立つ部署
 
-### 16. attendance_summary（勤怠サマリービュー）
+### 20. attendance_summary（勤怠サマリービュー）
 **目的**: メンバー情報と勤怠データの統合表示
 
 **取得データ**:
@@ -564,7 +613,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - year, month, day_of_week, year_month
 - is_late, is_early_leave（遅刻・早退判定）
 
-### 17. monthly_attendance_stats（月次勤怠統計ビュー）
+### 21. monthly_attendance_stats（月次勤怠統計ビュー）
 **目的**: 月別の勤怠集計データを提供
 
 **取得データ**:
@@ -585,7 +634,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - sick_leave_days: 病欠日数
 - vacation_days: 有給日数
 
-### 18. monthly_payroll（月次人件費ビュー）
+### 22. monthly_payroll（月次人件費ビュー）
 **目的**: 時給設定と勤怠データに基づく給与計算
 
 **取得データ**:
@@ -605,7 +654,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - remote_days: リモート日数
 - vacation_days: 有給日数
 
-### 19. get_monthly_payroll_summary()（月次人件費サマリーファンクション）
+### 23. get_monthly_payroll_summary()（月次人件費サマリーファンクション）
 **目的**: 月次の総合的な人件費統計を取得
 **パラメータ**: target_year_month（対象年月、デフォルト今月）
 **戻り値**: 
@@ -616,7 +665,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - avg_pay_per_employee: 従業員平均給与
 - departments_breakdown: 部署別内訳（JSON形式）
 
-### 20. get_member_attendance()（メンバー勤怠データ取得ファンクション）
+### 24. get_member_attendance()（メンバー勤怠データ取得ファンクション）
 **目的**: 特定メンバーの月次勤怠データを取得
 **パラメータ**: target_member_id（対象メンバーID）、target_year_month（対象年月、デフォルト今月）
 **戻り値**: 
@@ -630,7 +679,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - is_late: 遅刻フラグ
 - is_early_leave: 早退フラグ
 
-### 21. monthly_schedule_view（月次スケジュールビュー）
+### 25. monthly_schedule_view（月次スケジュールビュー）
 **目的**: カレンダー表示用の月別スケジュール情報を統合表示
 
 **取得データ**:
@@ -643,7 +692,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - type_icon: スケジュール種別アイコン（🏖️💼📚⚠️📅📋）
 - priority_icon: 優先度アイコン（🔴🟡🟢）
 
-### 22. upcoming_schedule_view（今後のスケジュールビュー）
+### 26. upcoming_schedule_view（今後のスケジュールビュー）
 **目的**: ダッシュボード表示用の近日予定（30日以内）
 
 **取得データ**:
@@ -653,7 +702,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - days_until: 残り日数
 - urgency_level: 緊急度レベル（holiday/today/soon/upcoming）
 
-### 23. holiday_schedule_view（休日スケジュールビュー）
+### 27. holiday_schedule_view（休日スケジュールビュー）
 **目的**: 会社の休日・祝日一覧表示
 
 **取得データ**:
@@ -662,7 +711,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - formatted_date: フォーマット済み日付（YYYY-MM-DD (曜日)）
 - month, year: 月・年情報
 
-### 24. get_monthly_schedule()（月次スケジュール取得ファンクション）
+### 28. get_monthly_schedule()（月次スケジュール取得ファンクション）
 **目的**: 指定月のカレンダー用スケジュールデータを取得
 **パラメータ**: target_year_month（対象年月、デフォルト今月）
 **戻り値**: 
@@ -671,7 +720,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
   - 各スケジュールの詳細情報とアイコン
   - 時刻順・タイトル順でソート済み
 
-### 25. get_upcoming_events()（今後のイベント取得ファンクション）
+### 29. get_upcoming_events()（今後のイベント取得ファンクション）
 **目的**: 指定日数以内の予定を取得
 **パラメータ**: days_ahead（検索日数、デフォルト30日）
 **戻り値**: 
@@ -680,14 +729,14 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - date_label: 日付ラベル
 - urgency_level: 緊急度レベル
 
-### 26. test_view_access()（ビューアクセステストファンクション）
+### 30. test_view_access()（ビューアクセステストファンクション）
 **目的**: 勤怠管理関連ビューの権限テスト
 **戻り値**: 
 - view_name: ビュー名
 - accessible: アクセス可否
 - error_message: エラーメッセージ（エラー時）
 
-### 27. monthly_expense_summary（月次販管費集計ビュー）
+### 31. monthly_expense_summary（月次販管費集計ビュー）
 **目的**: 月別・カテゴリ別・費用種別の販管費集計情報を提供
 
 **取得データ**:
@@ -704,7 +753,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - payment_completion_rate: 支払い完了率（%）
 - budget_variance_percentage: 予算差異率（%）
 
-### 28. yearly_expense_summary（年次販管費統計ビュー）
+### 32. yearly_expense_summary（年次販管費統計ビュー）
 **目的**: 年別の販管費分析と統計情報を提供
 
 **取得データ**:
@@ -718,7 +767,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - avg_monthly_amount: 月平均金額
 - annual_budget_variance_percentage: 年間予算差異率（%）
 
-### 29. expense_payment_alerts（支払い期限アラートビュー）
+### 33. expense_payment_alerts（支払い期限アラートビュー）
 **目的**: 支払い期限切れ・期限間近の費用をアラート表示
 
 **取得データ**:
@@ -1190,6 +1239,7 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
 | - | disable_schedule_rls.sql | スケジュールRLS一時無効化 | 725B |
 | 20250207000001 | create_expense_management.sql | 販管費管理システム実装（テーブル・ビュー・ファンクション・RLS） | 18KB |
 | 20250210000001 | add_table_of_contents.sql | 記事目次機能追加（table_of_contents, auto_generate_toc, toc_style カラム、関連ビュー・ファンクション） | 22KB |
+| 20250210000002 | fix_session_and_reading_time.sql | セッション管理・閲覧時間計算バグ修正（session_id必須化、制約追加、ビュー修正、セッション管理関数追加） | 28KB |
 
 ---
 
@@ -1406,6 +1456,6 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
 
 ---
 
-*最終更新: 2025年2月10日（記事目次機能実装完了・記事内ナビゲーション強化・自動目次生成機能完全実装）*  
-*実装完了: ニュース・ブログ管理（目次機能付き）・勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
-*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・記事エディターの目次UI実装・検索機能強化* 
+*最終更新: 2025年2月10日（セッション管理・閲覧時間計算バグ修正完了・セッション統計機能強化・記事目次機能実装完了）*  
+*実装完了: ニュース・ブログ管理（目次機能付き・セッション追跡強化）・勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
+*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・セッション追跡精度向上・検索機能強化* 
