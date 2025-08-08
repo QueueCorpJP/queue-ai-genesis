@@ -17,9 +17,9 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 **販管費管理テーブル**: 1個（完全実装済み）  
 **KPI/KGI管理テーブル**: 4個（完全実装済み）  
 **マイメモ管理テーブル**: 1個（完全実装済み）  
-**ビュー数**: 33個（基本8個 + Todo管理3個 + 閲覧時間4個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個 + 目次機能2個）  
-**ファンクション数**: 28個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個 + 目次機能4個 + セッション管理4個）  
-**トリガー数**: 20個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個 + セッション管理2個）
+**ビュー数**: 36個（基本8個 + Todo管理3個 + 閲覧時間4個 + 勤怠管理3個 + スケジュール管理3個 + 販管費管理4個 + KPI/KGI管理4個 + マイメモ管理2個 + 目次機能2個 + **SEO最適化3個**）  
+**ファンクション数**: 31個（基本6個 + Todo管理2個 + 勤怠管理2個 + スケジュール管理2個 + 権限テスト2個 + 販管費管理2個 + KPI/KGI管理2個 + マイメモ管理2個 + 目次機能4個 + セッション管理4個 + **SEO最適化3個**）  
+**トリガー数**: 21個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個 + セッション管理2個 + **SEO最適化1個**）
 
 #### 最新テーブル一覧（Supabase MCP同期）
 取得時点: 2025-08-08 / ソース: Supabase Management MCP
@@ -92,7 +92,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 ---
 
 ### 3. news_articles（ニュース記事）
-**目的**: ニュース記事やブログ投稿を管理（目次機能付き）
+**目的**: ニュース記事やブログ投稿を管理（目次機能・SEO最適化対応）
 
 | カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
 |---------|---------|---------|-------------|------|
@@ -107,6 +107,27 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 | table_of_contents | jsonb | YES | NULL | 目次構造データ（JSON形式） |
 | auto_generate_toc | boolean | NO | false | 目次自動生成フラグ |
 | toc_style | varchar(20) | NO | 'numbered' | 目次スタイル |
+| **seo_title** | varchar(60) | YES | NULL | **SEO用タイトル（60文字以内）** |
+| **meta_description** | varchar(160) | YES | NULL | **メタディスクリプション（160文字以内）** |
+| **meta_keywords** | text | YES | NULL | **メタキーワード** |
+| **slug** | varchar(255) | YES | NULL | **SEOフレンドリーURL** |
+| **canonical_url** | varchar(1000) | YES | NULL | **正規URL** |
+| **focus_keyword** | varchar(100) | YES | NULL | **フォーカスキーワード** |
+| **reading_time_minutes** | integer | YES | NULL | **推定読了時間（分）** |
+| **article_type** | varchar(50) | YES | 'article' | **記事タイプ** |
+| **author_name** | varchar(100) | YES | 'Queue株式会社' | **著者名** |
+| **author_url** | varchar(500) | YES | 'https://queue-tech.jp' | **著者URL** |
+| **og_title** | varchar(95) | YES | NULL | **OGタイトル（95文字以内）** |
+| **og_description** | varchar(300) | YES | NULL | **OGディスクリプション（300文字以内）** |
+| **og_image** | varchar(1000) | YES | NULL | **OG画像URL** |
+| **og_type** | varchar(50) | YES | 'article' | **OGタイプ** |
+| **twitter_title** | varchar(70) | YES | NULL | **Twitterタイトル（70文字以内）** |
+| **twitter_description** | varchar(200) | YES | NULL | **Twitterディスクリプション（200文字以内）** |
+| **twitter_image** | varchar(1000) | YES | NULL | **Twitter画像URL** |
+| **twitter_card_type** | varchar(50) | YES | 'summary_large_image' | **Twitterカードタイプ** |
+| **meta_robots** | varchar(100) | YES | 'index, follow' | **ロボット指示** |
+| **structured_data** | jsonb | YES | NULL | **構造化データ（JSON-LD）** |
+| **last_seo_update** | timestamptz | YES | now() | **SEO情報最終更新日時** |
 | status | varchar(20) | NO | 'draft' | 公開状況 |
 | published_at | timestamptz | YES | - | 公開日時 |
 | created_at | timestamptz | NO | now() | 作成日時 |
@@ -115,7 +136,11 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 **制約条件**:
 - status: 'draft', 'published', 'archived' のいずれか
 - toc_style: 'numbered', 'bulleted', 'plain', 'hierarchical' のいずれか
+- **article_type: 'article', 'blog_post', 'news', 'tutorial', 'case_study', 'technical' のいずれか**
+- **twitter_card_type: 'summary', 'summary_large_image', 'app', 'player' のいずれか**
+- **og_type: 'article', 'website', 'blog' のいずれか**
 - table_of_contents: 有効なJSON形式（level, title, anchor, orderを含む配列）
+- **slug: 公開記事でユニーク制約**
 
 **インデックス**:
 - idx_news_articles_status: status列
@@ -125,8 +150,18 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 - idx_news_articles_toc_content: table_of_contents列（GINインデックス）
 - idx_news_articles_auto_toc: auto_generate_toc列
 - idx_news_articles_toc_style: toc_style列
+- **idx_news_articles_slug_unique: slug列（公開記事のみユニーク）**
+- **idx_news_articles_seo_title: seo_title列**
+- **idx_news_articles_meta_keywords: meta_keywords列（日本語全文検索用GINインデックス）**
+- **idx_news_articles_focus_keyword: focus_keyword列**
+- **idx_news_articles_reading_time: reading_time_minutes列**
+- **idx_news_articles_article_type: article_type列**
+- **idx_news_articles_last_seo_update: last_seo_update列**
+- **idx_news_articles_fulltext_japanese: 日本語全文検索用（title, summary, content, meta_keywords）**
 
-**自動更新トリガー**: updated_atが更新時に自動設定
+**自動更新トリガー**: 
+- updated_atが更新時に自動設定
+- **SEO関連フィールドの自動生成・更新（trigger_update_seo_fields）**
 
 ---
 

@@ -41,6 +41,25 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     table_of_contents: [] as any[],
     auto_generate_toc: false,
     toc_style: 'numbered' as 'numbered' | 'bulleted' | 'plain' | 'hierarchical',
+    // SEO関連フィールド
+    seo_title: '',
+    meta_description: '',
+    meta_keywords: '',
+    slug: '',
+    canonical_url: '',
+    focus_keyword: '',
+    article_type: 'article' as string,
+    author_name: 'Queue株式会社',
+    author_url: 'https://queue-tech.jp',
+    og_title: '',
+    og_description: '',
+    og_image: '',
+    og_type: 'article' as string,
+    twitter_title: '',
+    twitter_description: '',
+    twitter_image: '',
+    twitter_card_type: 'summary_large_image' as string,
+    meta_robots: 'index, follow',
     status: 'draft' as 'draft' | 'published' | 'archived'
   });
   const [newTag, setNewTag] = useState('');

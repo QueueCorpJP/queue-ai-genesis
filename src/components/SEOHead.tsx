@@ -7,13 +7,22 @@ interface SEOHeadProps {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  ogType?: string;
+  twitterTitle?: string;
+  twitterDescription?: string;
+  twitterImage?: string;
+  twitterCard?: string;
   canonicalUrl?: string;
   structuredData?: object;
   articleType?: 'website' | 'article' | 'product' | 'service';
   publishedTime?: string;
   modifiedTime?: string;
   author?: string;
+  authorUrl?: string;
+  robots?: string;
   breadcrumbs?: Array<{ name: string; url: string }>;
+  focusKeyword?: string;
+  readingTime?: number;
 }
 
 const SEOHead: React.FC<SEOHeadProps> = ({
@@ -23,13 +32,22 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   ogTitle,
   ogDescription,
   ogImage = "/Queue.png",
+  ogType = "website",
+  twitterTitle,
+  twitterDescription,
+  twitterImage,
+  twitterCard = "summary_large_image",
   canonicalUrl,
   structuredData,
   articleType = 'website',
   publishedTime,
   modifiedTime,
   author = 'Queue株式会社',
-  breadcrumbs
+  authorUrl = 'https://queue-tech.jp',
+  robots = 'index, follow',
+  breadcrumbs,
+  focusKeyword,
+  readingTime
 }) => {
   useEffect(() => {
     const siteUrl = "https://queue-tech.jp";
@@ -66,7 +84,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     document.head.appendChild(createMeta('description', description));
     document.head.appendChild(createMeta('keywords', keywords));
     document.head.appendChild(createMeta('author', author));
-    document.head.appendChild(createMeta('robots', 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'));
+    document.head.appendChild(createMeta('robots', robots));
     document.head.appendChild(createMeta('language', 'Japanese'));
     document.head.appendChild(createMeta('revisit-after', '7 days'));
     document.head.appendChild(createMeta('theme-color', '#2563eb'));
@@ -81,6 +99,18 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     
     // セキュリティ関連のメタタグ
     document.head.appendChild(createMeta('referrer', 'strict-origin-when-cross-origin'));
+    
+    // SEO追加メタタグ
+    if (focusKeyword) {
+      document.head.appendChild(createMeta('focus-keyword', focusKeyword));
+    }
+    if (readingTime) {
+      document.head.appendChild(createMeta('reading-time', `${readingTime}分`));
+      document.head.appendChild(createMeta('estimated-reading-time', `PT${readingTime}M`));
+    }
+    if (authorUrl && articleType === 'article') {
+      document.head.appendChild(createMeta('author-url', authorUrl));
+    }
     
     // 記事の時間情報
     if (publishedTime) {
@@ -100,8 +130,12 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     document.head.appendChild(canonical);
 
     // Open Graph メタタグ
+    const fullTwitterImage = (twitterImage || ogImage).startsWith('http') 
+      ? (twitterImage || ogImage) 
+      : `${siteUrl}${twitterImage || ogImage}`;
+    
     const ogMetas = [
-      { property: 'og:type', content: articleType },
+      { property: 'og:type', content: ogType || articleType },
       { property: 'og:url', content: fullCanonicalUrl },
       { property: 'og:title', content: ogTitle || title },
       { property: 'og:description', content: ogDescription || description },
@@ -130,11 +164,11 @@ const SEOHead: React.FC<SEOHeadProps> = ({
 
     // Twitter メタタグ
     const twitterMetas = [
-      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:card', content: twitterCard },
       { name: 'twitter:url', content: fullCanonicalUrl },
-      { name: 'twitter:title', content: ogTitle || title },
-      { name: 'twitter:description', content: ogDescription || description },
-      { name: 'twitter:image', content: fullOgImage }
+      { name: 'twitter:title', content: twitterTitle || ogTitle || title },
+      { name: 'twitter:description', content: twitterDescription || ogDescription || description },
+      { name: 'twitter:image', content: fullTwitterImage }
     ];
 
     twitterMetas.forEach(({ name, content }) => {

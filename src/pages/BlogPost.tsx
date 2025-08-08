@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { ArticleCTA } from '@/components/ArticleCTA';
 import TableOfContents from '@/components/TableOfContents';
 import readingTimeTracker from '@/utils/readingTimeTracker';
+import { generateArticleSEOData, generateBreadcrumbs } from '@/utils/seoUtils';
 
 // 目次項目の型定義
 type TableOfContentsItem = {
@@ -35,6 +36,28 @@ type BlogArticle = {
   table_of_contents: TableOfContentsItem[] | null;
   auto_generate_toc: boolean;
   toc_style: 'numbered' | 'bulleted' | 'plain' | 'hierarchical';
+  // SEO関連フィールド
+  seo_title?: string | null;
+  meta_description?: string | null;
+  meta_keywords?: string | null;
+  slug?: string | null;
+  canonical_url?: string | null;
+  focus_keyword?: string | null;
+  reading_time_minutes?: number | null;
+  article_type?: string | null;
+  author_name?: string | null;
+  author_url?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image?: string | null;
+  og_type?: string | null;
+  twitter_title?: string | null;
+  twitter_description?: string | null;
+  twitter_image?: string | null;
+  twitter_card_type?: string | null;
+  meta_robots?: string | null;
+  structured_data?: any;
+  last_seo_update?: string | null;
   status: 'draft' | 'published' | 'archived';
   published_at: string | null;
   created_at: string;
@@ -155,27 +178,41 @@ const BlogPost: React.FC = () => {
     return tempDiv.innerHTML;
   };
 
-  // SEOデータ生成
+  // SEOデータ生成（新しいSEOユーティリティを使用）
   const generateSEOData = (article: BlogArticle) => {
-    const cleanSummary = stripHtmlTags(article.summary);
-    const readTime = calculateReadTime(article.content);
+    const seoData = generateArticleSEOData(article);
+    const breadcrumbs = generateBreadcrumbs(article);
     
     return {
-      title: `${article.title} | Queue 技術ブログ`,
-      description: cleanSummary.length > 160 
-        ? cleanSummary.substring(0, 157) + '...'
-        : cleanSummary,
-      keywords: ['Queue', 'AI', '機械学習', '開発', ...article.tags].join(', '),
-      canonicalUrl: `${window.location.origin}/news/${article.id}`,
-      ogImage: article.image_url || '/Queue.png',
-      type: 'article' as const,
-      article: {
-        publishedTime: article.published_at || article.created_at,
-        modifiedTime: article.updated_at,
-        author: article.source_name || 'Queue株式会社',
-        tags: article.tags,
-        readingTime: readTime
-      }
+      title: seoData.title,
+      description: seoData.description,
+      keywords: seoData.keywords,
+      canonicalUrl: seoData.canonicalUrl,
+      ogTitle: seoData.ogTitle,
+      ogDescription: seoData.ogDescription,
+      ogImage: seoData.ogImage,
+      ogType: seoData.ogType,
+      twitterTitle: seoData.twitterTitle,
+      twitterDescription: seoData.twitterDescription,
+      twitterImage: seoData.twitterImage,
+      twitterCard: seoData.twitterCard,
+      author: seoData.author,
+      authorUrl: article.author_url,
+      robots: seoData.robots,
+      publishedTime: seoData.publishedTime,
+      modifiedTime: seoData.modifiedTime,
+      articleType: seoData.articleType,
+      focusKeyword: article.focus_keyword,
+      readingTime: article.reading_time_minutes || calculateReadTime(article.content),
+      structuredData: {
+        article: seoData.structuredData,
+        breadcrumbs: breadcrumbs
+      },
+      breadcrumbs: [
+        { name: 'ホーム', url: `${window.location.origin}` },
+        { name: 'ブログ', url: `${window.location.origin}/news` },
+        { name: article.title, url: `${window.location.origin}/news/${article.slug || article.id}` }
+      ]
     };
   };
 
