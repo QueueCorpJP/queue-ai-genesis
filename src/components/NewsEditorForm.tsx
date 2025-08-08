@@ -12,14 +12,14 @@ import { supabase } from '@/lib/supabase';
 // @ts-ignore - react-quillのタイプ定義が存在しないため
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import 'quill-better-table/dist/quill-better-table.css';
-import Quill from 'quill';
-import QuillBetterTable from 'quill-better-table';
+// import 'quill-better-table/dist/quill-better-table.css';
+// import Quill from 'quill';
+// import QuillBetterTable from 'quill-better-table';
 
 // Quillにテーブルモジュールを登録
-Quill.register({
-  'modules/better-table': QuillBetterTable
-}, true);
+// Quill.register({
+//   'modules/better-table': QuillBetterTable
+// }, true);
 
 interface NewsEditorFormProps {
   article?: any;
@@ -141,7 +141,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
   };
 
   // テーブル挿入機能
-  const insertTable = (rows: number = 3, cols: number = 3) => {
+  // const insertTable = (rows: number = 3, cols: number = 3) => {
     const quill = quillRef.current?.getEditor();
     if (quill) {
       const range = quill.getSelection(true);
