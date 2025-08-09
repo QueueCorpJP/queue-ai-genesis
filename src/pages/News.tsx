@@ -41,6 +41,7 @@ type BlogArticle = {
   table_of_contents: TableOfContentsItem[] | null;
   auto_generate_toc: boolean;
   toc_style: 'numbered' | 'bulleted' | 'plain' | 'hierarchical';
+  slug?: string | null;
   status: 'draft' | 'published' | 'archived';
   published_at: string | null;
   created_at: string;
@@ -68,6 +69,11 @@ const Blog: React.FC = () => {
     fetchArticles(page);
     // ページ変更時にトップにスクロール
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 記事URLを生成するヘルパー関数
+  const getArticleUrl = (article: BlogArticle) => {
+    return article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
   };
 
   // SEO用のデータを生成
@@ -307,7 +313,7 @@ const Blog: React.FC = () => {
                           {/* タイトル */}
                             <h3 className="font-bold text-gray-900 mb-2 leading-tight line-clamp-2">
                             <Link 
-                                to={`/news/${article.id}`}
+                                to={getArticleUrl(article)}
                                 className="hover:text-navy-600 transition-colors duration-200 text-sm sm:text-base"
                             >
                               {article.title}
@@ -346,7 +352,7 @@ const Blog: React.FC = () => {
                                 size="sm" 
                                 className="bg-navy-700 hover:bg-navy-600 text-xs h-6 sm:h-7 px-2 sm:px-3"
                               >
-                                <Link to={`/news/${article.id}`}>
+                                <Link to={getArticleUrl(article)}>
                                   読む
                                   <ArrowRight className="ml-1 h-3 w-3" />
                               </Link>

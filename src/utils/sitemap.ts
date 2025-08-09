@@ -20,6 +20,7 @@ interface SitemapUrl {
 interface NewsArticle {
   id: string;
   title: string;
+  slug?: string | null;
   updated_at: string;
   published_at: string | null;
   status: 'published' | 'draft' | 'archived';
@@ -64,8 +65,10 @@ export const generateSitemap = async (articles: NewsArticle[] = []): Promise<str
   );
 
   publishedArticles.forEach(article => {
+    // スラッグがある場合はスラッグを使用、なければIDを使用
+    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
     urls.push({
-      url: `${baseUrl}/news/${article.id}`,
+      url: `${baseUrl}${urlPath}`,
       lastmod: new Date(article.updated_at).toISOString(),
       changefreq: 'monthly',
       priority: 0.6
@@ -141,9 +144,11 @@ export const generateNewsSitemap = async (articles: NewsArticle[] = []): Promise
     article.status === 'published' && article.published_at
   );
 
-  const newsUrls = publishedArticles.map(article => `
+  const newsUrls = publishedArticles.map(article => {
+    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    return `
   <url>
-    <loc>${baseUrl}/news/${article.id}</loc>
+    <loc>${baseUrl}${urlPath}</loc>
     <news:news>
       <news:publication>
         <news:name>Queue株式会社</news:name>
@@ -155,7 +160,8 @@ export const generateNewsSitemap = async (articles: NewsArticle[] = []): Promise
     <lastmod>${new Date(article.updated_at).toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>`).join('');
+  </url>`;
+  }).join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"

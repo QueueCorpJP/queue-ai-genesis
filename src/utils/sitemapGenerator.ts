@@ -1,288 +1,117 @@
-// XMLサイトマップ生成ユーティリティ
-// 検索エンジンクロール最適化のためのサイトマップ機能
-
 import { supabase } from '@/lib/supabase';
-import { generateSitemapEntry } from './seoUtils';
+import { generateSitemap, generateNewsSitemap } from './sitemap';
+import fs from 'fs';
+import path from 'path';
 
-export interface SitemapEntry {
-  url: string;
-  lastmod: string;
-  changefreq: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
-  priority: string;
+interface ArticleForSitemap {
+  id: string;
+  title: string;
+  slug?: string | null;
+  updated_at: string;
+  published_at: string | null;
+  status: 'published' | 'draft' | 'archived';
 }
 
-export interface SitemapIndex {
-  sitemap: string;
-  lastmod: string;
-}
-
 /**
- * 静的ページのサイトマップエントリー
+ * サイトマップファイルを物理的に生成・保存
  */
-const getStaticPages = (): SitemapEntry[] => {
-  const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-  const today = new Date().toISOString().split('T')[0];
-  
-  return [
-    {
-      url: baseUrl,
-      lastmod: today,
-      changefreq: 'weekly',
-      priority: '1.0'
-    },
-    {
-      url: `${baseUrl}/news`,
-      lastmod: today,
-      changefreq: 'daily',
-      priority: '0.9'
-    },
-    {
-      url: `${baseUrl}/company`,
-      lastmod: today,
-      changefreq: 'monthly',
-      priority: '0.8'
-    },
-    {
-      url: `${baseUrl}/services`,
-      lastmod: today,
-      changefreq: 'monthly',
-      priority: '0.8'
-    },
-    {
-      url: `${baseUrl}/products`,
-      lastmod: today,
-      changefreq: 'monthly',
-      priority: '0.8'
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastmod: today,
-      changefreq: 'monthly',
-      priority: '0.7'
-    }
-  ];
-};
-
-/**
- * 記事のサイトマップエントリーを取得
- */
-export const getArticleSitemapEntries = async (): Promise<SitemapEntry[]> => {
+export const generateSitemapFiles = async (): Promise<{
+  success: boolean;
+  message: string;
+  files?: string[];
+}> => {
   try {
+    console.log('🚀 サイトマップ生成開始...');
+    
+    // 公開済み記事を取得
     const { data: articles, error } = await supabase
-      .from('sitemap_articles')
-      .select('*')
-      .order('lastmod', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching sitemap articles:', error);
-      return [];
-    }
-    
-    const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-    
-    return articles.map(article => ({
-      url: `${baseUrl}/news/${article.slug}`,
-      lastmod: article.lastmod,
-      changefreq: article.changefreq,
-      priority: article.priority
-    }));
-  } catch (error) {
-    console.error('Error generating article sitemap entries:', error);
-    return [];
-  }
-};
-
-/**
- * XMLサイトマップを生成
- */
-export const generateXMLSitemap = async (): Promise<string> => {
-  const staticPages = getStaticPages();
-  const articlePages = await getArticleSitemapEntries();
-  const allPages = [...staticPages, ...articlePages];
-  
-  const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
-  const urlsetOpen = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-  const urlsetClose = '</urlset>';
-  
-  const urls = allPages.map(page => `
-  <url>
-    <loc>${page.url}</loc>
-    <lastmod>${page.lastmod}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`).join('');
-  
-  return `${xmlHeader}\n${urlsetOpen}${urls}\n${urlsetClose}`;
-};
-
-/**
- * サイトマップインデックスを生成（大量の記事がある場合用）
- */
-export const generateSitemapIndex = async (): Promise<string> => {
-  const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-  const today = new Date().toISOString().split('T')[0];
-  
-  // 記事数を確認
-  const { count } = await supabase
-    .from('news_articles')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'published');
-  
-  const sitemapEntries: SitemapIndex[] = [
-    {
-      sitemap: `${baseUrl}/sitemap-static.xml`,
-      lastmod: today
-    }
-  ];
-  
-  // 記事数が多い場合は分割
-  const articlesPerSitemap = 1000;
-  const numberOfSitemaps = Math.ceil((count || 0) / articlesPerSitemap);
-  
-  for (let i = 0; i < numberOfSitemaps; i++) {
-    sitemapEntries.push({
-      sitemap: `${baseUrl}/sitemap-articles-${i + 1}.xml`,
-      lastmod: today
-    });
-  }
-  
-  const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
-  const sitemapindexOpen = '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-  const sitemapindexClose = '</sitemapindex>';
-  
-  const sitemaps = sitemapEntries.map(entry => `
-  <sitemap>
-    <loc>${entry.sitemap}</loc>
-    <lastmod>${entry.lastmod}</lastmod>
-  </sitemap>`).join('');
-  
-  return `${xmlHeader}\n${sitemapindexOpen}${sitemaps}\n${sitemapindexClose}`;
-};
-
-/**
- * 分割された記事サイトマップを生成
- */
-export const generateArticlesSitemap = async (page: number = 1, limit: number = 1000): Promise<string> => {
-  const offset = (page - 1) * limit;
-  
-  try {
-    const { data: articles, error } = await supabase
-      .from('sitemap_articles')
-      .select('*')
-      .order('lastmod', { ascending: false })
-      .range(offset, offset + limit - 1);
-    
-    if (error) {
-      console.error('Error fetching articles for sitemap:', error);
-      return '';
-    }
-    
-    const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-    
-    const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
-    const urlsetOpen = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-    const urlsetClose = '</urlset>';
-    
-    const urls = articles.map(article => `
-  <url>
-    <loc>${baseUrl}/news/${article.slug}</loc>
-    <lastmod>${article.lastmod}</lastmod>
-    <changefreq>${article.changefreq}</changefreq>
-    <priority>${article.priority}</priority>
-  </url>`).join('');
-    
-    return `${xmlHeader}\n${urlsetOpen}${urls}\n${urlsetClose}`;
-  } catch (error) {
-    console.error('Error generating articles sitemap:', error);
-    return '';
-  }
-};
-
-/**
- * 静的ページのサイトマップを生成
- */
-export const generateStaticSitemap = (): string => {
-  const staticPages = getStaticPages();
-  
-  const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
-  const urlsetOpen = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-  const urlsetClose = '</urlset>';
-  
-  const urls = staticPages.map(page => `
-  <url>
-    <loc>${page.url}</loc>
-    <lastmod>${page.lastmod}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`).join('');
-  
-  return `${xmlHeader}\n${urlsetOpen}${urls}\n${urlsetClose}`;
-};
-
-/**
- * robots.txtを生成
- */
-export const generateRobotsTxt = (): string => {
-  const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-  
-  return `User-agent: *
-Allow: /
-
-# サイトマップの場所
-Sitemap: ${baseUrl}/sitemap.xml
-
-# クロール頻度の制限
-Crawl-delay: 1
-
-# 特定のパスを除外（必要に応じて）
-# Disallow: /admin/
-# Disallow: /api/`;
-};
-
-/**
- * サイトマップを自動的にサーチコンソールに送信
- */
-export const submitSitemapToSearchConsole = async (sitemapUrl: string): Promise<boolean> => {
-  try {
-    // Google Search Console APIを使用してサイトマップを送信
-    // 実際の実装では、適切な認証とAPIキーが必要
-    console.log(`Sitemap submitted: ${sitemapUrl}`);
-    return true;
-  } catch (error) {
-    console.error('Error submitting sitemap:', error);
-    return false;
-  }
-};
-
-/**
- * サイトマップ情報を取得
- */
-export const getSitemapInfo = async () => {
-  try {
-    const { count: totalArticles } = await supabase
       .from('news_articles')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'published');
-    
-    const { data: recentArticles } = await supabase
-      .from('news_articles')
-      .select('updated_at')
+      .select('id, title, slug, updated_at, published_at, status')
       .eq('status', 'published')
-      .order('updated_at', { ascending: false })
-      .limit(1);
+      .order('published_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ 記事データ取得エラー:', error);
+      return {
+        success: false,
+        message: `記事データ取得エラー: ${error.message}`
+      };
+    }
+
+    const publishedArticles: ArticleForSitemap[] = articles || [];
+    console.log(`📰 公開記事数: ${publishedArticles.length}件`);
+
+    // メインサイトマップ生成
+    const mainSitemap = await generateSitemap(publishedArticles);
     
-    const lastUpdated = recentArticles?.[0]?.updated_at || new Date().toISOString();
-    const staticPages = getStaticPages();
+    // ニュースサイトマップ生成
+    const newsSitemap = await generateNewsSitemap(publishedArticles);
+
+    // ファイル保存用のディレクトリパス
+    const publicDir = path.join(process.cwd(), 'public');
     
+    // ディレクトリが存在しない場合は作成
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+
+    // サイトマップファイルを保存
+    const mainSitemapPath = path.join(publicDir, 'sitemap.xml');
+    const newsSitemapPath = path.join(publicDir, 'news-sitemap.xml');
+    
+    fs.writeFileSync(mainSitemapPath, mainSitemap, 'utf-8');
+    fs.writeFileSync(newsSitemapPath, newsSitemap, 'utf-8');
+
+    console.log('✅ サイトマップファイル生成完了');
+    console.log(`📄 メインサイトマップ: ${mainSitemapPath}`);
+    console.log(`📰 ニュースサイトマップ: ${newsSitemapPath}`);
+
     return {
-      totalUrls: (totalArticles || 0) + staticPages.length,
-      totalArticles: totalArticles || 0,
-      totalStaticPages: staticPages.length,
-      lastUpdated,
-      sitemapUrl: `${import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp'}/sitemap.xml`
+      success: true,
+      message: `サイトマップを正常に生成しました（記事数: ${publishedArticles.length}件）`,
+      files: [
+        'sitemap.xml',
+        'news-sitemap.xml'
+      ]
     };
+
   } catch (error) {
-    console.error('Error getting sitemap info:', error);
-    return null;
+    console.error('❌ サイトマップ生成エラー:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
+};
+
+/**
+ * 記事公開時のサイトマップ更新
+ */
+export const updateSitemapOnPublish = async (articleId: string): Promise<void> => {
+  try {
+    console.log(`🔄 記事公開によるサイトマップ更新開始: ${articleId}`);
+    
+    const result = await generateSitemapFiles();
+    
+    if (result.success) {
+      console.log('✅ サイトマップ更新完了:', result.message);
+    } else {
+      console.error('❌ サイトマップ更新失敗:', result.message);
+    }
+  } catch (error) {
+    console.error('❌ サイトマップ更新エラー:', error);
+  }
+};
+
+/**
+ * 開発環境での手動サイトマップ生成
+ */
+export const generateSitemapDev = async (): Promise<void> => {
+  if (typeof window !== 'undefined') {
+    console.warn('⚠️ この関数はサーバーサイドでのみ実行してください');
+    return;
+  }
+
+  const result = await generateSitemapFiles();
+  console.log('📋 開発環境サイトマップ生成結果:', result);
 };

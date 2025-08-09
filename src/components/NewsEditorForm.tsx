@@ -6,9 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Upload, Image as ImageIcon, MessageCircle, Table } from 'lucide-react';
+import { X, Plus, Upload, Image as ImageIcon, MessageCircle, Table, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { generateSlug, calculateReadingTime } from '@/utils/seoUtils';
+import { onArticlePublished } from '@/utils/sitemapUpdater';
 // @ts-ignore - react-quillのタイプ定義が存在しないため
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -41,7 +43,27 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     table_of_contents: [] as any[],
     auto_generate_toc: false,
     toc_style: 'numbered' as 'numbered' | 'bulleted' | 'plain' | 'hierarchical',
-    status: 'draft' as 'draft' | 'published' | 'archived'
+    status: 'draft' as 'draft' | 'published' | 'archived',
+    // SEO関連フィールド
+    seo_title: '',
+    meta_description: '',
+    meta_keywords: '',
+    slug: '',
+    canonical_url: '',
+    focus_keyword: '',
+    reading_time_minutes: 0,
+    article_type: 'blog_post' as string,
+    author_name: 'Queue株式会社',
+    author_url: 'https://queue-tech.jp',
+    og_title: '',
+    og_description: '',
+    og_image: '',
+    og_type: 'article',
+    twitter_title: '',
+    twitter_description: '',
+    twitter_image: '',
+    twitter_card_type: 'summary_large_image',
+    meta_robots: 'index, follow'
   });
   const [newTag, setNewTag] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -94,6 +116,60 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     }
   };
 
+  // SEOデータ自動生成機能
+  const generateSEOData = () => {
+    const { title, summary, content, tags } = formData;
+    if (!title.trim()) {
+      toast.error('タイトルを入力してからSEOデータを生成してください');
+      return;
+    }
+
+    // HTMLタグを除去する関数
+    const stripHtml = (html: string) => {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent || div.innerText || '';
+    };
+
+    // SEOタイトル生成（60文字以内）
+    const seoTitle = title.length > 50 ? title.substring(0, 50).trim() + '...' : title;
+    
+    // メタディスクリプション生成（160文字以内）
+    const cleanSummary = stripHtml(summary);
+    const metaDescription = cleanSummary || stripHtml(content).substring(0, 150) + '...';
+    const finalMetaDescription = metaDescription.length > 160 ? metaDescription.substring(0, 160).trim() + '...' : metaDescription;
+    
+    // スラッグ生成
+    const slug = generateSlug(title);
+    
+    // メタキーワード生成
+    const keywords = ['Queue株式会社', 'AI', '人工知能', ...tags].join(', ');
+    
+    // 読了時間計算
+    const readingTime = calculateReadingTime(content);
+    
+    // カノニカルURL生成
+    const canonicalUrl = `/news/${slug}`;
+
+    setFormData(prev => ({
+      ...prev,
+      seo_title: seoTitle,
+      meta_description: finalMetaDescription,
+      meta_keywords: keywords,
+      slug: slug,
+      canonical_url: canonicalUrl,
+      reading_time_minutes: readingTime,
+      og_title: seoTitle,
+      og_description: finalMetaDescription,
+      og_image: prev.image_url || '/Queue.png',
+      twitter_title: seoTitle.length > 70 ? seoTitle.substring(0, 67) + '...' : seoTitle,
+      twitter_description: finalMetaDescription.length > 200 ? finalMetaDescription.substring(0, 197) + '...' : finalMetaDescription,
+      twitter_image: prev.image_url || '/Queue.png'
+    }));
+
+    toast.success('SEOデータを自動生成しました');
+  };
+
   // 記事データ初期化
   useEffect(() => {
     if (article) {
@@ -108,7 +184,27 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         table_of_contents: article.table_of_contents || [],
         auto_generate_toc: article.auto_generate_toc || false,
         toc_style: article.toc_style || 'numbered',
-        status: article.status || 'draft'
+        status: article.status || 'draft',
+        // SEO関連フィールド
+        seo_title: article.seo_title || '',
+        meta_description: article.meta_description || '',
+        meta_keywords: article.meta_keywords || '',
+        slug: article.slug || '',
+        canonical_url: article.canonical_url || '',
+        focus_keyword: article.focus_keyword || '',
+        reading_time_minutes: article.reading_time_minutes || 0,
+        article_type: article.article_type || 'blog_post',
+        author_name: article.author_name || 'Queue株式会社',
+        author_url: article.author_url || 'https://queue-tech.jp',
+        og_title: article.og_title || '',
+        og_description: article.og_description || '',
+        og_image: article.og_image || '',
+        og_type: article.og_type || 'article',
+        twitter_title: article.twitter_title || '',
+        twitter_description: article.twitter_description || '',
+        twitter_image: article.twitter_image || '',
+        twitter_card_type: article.twitter_card_type || 'summary_large_image',
+        meta_robots: article.meta_robots || 'index, follow'
       });
       setImagePreview(article.image_url || '');
     } else {
@@ -123,7 +219,27 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         table_of_contents: [],
         auto_generate_toc: false,
         toc_style: 'numbered',
-        status: 'draft'
+        status: 'draft',
+        // SEO関連フィールド
+        seo_title: '',
+        meta_description: '',
+        meta_keywords: '',
+        slug: '',
+        canonical_url: '',
+        focus_keyword: '',
+        reading_time_minutes: 0,
+        article_type: 'blog_post',
+        author_name: 'Queue株式会社',
+        author_url: 'https://queue-tech.jp',
+        og_title: '',
+        og_description: '',
+        og_image: '',
+        og_type: 'article',
+        twitter_title: '',
+        twitter_description: '',
+        twitter_image: '',
+        twitter_card_type: 'summary_large_image',
+        meta_robots: 'index, follow'
       });
       setImagePreview('');
     }
@@ -430,39 +546,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     'align', 'script'
   ];
 
-  useEffect(() => {
-    if (article) {
-      setFormData({
-        title: article.title || '',
-        summary: article.summary || '',
-        content: article.content || '',
-        source_name: article.source_name || '',
-        source_url: article.source_url || '',
-        image_url: article.image_url || '',
-        tags: article.tags || [],
-        table_of_contents: article.table_of_contents || [],
-        auto_generate_toc: article.auto_generate_toc || false,
-        toc_style: article.toc_style || 'numbered',
-        status: article.status || 'draft'
-      });
-      setImagePreview(article.image_url || '');
-    } else {
-      setFormData({
-        title: '',
-        summary: '',
-        content: '',
-        source_name: '',
-        source_url: '',
-        image_url: '',
-        tags: [],
-        table_of_contents: [],
-        auto_generate_toc: false,
-        toc_style: 'numbered',
-        status: 'draft'
-      });
-      setImagePreview('');
-    }
-  }, [article]);
+
 
   // Quillエディタの初期化後にカスタムボタンを追加
   useEffect(() => {
@@ -585,7 +669,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
 
       const now = new Date().toISOString();
       
-      // 基本的な記事データのみをデータベースに送信
+      // 記事データ（SEO情報含む）をデータベースに送信
       const articleData = {
         title: formData.title,
         summary: formData.summary,
@@ -599,7 +683,28 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         toc_style: formData.toc_style || 'numbered',
         status: formData.status,
         published_at: formData.status === 'published' ? now : null,
-        updated_at: now
+        updated_at: now,
+        // SEO関連フィールド
+        seo_title: formData.seo_title || null,
+        meta_description: formData.meta_description || null,
+        meta_keywords: formData.meta_keywords || null,
+        slug: formData.slug || null,
+        canonical_url: formData.canonical_url || null,
+        focus_keyword: formData.focus_keyword || null,
+        reading_time_minutes: formData.reading_time_minutes || null,
+        article_type: formData.article_type || 'blog_post',
+        author_name: formData.author_name || 'Queue株式会社',
+        author_url: formData.author_url || 'https://queue-tech.jp',
+        og_title: formData.og_title || null,
+        og_description: formData.og_description || null,
+        og_image: formData.og_image || finalImageUrl || null,
+        og_type: formData.og_type || 'article',
+        twitter_title: formData.twitter_title || null,
+        twitter_description: formData.twitter_description || null,
+        twitter_image: formData.twitter_image || finalImageUrl || null,
+        twitter_card_type: formData.twitter_card_type || 'summary_large_image',
+        meta_robots: formData.meta_robots || 'index, follow',
+        last_seo_update: now
       };
 
       if (article) {
@@ -614,17 +719,29 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           throw error;
         }
         toast.success('記事を更新しました');
+        
+        // 記事が公開状態の場合、サイトマップを更新
+        if (formData.status === 'published') {
+          onArticlePublished(article.id);
+        }
       } else {
         // 新規記事の作成
-        const { error } = await supabase
+        const { data: insertedData, error } = await supabase
           .from('news_articles')
-          .insert(articleData);
+          .insert(articleData)
+          .select('id')
+          .single();
 
         if (error) {
           console.error('記事作成エラー:', error);
           throw error;
         }
         toast.success('記事を作成しました');
+        
+        // 記事が公開状態の場合、サイトマップを更新
+        if (formData.status === 'published' && insertedData) {
+          onArticlePublished(insertedData.id);
+        }
       }
 
       onSave();
@@ -775,8 +892,39 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           </Select>
         </div>
       </div>
+      
+      {/* SEO自動生成ボタン */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="h-5 w-5 text-blue-600" />
+            <div>
+              <h3 className="font-semibold text-blue-900">SEO最適化</h3>
+              <p className="text-sm text-blue-700">タイトルと内容からSEOデータを自動生成</p>
+            </div>
+          </div>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={generateSEOData}
+            disabled={!formData.title.trim()}
+            className="bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            SEO生成
+          </Button>
+        </div>
+      </div>
 
-      <div className="space-y-2">
+      <Tabs defaultValue="basic" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="basic">基本情報</TabsTrigger>
+          <TabsTrigger value="seo">SEO設定</TabsTrigger>
+          <TabsTrigger value="social">SNS設定</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="basic" className="space-y-6 mt-6">
+          <div className="space-y-2">
         <Label htmlFor="summary">概要 *</Label>
         <div className="border rounded-md">
           <div className="bg-blue-50 border-b px-4 py-2 text-sm text-blue-800">
@@ -1022,8 +1170,224 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           <Button type="button" onClick={handleAddTag} disabled={!newTag.trim()}>
             追加
           </Button>
+          </div>
         </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="seo" className="space-y-6 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="seo_title">SEOタイトル</Label>
+                <Input
+                  id="seo_title"
+                  value={formData.seo_title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, seo_title: e.target.value }))}
+                  placeholder="SEO用のタイトル（60文字以内）"
+                  maxLength={60}
+                />
+                <div className="text-xs text-gray-500">
+                  {formData.seo_title.length}/60文字
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="meta_description">メタディスクリプション</Label>
+                <Textarea
+                  id="meta_description"
+                  value={formData.meta_description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, meta_description: e.target.value }))}
+                  placeholder="検索結果に表示される説明（160文字以内）"
+                  maxLength={160}
+                  rows={3}
+                />
+                <div className="text-xs text-gray-500">
+                  {formData.meta_description.length}/160文字
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="slug">スラッグ（URL）</Label>
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                  placeholder="url-friendly-slug"
+                />
+                <div className="text-xs text-gray-500">
+                  URL: /news/{formData.slug}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="focus_keyword">フォーカスキーワード</Label>
+                <Input
+                  id="focus_keyword"
+                  value={formData.focus_keyword}
+                  onChange={(e) => setFormData(prev => ({ ...prev, focus_keyword: e.target.value }))}
+                  placeholder="メインキーワード"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="meta_keywords">メタキーワード</Label>
+                <Textarea
+                  id="meta_keywords"
+                  value={formData.meta_keywords}
+                  onChange={(e) => setFormData(prev => ({ ...prev, meta_keywords: e.target.value }))}
+                  placeholder="キーワード1, キーワード2, キーワード3"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="canonical_url">カノニカルURL</Label>
+                <Input
+                  id="canonical_url"
+                  value={formData.canonical_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, canonical_url: e.target.value }))}
+                  placeholder="/news/article-slug"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="article_type">記事タイプ</Label>
+                <Select value={formData.article_type} onValueChange={(value) => setFormData(prev => ({ ...prev, article_type: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="blog_post">ブログ記事</SelectItem>
+                    <SelectItem value="news">ニュース</SelectItem>
+                    <SelectItem value="tutorial">チュートリアル</SelectItem>
+                    <SelectItem value="case_study">事例紹介</SelectItem>
+                    <SelectItem value="technical">技術記事</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="reading_time">読了時間（分）</Label>
+                <Input
+                  id="reading_time"
+                  type="number"
+                  value={formData.reading_time_minutes}
+                  onChange={(e) => setFormData(prev => ({ ...prev, reading_time_minutes: parseInt(e.target.value) || 0 }))}
+                  placeholder="5"
+                  min="1"
+                />
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="social" className="space-y-6 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Open Graph設定 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Open Graph（Facebook・LinkedIn）</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="og_title">OGタイトル</Label>
+                <Input
+                  id="og_title"
+                  value={formData.og_title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, og_title: e.target.value }))}
+                  placeholder="Facebook/LinkedIn用タイトル（95文字以内）"
+                  maxLength={95}
+                />
+                <div className="text-xs text-gray-500">
+                  {formData.og_title.length}/95文字
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="og_description">OGディスクリプション</Label>
+                <Textarea
+                  id="og_description"
+                  value={formData.og_description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, og_description: e.target.value }))}
+                  placeholder="Facebook/LinkedIn用説明文（300文字以内）"
+                  maxLength={300}
+                  rows={3}
+                />
+                <div className="text-xs text-gray-500">
+                  {formData.og_description.length}/300文字
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="og_image">OG画像URL</Label>
+                <Input
+                  id="og_image"
+                  value={formData.og_image}
+                  onChange={(e) => setFormData(prev => ({ ...prev, og_image: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            </div>
+            
+            {/* Twitter Cards設定 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Twitter Cards</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="twitter_title">Twitterタイトル</Label>
+                <Input
+                  id="twitter_title"
+                  value={formData.twitter_title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, twitter_title: e.target.value }))}
+                  placeholder="Twitter用タイトル（70文字以内）"
+                  maxLength={70}
+                />
+                <div className="text-xs text-gray-500">
+                  {formData.twitter_title.length}/70文字
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="twitter_description">Twitterディスクリプション</Label>
+                <Textarea
+                  id="twitter_description"
+                  value={formData.twitter_description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, twitter_description: e.target.value }))}
+                  placeholder="Twitter用説明文（200文字以内）"
+                  maxLength={200}
+                  rows={3}
+                />
+                <div className="text-xs text-gray-500">
+                  {formData.twitter_description.length}/200文字
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="twitter_image">Twitter画像URL</Label>
+                <Input
+                  id="twitter_image"
+                  value={formData.twitter_image}
+                  onChange={(e) => setFormData(prev => ({ ...prev, twitter_image: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="twitter_card_type">Twitterカードタイプ</Label>
+                <Select value={formData.twitter_card_type} onValueChange={(value) => setFormData(prev => ({ ...prev, twitter_card_type: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="summary">概要</SelectItem>
+                    <SelectItem value="summary_large_image">大きな画像付き概要</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <div className="flex justify-end space-x-2">
         {onCancel && (

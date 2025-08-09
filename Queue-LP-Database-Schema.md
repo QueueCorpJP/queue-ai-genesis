@@ -5,7 +5,7 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **プロジェクトID**: `vrpdhzbfnwljdsretjld`  
 **データベースバージョン**: PostgreSQL 17.4.1.054  
-**最終更新**: 2025年2月10日（セッション管理・閲覧時間計算バグ修正・セッション統計機能強化）  
+**最終更新**: 2025年1月26日（正規表現エラー修正・記事作成機能完全復旧・テーブル情報更新）  
 **Supabaseリージョン**: Asia Pacific (Tokyo) / ap-northeast-1  
 **認証システム**: 有効（Row Level Security対応・社員アカウントログイン対応）  
 **実装ステータス**: Todo管理システム完全実装済み、勤怠管理システム完全実装済み、社員認証システム完全実装済み、会社スケジュール管理システム完全実装済み
@@ -22,30 +22,30 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 **トリガー数**: 21個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個 + セッション管理2個 + **SEO最適化1個**）
 
 #### 最新テーブル一覧（Supabase MCP同期）
-取得時点: 2025-08-08 / ソース: Supabase Management MCP
+取得時点: 2025-01-26 / ソース: Supabase Management MCP
 
-| テーブル名 | スキーマ | RLS | 備考 |
-|---|---|---|---|
-| consultation_requests | public | 無効 | 相談依頼 |
-| contact_requests | public | 無効 | お問い合わせ |
-| news_articles | public | 無効 | 記事本体 |
-| news_article_views | public | 有効 | 記事閲覧履歴 |
-| chatbot_conversations | public | 有効 | チャット会話ログ |
-| cta_clicks | public | 有効 | CTAクリック履歴 |
-| members | public | 無効 | メンバー管理（アプリ側で権限制御） |
-| member_activity_logs | public | 無効 | メンバー操作監査ログ |
-| todos | public | 有効 | Todo管理 |
-| todo_progress_logs | public | 有効 | Todo進捗ログ |
-| member_hourly_rates | public | 無効 | 時給設定（役員向け） |
-| attendance_records | public | 無効 | 勤怠記録 |
-| company_schedules | public | 有効 | 会社スケジュール |
-| migration_log | public | 無効 | マイグレーション実行ログ |
-| monthly_expenses | public | 無効 | 月次販管費（アプリ側で権限制御） |
-| kpi_indicators | public | 無効 | KPI/KGI指標マスター |
-| kpi_targets | public | 無効 | KPI/KGI目標 |
-| kpi_progress_records | public | 無効 | KPI進捗記録 |
-| kpi_evaluations | public | 無効 | KPI評価 |
-| personal_memos | public | 無効 | 個人メモ |
+| テーブル名 | スキーマ | RLS | 備考 | サイズ | レコード数 |
+|---|---|---|---|---|---|
+| consultation_requests | public | 無効 | 相談依頼 | 80 kB | 10 |
+| contact_requests | public | 無効 | お問い合わせ | 80 kB | 12 |
+| news_articles | public | 無効 | 記事本体（SEO最適化済み） | 1328 kB | 29 |
+| news_article_views | public | 有効 | 記事閲覧履歴（セッション管理強化） | 560 kB | 501 |
+| chatbot_conversations | public | 有効 | チャット会話ログ | 152 kB | 58 |
+| cta_clicks | public | 有効 | CTAクリック履歴 | 96 kB | 13 |
+| members | public | 無効 | メンバー管理（アプリ側で権限制御） | 128 kB | 4 |
+| member_activity_logs | public | 無効 | メンバー操作監査ログ | 96 kB | 4 |
+| todos | public | 有効 | Todo管理 | 112 kB | 14 |
+| todo_progress_logs | public | 有効 | Todo進捗ログ | 64 kB | 7 |
+| member_hourly_rates | public | 無効 | 時給設定（役員向け） | 56 kB | 1 |
+| attendance_records | public | 無効 | 勤怠記録 | 96 kB | 11 |
+| company_schedules | public | 有効 | 会社スケジュール | 192 kB | 5 |
+| migration_log | public | 無効 | マイグレーション実行ログ | 32 kB | 2 |
+| monthly_expenses | public | 無効 | 月次販管費（アプリ側で権限制御） | 192 kB | 7 |
+| kpi_indicators | public | 無効 | KPI/KGI指標マスター | 96 kB | 16 |
+| kpi_targets | public | 無効 | KPI/KGI目標 | 160 kB | 1 |
+| kpi_progress_records | public | 無効 | KPI進捗記録 | 96 kB | 6 |
+| kpi_evaluations | public | 無効 | KPI評価 | 40 kB | 0 |
+| personal_memos | public | 無効 | 個人メモ（日本語全文検索対応） | 200 kB | 3 |
 
 注: RLSが「無効」のテーブルについても、アプリケーションレイヤーで厳格なロール・権限制御を実装済みです（本書各セクション参照）。
 
@@ -1442,6 +1442,23 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
   - レスポンシブ対応のカード形式メモ表示
   - 高度な検索・フィルタリング・ソート機能
 
+### 2025年1月26日 - 正規表現エラー修正・記事作成機能完全復旧・データベース情報更新
+- **記事作成機能の正規表現エラー修正**
+  - generate_article_slug関数の無効なエスケープシーケンス修正（\\w → \w, \\s → \s, \\- → \-）
+  - calculate_reading_time関数のUnicode文字クラス問題修正（\p{Hiragana}等の対応）
+  - 記事作成時の400エラー「invalid regex escape sequence」完全解決
+  - SEO自動生成機能（スラッグ・読了時間・メタ情報）正常動作確認済み
+
+- **テーブル情報リアルタイム更新**
+  - Supabase MCP を使用した最新テーブル情報の取得・更新
+  - 各テーブルのサイズ・レコード数・RLS状態をリアルタイム同期
+  - 総容量: 約4.8MB、総レコード数: 約760件のデータベース運用中
+
+- **データベース運用状況**
+  - 記事本体（news_articles）: 1.3MB、29記事（SEO最適化済み）
+  - 記事閲覧統計（news_article_views）: 560KB、501閲覧記録
+  - 全システム正常稼動中（KPI/KGI管理、マイメモ、販管費管理含む）
+
 ### 2025年2月10日 - 記事目次機能追加・記事内ナビゲーション強化・自動目次生成機能実装
 - **記事目次機能のフルスタック実装**
   - news_articlesテーブルに目次関連カラム追加（table_of_contents, auto_generate_toc, toc_style）
@@ -1492,6 +1509,6 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
 
 ---
 
-*最終更新: 2025年2月10日（セッション管理・閲覧時間計算バグ修正完了・セッション統計機能強化・記事目次機能実装完了）*  
-*実装完了: ニュース・ブログ管理（目次機能付き・セッション追跡強化）・勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
-*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・セッション追跡精度向上・検索機能強化* 
+*最終更新: 2025年1月26日（正規表現エラー修正完了・記事作成機能完全復旧・テーブル情報リアルタイム更新）*  
+*実装完了: ニュース・ブログ管理（SEO最適化・目次機能付き・セッション追跡強化）・勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
+*今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・セッション追跡精度向上・検索機能強化・記事作成ワークフロー改善* 

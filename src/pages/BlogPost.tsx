@@ -65,14 +65,14 @@ type BlogArticle = {
 };
 
 const BlogPost: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id?: string; slug?: string }>();
   const navigate = useNavigate();
   const [article, setArticle] = useState<BlogArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!id) {
+    if (!id && !slug) {
       navigate('/news');
       return;
     }
@@ -82,17 +82,25 @@ const BlogPost: React.FC = () => {
     return () => {
       readingTimeTracker.endTracking();
     };
-  }, [id, navigate]);
+  }, [id, slug, navigate]);
 
   const fetchArticle = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('news_articles')
         .select('*')
-        .eq('id', id)
-        .eq('status', 'published')
-        .single();
+        .eq('status', 'published');
+      
+      // スラッグまたはIDで検索
+      if (slug) {
+        query = query.eq('slug', slug);
+      } else if (id) {
+        query = query.eq('id', id);
+      }
+      
+      const { data, error } = await query.single();
 
       if (error) {
         console.error('Error fetching article:', error);

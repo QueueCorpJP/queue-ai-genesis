@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:supabase": "node test-supabase.js"
+    "test:supabase": "node test-supabase.js",
+    "generate:sitemap": "node scripts/generate-sitemap.js",
+    "prebuild": "npm run generate:sitemap"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
