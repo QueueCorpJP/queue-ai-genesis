@@ -67,6 +67,25 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
     return null;
   }
 
+  // スタイルに応じたマーカーを生成
+  const getMarker = (item: TableOfContentsItem, index: number) => {
+    switch (style) {
+      case 'numbered':
+        return `${item.order}.`;
+      case 'bulleted':
+        return '•';
+      case 'plain':
+        return '';
+      case 'hierarchical':
+        // レベルに応じた記号
+        const markers = ['1.', 'a.', 'i.', '•'];
+        const markerIndex = Math.min(item.level - 1, markers.length - 1);
+        return markers[markerIndex];
+      default:
+        return `${item.order}.`;
+    }
+  };
+
   return (
     <div className={`bg-white p-6 rounded-lg border border-gray-200 shadow-sm ${className}`}>
       {/* 目次タイトル */}
@@ -78,21 +97,28 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({
       {/* 目次リスト */}
       <nav>
         <ol className="space-y-2">
-          {items.map((item, index) => (
-            <li key={`${item.anchor}-${index}`} className="flex">
-              <button
-                onClick={() => scrollToAnchor(item.anchor)}
-                className="w-full text-left flex items-start gap-3 p-2 rounded-md transition-colors duration-200 hover:bg-gray-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-              >
-                <span className="text-gray-600 font-medium min-w-[24px] flex-shrink-0">
-                  {item.order}.
-                </span>
-                <span className="text-gray-700 leading-relaxed">
-                  {item.title}
-                </span>
-              </button>
-            </li>
-          ))}
+          {items.map((item, index) => {
+            const marker = getMarker(item, index);
+            const hasMarker = marker.length > 0;
+            
+            return (
+              <li key={`${item.anchor}-${index}`} className="flex">
+                <button
+                  onClick={() => scrollToAnchor(item.anchor)}
+                  className={`w-full text-left flex items-start p-2 rounded-md transition-colors duration-200 hover:bg-gray-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${hasMarker ? 'gap-3' : ''}`}
+                >
+                  {hasMarker && (
+                    <span className="text-gray-600 font-medium min-w-[24px] flex-shrink-0">
+                      {marker}
+                    </span>
+                  )}
+                  <span className={`text-gray-700 leading-relaxed ${style === 'hierarchical' ? `ml-${(item.level - 1) * 4}` : ''}`}>
+                    {item.title}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ol>
       </nav>
     </div>
