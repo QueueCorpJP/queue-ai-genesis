@@ -997,90 +997,6 @@ const AdminDashboard: React.FC = () => {
                     <span>概要</span>
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="todos" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                  >
-                    <Target className="w-4 h-4" />
-                    <span>Todo</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="attendance" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    <span>勤怠</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="schedule" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    <span>スケジュール</span>
-                  </TabsTrigger>
-                  {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
-                    <TabsTrigger 
-                      value="expenses" 
-                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                    >
-                      <DollarSign className="w-4 h-4" />
-                      <span>販管費</span>
-                    </TabsTrigger>
-                  )}
-                  {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
-                    <TabsTrigger 
-                      value="recruitment" 
-                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                    >
-                      <Users className="w-4 h-4" />
-                      <span>採用</span>
-                    </TabsTrigger>
-                  )}
-                  {(user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
-                   (user?.role && ['member', 'employee'].includes(user.role)) ? (
-                    <TabsTrigger 
-                      value="kpi" 
-                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                    >
-                      <Target className="w-4 h-4" />
-                      <span>KPI/KGI</span>
-                    </TabsTrigger>
-                  ) : null}
-                  {(user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
-                   (user?.role && ['member', 'employee'].includes(user.role)) ? (
-                    <TabsTrigger 
-                      value="memos" 
-                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>マイメモ</span>
-                    </TabsTrigger>
-                  ) : null}
-                  {user?.role === 'executive' && (
-                    <TabsTrigger 
-                      value="payroll" 
-                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                    >
-                      <DollarSign className="w-4 h-4" />
-                      <span>人件費</span>
-                    </TabsTrigger>
-                  )}
-                  <TabsTrigger 
-                    value="news" 
-                    className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                  >
-                    <Newspaper className="w-4 h-4" />
-                    <span>ブログ</span>
-                  </TabsTrigger>
-                  {user?.role === 'executive' && (
-                    <TabsTrigger 
-                      value="members" 
-                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
-                    >
-                      <Users className="w-4 h-4" />
-                      <span>メンバー</span>
-                    </TabsTrigger>
-                  )}
-                  <TabsTrigger 
                     value="settings" 
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700"
                   >
@@ -1089,7 +1005,159 @@ const AdminDashboard: React.FC = () => {
                   </TabsTrigger>
                 </TabsList>
                 
-                {/* Analytics Dropdown */}
+                {/* Personal Management Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant={['todos', 'attendance', 'kpi', 'memos'].includes(activeTab) ? 'default' : 'ghost'} 
+                      className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>個人管理</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => setActiveTab('todos')}>
+                      <Target className="w-4 h-4 mr-2" />
+                      個人Todo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('attendance')}>
+                      <Clock className="w-4 h-4 mr-2" />
+                      勤怠管理
+                    </DropdownMenuItem>
+                    {((user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+                      (user?.role && ['member', 'employee'].includes(user.role))) && (
+                      <DropdownMenuItem onClick={() => setActiveTab('kpi')}>
+                        <Target className="w-4 h-4 mr-2" />
+                        KPI/KGI
+                      </DropdownMenuItem>
+                    )}
+                    {((user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+                      (user?.role && ['member', 'employee'].includes(user.role))) && (
+                      <DropdownMenuItem onClick={() => setActiveTab('memos')}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        マイメモ
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Organization Management Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant={['schedule', 'todo-progress'].includes(activeTab) ? 'default' : 'ghost'} 
+                      className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                    >
+                      <Building className="w-4 h-4" />
+                      <span>組織管理</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => setActiveTab('schedule')}>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      スケジュール
+                    </DropdownMenuItem>
+                    {(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp') && (
+                      <DropdownMenuItem onClick={() => setActiveTab('todo-progress')}>
+                        <ClipboardList className="w-4 h-4 mr-2" />
+                        全体Todo進捗
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* HR Management Dropdown */}
+                {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant={['members', 'recruitment'].includes(activeTab) ? 'default' : 'ghost'} 
+                        className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                      >
+                        <UserCheck className="w-4 h-4" />
+                        <span>人事管理</span>
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      {user?.role === 'executive' && (
+                        <DropdownMenuItem onClick={() => setActiveTab('members')}>
+                          <Users className="w-4 h-4 mr-2" />
+                          メンバー
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => setActiveTab('recruitment')}>
+                        <Users className="w-4 h-4 mr-2" />
+                        採用管理
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
+                {/* Finance Management Dropdown */}
+                {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant={['expenses', 'payroll'].includes(activeTab) ? 'default' : 'ghost'} 
+                        className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                      >
+                        <DollarSign className="w-4 h-4" />
+                        <span>財務管理</span>
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onClick={() => setActiveTab('expenses')}>
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        販管費
+                      </DropdownMenuItem>
+                      {user?.role === 'executive' && (
+                        <DropdownMenuItem onClick={() => setActiveTab('payroll')}>
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          人件費
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
+                {/* Customer & Content Management Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant={['consultations', 'contacts', 'chatbot', 'news'].includes(activeTab) ? 'default' : 'ghost'} 
+                      className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>顧客・コンテンツ</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => setActiveTab('consultations')}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      相談申込
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('contacts')}>
+                      <Phone className="w-4 h-4 mr-2" />
+                      お問い合わせ
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('chatbot')}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      チャットボット
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab('news')}>
+                      <Newspaper className="w-4 h-4 mr-2" />
+                      ブログ管理
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Analytics & Reports Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
@@ -1097,7 +1165,7 @@ const AdminDashboard: React.FC = () => {
                       className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
                     >
                       <BarChart3 className="w-4 h-4" />
-                      <span>分析</span>
+                      <span>分析・レポート</span>
                       <ChevronDown className="w-3 h-3" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -1116,56 +1184,6 @@ const AdminDashboard: React.FC = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                {/* Management Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant={['consultations', 'contacts', 'chatbot'].includes(activeTab) ? 'default' : 'ghost'} 
-                      className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
-                    >
-                      <UserCheck className="w-4 h-4" />
-                      <span>顧客管理</span>
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem onClick={() => setActiveTab('consultations')}>
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      相談申込
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setActiveTab('contacts')}>
-                      <Phone className="w-4 h-4 mr-2" />
-                      お問い合わせ
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setActiveTab('chatbot')}>
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      チャットボット
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Task Management Dropdown */}
-                {(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp') && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant={['todo-progress'].includes(activeTab) ? 'default' : 'ghost'} 
-                        className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
-                      >
-                        <ClipboardList className="w-4 h-4" />
-                        <span>タスク管理</span>
-                        <ChevronDown className="w-3 h-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-48">
-                      <DropdownMenuItem onClick={() => setActiveTab('todo-progress')}>
-                        <ClipboardList className="w-4 h-4 mr-2" />
-                        全体Todo進捗
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
               </div>
             </div>
           </div>
@@ -1199,7 +1217,135 @@ const AdminDashboard: React.FC = () => {
                   <span>概要</span>
                 </button>
                 
-                {/* Analytics Submenu */}
+                {/* Personal Management Submenu */}
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">個人管理</div>
+                  {[
+                    { value: 'todos', icon: Target, label: '個人Todo' },
+                    { value: 'attendance', icon: Clock, label: '勤怠管理' },
+                    ...(((user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
+                         (user?.role && ['member', 'employee'].includes(user.role))) ? 
+                        [
+                          { value: 'kpi', icon: Target, label: 'KPI/KGI' },
+                          { value: 'memos', icon: FileText, label: 'マイメモ' }
+                        ] : [])
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Organization Management Submenu */}
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">組織管理</div>
+                  {[
+                    { value: 'schedule', icon: Calendar, label: 'スケジュール' },
+                    ...(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp' ? 
+                        [{ value: 'todo-progress', icon: ClipboardList, label: '全体Todo進捗' }] : [])
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* HR Management Submenu */}
+                {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+                  <div className="border-t border-gray-100">
+                    <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">人事管理</div>
+                    {[
+                      ...(user?.role === 'executive' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
+                      { value: 'recruitment', icon: Users, label: '採用管理' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.value}
+                        onClick={() => {
+                          setActiveTab(tab.value);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                          activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        <tab.icon className="w-4 h-4" />
+                        <span>{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Finance Management Submenu */}
+                {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
+                  <div className="border-t border-gray-100">
+                    <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">財務管理</div>
+                    {[
+                      { value: 'expenses', icon: DollarSign, label: '販管費' },
+                      ...(user?.role === 'executive' ? [{ value: 'payroll', icon: DollarSign, label: '人件費' }] : [])
+                    ].map((tab) => (
+                      <button
+                        key={tab.value}
+                        onClick={() => {
+                          setActiveTab(tab.value);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                          activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        <tab.icon className="w-4 h-4" />
+                        <span>{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Customer & Content Management Submenu */}
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">顧客・コンテンツ</div>
+                  {[
+                    { value: 'consultations', icon: MessageSquare, label: '相談申込' },
+                    { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
+                    { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' },
+                    { value: 'news', icon: Newspaper, label: 'ブログ管理' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => {
+                        setActiveTab(tab.value);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
+                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Analytics & Reports Submenu */}
                 <div className="border-t border-gray-100">
                   <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">分析・レポート</div>
                   {[
@@ -1223,128 +1369,22 @@ const AdminDashboard: React.FC = () => {
                   ))}
                 </div>
                 
-                {/* Customer Management Submenu */}
+                {/* System Settings */}
                 <div className="border-t border-gray-100">
-                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">顧客管理</div>
-                  {[
-                    { value: 'consultations', icon: MessageSquare, label: '相談申込' },
-                    { value: 'contacts', icon: Phone, label: 'お問い合わせ' },
-                    { value: 'chatbot', icon: MessageSquare, label: 'チャットボット' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.value}
-                      onClick={() => {
-                        setActiveTab(tab.value);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
-                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                      }`}
-                    >
-                      <tab.icon className="w-4 h-4" />
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
+                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">システム設定</div>
+                  <button
+                    onClick={() => {
+                      setActiveTab('settings');
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
+                      activeTab === 'settings' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                    }`}
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>設定</span>
+                  </button>
                 </div>
-                
-                {/* Task Management Submenu */}
-                <div className="border-t border-gray-100">
-                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">タスク管理</div>
-                  {[
-                    { value: 'todos', icon: Target, label: '個人Todo' },
-                    ...(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp' ? [{ value: 'todo-progress', icon: ClipboardList, label: '全体Todo進捗' }] : [])
-                  ].map((tab) => (
-                    <button
-                      key={tab.value}
-                      onClick={() => {
-                        setActiveTab(tab.value);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
-                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                      }`}
-                    >
-                      <tab.icon className="w-4 h-4" />
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Attendance & Schedule Management */}
-                <div className="border-t border-gray-100">
-                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">勤怠・スケジュール・財務・採用</div>
-                  {[
-                    { value: 'attendance', icon: Calendar, label: '勤怠管理' },
-                    { value: 'schedule', icon: Calendar, label: 'スケジュール' },
-                    ...(user?.role && ['executive', 'ceo', 'admin'].includes(user.role) ? [{ value: 'expenses', icon: DollarSign, label: '販管費管理' }] : []),
-                    ...(user?.role && ['executive', 'ceo', 'admin'].includes(user.role) ? [{ value: 'recruitment', icon: Users, label: '採用管理' }] : []),
-                    ...(user?.role === 'executive' ? [{ value: 'payroll', icon: DollarSign, label: '人件費管理' }] : [])
-                  ].map((tab) => (
-                    <button
-                      key={tab.value}
-                      onClick={() => {
-                        setActiveTab(tab.value);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-2 px-6 py-3 text-left hover:bg-gray-50 ${
-                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                      }`}
-                    >
-                      <tab.icon className="w-4 h-4" />
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-                
-                {/* System Management */}
-                <div className="border-t border-gray-100">
-                  <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">システム管理</div>
-                  {[
-                    { value: 'news', icon: Newspaper, label: 'ブログ管理' },
-                    ...(user?.role === 'executive' ? [{ value: 'members', icon: Users, label: 'メンバー' }] : []),
-                    { value: 'settings', icon: Settings, label: '設定' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.value}
-                      onClick={() => {
-                        setActiveTab(tab.value);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
-                        activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                      }`}
-                    >
-                      <tab.icon className="w-4 h-4" />
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* KPI & Personal Management */}
-                {((user?.role && ['executive', 'ceo', 'admin'].includes(user.role)) || 
-                  (user?.role && ['member', 'employee'].includes(user.role))) && (
-                  <div className="border-t border-gray-100">
-                    <div className="px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500">個人・目標管理</div>
-                    {[
-                      { value: 'kpi', icon: Target, label: 'KPI/KGI' },
-                      { value: 'memos', icon: FileText, label: 'マイメモ' }
-                    ].map((tab) => (
-                      <button
-                        key={tab.value}
-                        onClick={() => {
-                          setActiveTab(tab.value);
-                          setMobileMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center space-x-2 px-4 py-3 text-left hover:bg-gray-50 ${
-                          activeTab === tab.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                        }`}
-                      >
-                        <tab.icon className="w-4 h-4" />
-                        <span>{tab.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           </div>
