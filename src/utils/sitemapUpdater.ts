@@ -26,7 +26,7 @@ export const updateSitemaps = async (): Promise<{
       .from('news_articles')
       .select('id, title, slug, updated_at, published_at, status')
       .eq('status', 'published')
-      .order('published_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching articles for sitemap:', error);

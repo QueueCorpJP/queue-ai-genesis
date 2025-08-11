@@ -48,7 +48,7 @@ const CTAAnalytics: React.FC = () => {
       const { data: stats, error: statsError } = await getSupabaseAdmin()
         .from('cta_click_stats')
         .select('*')
-        .order('published_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (statsError) {
         console.error('CTA stats fetch error:', statsError);
@@ -113,7 +113,7 @@ const CTAAnalytics: React.FC = () => {
         const { data: stats, error } = await getSupabaseAdmin()
           .from('cta_click_stats')
           .select('*')
-          .order('published_at', { ascending: false });
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('CTAデータ取得エラー:', error);

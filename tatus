@@ -1,0 +1,5 @@
+[33m0898e17[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m  目次スタイル修正: プレーン選択時に数字が表示される問題を解決
+[33m6707fb8[m  完璧なSEOクローリング対応実装
+[33m64779f2[m Merge: 記事作成エラー修正と機能改善をマージ
+[33m64de7a0[m fix: 記事作成時の正規表現エラーを修正
+[33m27e7b82[m Simplify news article data model and improve error handling (#2)

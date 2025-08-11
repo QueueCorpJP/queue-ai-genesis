@@ -153,7 +153,8 @@ const Blog: React.FC = () => {
         .from('news_articles')
         .select('*', { count: 'exact' })
         .eq('status', 'published')
-        .order('published_at', { ascending: false })
+        .order('sort_order', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(start, end - 1);
 
       if (error) {

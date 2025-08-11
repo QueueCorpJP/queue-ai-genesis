@@ -128,7 +128,7 @@ const Analytics: React.FC = () => {
         .from('news_articles')
         .select('id, title, published_at, status')
         .eq('status', 'published')
-        .order('published_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (articlesError) throw articlesError;
 

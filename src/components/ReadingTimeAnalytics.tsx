@@ -91,7 +91,7 @@ const ReadingTimeAnalytics: React.FC = () => {
         .from('news_articles')
         .select('id, title')
         .eq('status', 'published')
-        .order('published_at', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       setArticles(data || []);
@@ -125,7 +125,7 @@ const ReadingTimeAnalytics: React.FC = () => {
         query = query.eq('article_id', selectedArticle);
       }
       
-      const { data, error } = await query.order('published_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       setReadingStats(data || []);

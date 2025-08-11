@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIcon } from 'lucide-react';
+import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIcon, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import NewsEditor from './NewsEditor';
@@ -26,6 +26,7 @@ interface NewsArticle {
   created_at: string;
   status: 'draft' | 'published' | 'archived';
   tags?: string[];
+  sort_order?: number;
 }
 
 const NewsManager: React.FC = () => {
@@ -50,6 +51,7 @@ const NewsManager: React.FC = () => {
       const { data, error } = await supabase
         .from('news_articles')
         .select('*')
+        .order('sort_order', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -87,6 +89,48 @@ const NewsManager: React.FC = () => {
     } catch (error) {
       console.error('Error:', error);
       toast.error('記事の削除に失敗しました');
+    }
+  };
+
+  // 表示順序を上げる（数値を増やす）
+  const moveUp = async (id: string, currentOrder: number) => {
+    const newOrder = currentOrder + 1;
+    await updateSortOrder(id, newOrder);
+  };
+
+  // 表示順序を下げる（数値を減らす）
+  const moveDown = async (id: string, currentOrder: number) => {
+    const newOrder = Math.max(1, currentOrder - 1);
+    await updateSortOrder(id, newOrder);
+  };
+
+  // 表示順序を更新
+  const updateSortOrder = async (id: string, newOrder: number) => {
+    try {
+      const { error } = await supabase
+        .from('news_articles')
+        .update({ sort_order: newOrder })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating sort order:', error);
+        toast.error('表示順序の更新に失敗しました');
+        return;
+      }
+
+      // ローカル状態を更新
+      setArticles(prev => 
+        prev.map(article => 
+          article.id === id 
+            ? { ...article, sort_order: newOrder }
+            : article
+        ).sort((a, b) => (b.sort_order || 0) - (a.sort_order || 0))
+      );
+
+      toast.success('表示順序を更新しました');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('表示順序の更新に失敗しました');
     }
   };
 
@@ -338,6 +382,7 @@ const NewsManager: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>表示順序</TableHead>
                     <TableHead>画像</TableHead>
                     <TableHead>タイトル</TableHead>
                     <TableHead>ステータス</TableHead>
@@ -350,6 +395,31 @@ const NewsManager: React.FC = () => {
                 <TableBody>
                   {filteredArticles.map((article) => (
                     <TableRow key={article.id}>
+                      <TableCell className="w-32">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-mono">
+                            {article.sort_order || 0}
+                          </span>
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => moveUp(article.id, article.sort_order || 0)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <ArrowUp className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => moveDown(article.id, article.sort_order || 0)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <ArrowDown className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell className="w-20">
                         {article.image_url ? (
                             <img

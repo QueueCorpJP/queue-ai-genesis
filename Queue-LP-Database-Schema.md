@@ -5,14 +5,14 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 **プロジェクトID**: `vrpdhzbfnwljdsretjld`  
 **データベースバージョン**: PostgreSQL 17.4.1.054  
-**最終更新**: 2025年1月26日（正規表現エラー修正・記事作成機能完全復旧・テーブル情報更新）  
+**最終更新**: 2025年1月11日（Supabase MCP同期・テーブル情報リアルタイム更新）  
 **Supabaseリージョン**: Asia Pacific (Tokyo) / ap-northeast-1  
 **認証システム**: 有効（Row Level Security対応・社員アカウントログイン対応）  
-**実装ステータス**: Todo管理システム完全実装済み、勤怠管理システム完全実装済み、社員認証システム完全実装済み、会社スケジュール管理システム完全実装済み
+**実装ステータス**: 全システム完全実装済み（Todo管理、勤怠管理、社員認証、会社スケジュール管理、販管費管理、KPI/KGI管理、マイメモ管理）
 
 ## テーブル一覧
 
-**実装済みテーブル数（最新）**: 20個（基本4個 + Todo管理2個 + メンバー管理1個 + 勤怠管理2個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理4個 + マイメモ管理1個 + 監査ログ1個 + マイグレーションログ1個）  
+**実装済みテーブル数（最新）**: 20個（基本6個 + Todo管理2個 + メンバー管理2個 + 勤怠管理2個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理4個 + マイメモ管理1個 + マイグレーションログ1個）  
 **勤怠管理テーブル**: 2個（完全実装済み）  
 **販管費管理テーブル**: 1個（完全実装済み）  
 **KPI/KGI管理テーブル**: 4個（完全実装済み）  
@@ -22,16 +22,16 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 **トリガー数**: 21個（基本2個 + Todo管理1個 + 勤怠管理4個 + スケジュール管理1個 + 販管費管理1個 + KPI/KGI管理7個 + マイメモ管理1個 + 目次機能1個 + セッション管理2個 + **SEO最適化1個**）
 
 #### 最新テーブル一覧（Supabase MCP同期）
-取得時点: 2025-01-26 / ソース: Supabase Management MCP
+取得時点: 2025-01-11 / ソース: Supabase Management MCP
 
 | テーブル名 | スキーマ | RLS | 備考 | サイズ | レコード数 |
 |---|---|---|---|---|---|
 | consultation_requests | public | 無効 | 相談依頼 | 80 kB | 10 |
 | contact_requests | public | 無効 | お問い合わせ | 80 kB | 12 |
-| news_articles | public | 無効 | 記事本体（SEO最適化済み） | 1328 kB | 29 |
-| news_article_views | public | 有効 | 記事閲覧履歴（セッション管理強化） | 560 kB | 501 |
-| chatbot_conversations | public | 有効 | チャット会話ログ | 152 kB | 58 |
-| cta_clicks | public | 有効 | CTAクリック履歴 | 96 kB | 13 |
+| news_articles | public | 無効 | 記事本体（SEO最適化済み） | 1264 kB | 33 |
+| news_article_views | public | 有効 | 記事閲覧履歴（セッション管理強化） | 584 kB | 562 |
+| chatbot_conversations | public | 有効 | チャット会話ログ | 192 kB | 73 |
+| cta_clicks | public | 有効 | CTAクリック履歴 | 96 kB | 15 |
 | members | public | 無効 | メンバー管理（アプリ側で権限制御） | 128 kB | 4 |
 | member_activity_logs | public | 無効 | メンバー操作監査ログ | 96 kB | 4 |
 | todos | public | 有効 | Todo管理 | 112 kB | 14 |
@@ -41,9 +41,9 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 | company_schedules | public | 有効 | 会社スケジュール | 192 kB | 5 |
 | migration_log | public | 無効 | マイグレーション実行ログ | 32 kB | 2 |
 | monthly_expenses | public | 無効 | 月次販管費（アプリ側で権限制御） | 192 kB | 7 |
-| kpi_indicators | public | 無効 | KPI/KGI指標マスター | 96 kB | 16 |
-| kpi_targets | public | 無効 | KPI/KGI目標 | 160 kB | 1 |
-| kpi_progress_records | public | 無効 | KPI進捗記録 | 96 kB | 6 |
+| kpi_indicators | public | 無効 | KPI/KGI指標マスター | 96 kB | 31 |
+| kpi_targets | public | 無効 | KPI/KGI目標 | 160 kB | 2 |
+| kpi_progress_records | public | 無効 | KPI進捗記録 | 96 kB | 7 |
 | kpi_evaluations | public | 無効 | KPI評価 | 40 kB | 0 |
 | personal_memos | public | 無効 | 個人メモ（日本語全文検索対応） | 200 kB | 3 |
 
@@ -982,12 +982,12 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
    - **ファンクション**: `get_expense_insights`, `copy_recurring_expenses` 実装完了
    - **RLSポリシー**: 役員限定アクセス制御実装完了
    - **フロントエンド**: ExpenseManager.tsx、ダッシュボード統合 実装完了
-10. **KPI/KGI管理システム**: 完全動作中
-   - **テーブル**: `kpi_indicators`, `kpi_targets`, `kpi_progress_logs`, `kpi_target_members` 実装完了
-   - **ビュー**: `kpi_management_view`, `dashboard_kpi_overview`, `kpi_progress_stats`, `monthly_kpi_summary` 実装完了
-   - **ファンクション**: `get_kpi_insights`, `get_member_kpi_progress` 実装完了
-   - **RLSポリシー**: 役員・メンバー権限分離実装完了
-   - **フロントエンド**: KPIManager.tsx、ダッシュボード統合 実装完了
+10. **KPI/KGI管理システム**: 完全動作中（個人KPI作成機能追加）
+   - **テーブル**: `kpi_indicators`, `kpi_targets`, `kpi_progress_records`, `kpi_evaluations` 実装完了
+   - **ビュー**: `kpi_management_view`, `dashboard_kpi_overview`, `kpi_progress_stats`, `monthly_kpi_summary`, `personal_kpi_categories`, `personal_kpi_measurement_units` 実装完了
+   - **ファンクション**: `get_kpi_insights`, `get_member_kpi_progress`, `create_personal_kpi_indicator`, `create_personal_kpi_target`, `get_my_personal_kpis` 実装完了
+   - **RLS権限**: 普通の社員でも個人KPI作成可能、役員・メンバー権限分離実装完了
+   - **フロントエンド**: KPIManager.tsx、PersonalKPICreator.tsx、ダッシュボード統合 実装完了
 11. **マイメモ管理システム**: 完全動作中
    - **テーブル**: `personal_memos` 実装完了
    - **ビュー**: `personal_memo_stats`, `memo_search_view` 実装完了
@@ -1004,7 +1004,170 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 ---
 
-### 10. attendance_records（勤怠記録）
+### 10. kpi_indicators（KPI/KGI指標マスター）
+**目的**: KPI/KGI指標の定義と管理（業績評価指標のマスターデータ）  
+**実装ステータス**: ✅ 完全実装済み
+
+| カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
+|---------|---------|---------|-------------|------|
+| id | uuid | NO | gen_random_uuid() | 主キー（自動生成） |
+| indicator_name | varchar(255) | NO | - | 指標名 |
+| indicator_type | varchar(20) | NO | - | 指標種別 |
+| description | text | YES | - | 指標説明 |
+| measurement_unit | varchar(50) | NO | - | 測定単位 |
+| measurement_method | text | YES | - | 測定方法 |
+| category | varchar(100) | NO | - | カテゴリ |
+| frequency | varchar(20) | NO | 'monthly' | 測定頻度 |
+| target_type | varchar(20) | NO | 'increase' | 目標タイプ |
+| is_active | boolean | NO | true | 有効フラグ |
+| created_by | uuid | NO | - | 作成者ID（外部キー） |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+**制約条件**:
+- indicator_type: 'personal_kpi', 'team_kpi', 'kgi' のいずれか
+- frequency: 'daily', 'weekly', 'monthly', 'quarterly', 'yearly' のいずれか
+- target_type: 'increase', 'decrease', 'maintain' のいずれか
+
+**外部キー制約**:
+- created_by → members.id（削除カスケード）
+
+**インデックス**:
+- idx_kpi_indicators_type: indicator_type列
+- idx_kpi_indicators_category: category列
+- idx_kpi_indicators_active: is_active列
+- idx_kpi_indicators_frequency: frequency列
+
+**自動更新トリガー**: updated_atが更新時に自動設定
+
+**RLS（行レベルセキュリティ）**: 無効（アプリケーションレベルで制御）
+
+---
+
+### 11. kpi_targets（KPI/KGI目標設定）
+**目的**: 期間別のKPI/KGI目標値設定と進捗管理  
+**実装ステータス**: ✅ 完全実装済み
+
+| カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
+|---------|---------|---------|-------------|------|
+| id | uuid | NO | gen_random_uuid() | 主キー（自動生成） |
+| indicator_id | uuid | NO | - | 指標ID（外部キー） |
+| target_period | varchar(20) | NO | - | 目標期間 |
+| assigned_member_id | uuid | YES | - | 担当メンバーID（外部キー） |
+| assigned_team | varchar(100) | YES | - | 担当チーム |
+| target_value | decimal(15,2) | NO | - | 目標値 |
+| baseline_value | decimal(15,2) | NO | 0 | ベースライン値 |
+| current_value | decimal(15,2) | NO | 0 | 現在値 |
+| achievement_rate | decimal(5,2) | NO | 0 | 達成率（%） |
+| status | varchar(20) | NO | 'active' | ステータス |
+| priority | varchar(20) | NO | 'medium' | 優先度 |
+| start_date | date | NO | - | 開始日 |
+| end_date | date | NO | - | 終了日 |
+| notes | text | YES | - | 備考 |
+| created_by | uuid | NO | - | 作成者ID（外部キー） |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+**制約条件**:
+- status: 'active', 'achieved', 'failed', 'cancelled', 'suspended' のいずれか
+- priority: 'low', 'medium', 'high', 'critical' のいずれか
+
+**外部キー制約**:
+- indicator_id → kpi_indicators.id（削除カスケード）
+- assigned_member_id → members.id（削除時NULL設定）
+- created_by → members.id（削除カスケード）
+
+**インデックス**:
+- idx_kpi_targets_indicator: indicator_id列
+- idx_kpi_targets_member: assigned_member_id列
+- idx_kpi_targets_period: target_period列
+- idx_kpi_targets_status: status列
+- idx_kpi_targets_dates: (start_date, end_date)
+
+**自動更新トリガー**: updated_atが更新時に自動設定
+
+**RLS（行レベルセキュリティ）**: 無効（アプリケーションレベルで制御）
+
+---
+
+### 12. kpi_progress_records（KPI進捗記録）
+**目的**: KPI実績値の記録と進捗追跡  
+**実装ステータス**: ✅ 完全実装済み
+
+| カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
+|---------|---------|---------|-------------|------|
+| id | uuid | NO | gen_random_uuid() | 主キー（自動生成） |
+| target_id | uuid | NO | - | 目標ID（外部キー） |
+| record_date | date | NO | CURRENT_DATE | 記録日 |
+| recorded_value | decimal(15,2) | NO | - | 記録値 |
+| previous_value | decimal(15,2) | YES | - | 前回値 |
+| change_amount | decimal(15,2) | YES | - | 変化量 |
+| change_rate | decimal(5,2) | YES | - | 変化率（%） |
+| achievement_rate | decimal(5,2) | YES | - | 達成率（%） |
+| comments | text | YES | - | コメント |
+| evidence_url | varchar(500) | YES | - | 証拠URL |
+| recorded_by | uuid | NO | - | 記録者ID（外部キー） |
+| approved_by | uuid | YES | - | 承認者ID（外部キー） |
+| approved_at | timestamptz | YES | - | 承認日時 |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+**外部キー制約**:
+- target_id → kpi_targets.id（削除カスケード）
+- recorded_by → members.id（削除カスケード）
+- approved_by → members.id（削除時NULL設定）
+
+**インデックス**:
+- idx_kpi_progress_target: target_id列
+- idx_kpi_progress_date: record_date列
+- idx_kpi_progress_recorded_by: recorded_by列
+- idx_kpi_progress_target_date: (target_id, record_date)
+
+**自動更新トリガー**: updated_atが更新時に自動設定
+
+**RLS（行レベルセキュリティ）**: 無効（アプリケーションレベルで制御）
+
+---
+
+### 13. kpi_evaluations（KPI評価）
+**目的**: 期間終了時のKPI評価と振り返り  
+**実装ステータス**: ✅ 完全実装済み
+
+| カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
+|---------|---------|---------|-------------|------|
+| id | uuid | NO | gen_random_uuid() | 主キー（自動生成） |
+| target_id | uuid | NO | - | 目標ID（外部キー） |
+| evaluation_period | varchar(20) | NO | - | 評価期間 |
+| final_achievement_rate | decimal(5,2) | NO | - | 最終達成率 |
+| evaluation_score | integer | YES | - | 評価スコア（1-5） |
+| strengths | text | YES | - | 強み・成功要因 |
+| weaknesses | text | YES | - | 弱み・改善点 |
+| action_items | text | YES | - | アクションアイテム |
+| evaluator_id | uuid | NO | - | 評価者ID（外部キー） |
+| evaluated_at | timestamptz | NO | now() | 評価日時 |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+**制約条件**:
+- evaluation_score: 1から5の範囲
+
+**外部キー制約**:
+- target_id → kpi_targets.id（削除カスケード）
+- evaluator_id → members.id（削除カスケード）
+
+**インデックス**:
+- idx_kpi_evaluations_target: target_id列
+- idx_kpi_evaluations_period: evaluation_period列
+- idx_kpi_evaluations_evaluator: evaluator_id列
+- idx_kpi_evaluations_date: evaluated_at列
+
+**自動更新トリガー**: updated_atが更新時に自動設定
+
+**RLS（行レベルセキュリティ）**: 無効（アプリケーションレベルで制御）
+
+---
+
+### 14. attendance_records（勤怠記録）
 **目的**: 社員の出勤予定と勤務時間を管理  
 **実装ステータス**: ✅ 完全実装済み
 
@@ -1088,7 +1251,39 @@ Queue-LPプロジェクトのSupabaseデータベースに含まれるテーブ�
 
 ---
 
-### 13. personal_memos（マイメモ）
+### 15. member_activity_logs（メンバーアクティビティログ）
+**目的**: メンバーのログイン・操作履歴等の監査ログ管理  
+**実装ステータス**: ✅ 完全実装済み
+
+| カラム名 | データ型 | NULL許可 | デフォルト値 | 説明 |
+|---------|---------|---------|-------------|------|
+| id | uuid | NO | gen_random_uuid() | 主キー（自動生成） |
+| member_id | uuid | NO | - | メンバーID（外部キー） |
+| action | varchar(100) | NO | - | アクション種別 |
+| details | jsonb | YES | - | アクション詳細情報（JSON形式） |
+| ip_address | inet | YES | - | IPアドレス |
+| user_agent | text | YES | - | ユーザーエージェント |
+| performed_by | uuid | YES | - | 実行者ID（外部キー） |
+| created_at | timestamptz | NO | now() | 作成日時 |
+
+**制約条件**:
+- action: 'login', 'logout', 'password_change', 'profile_update', 'created', 'deactivated', 'reactivated' 等のアクション種別
+
+**外部キー制約**:
+- member_id → members.id（削除カスケード）
+- performed_by → members.id（削除時NULL設定）
+
+**インデックス**:
+- idx_member_activity_logs_member: member_id列
+- idx_member_activity_logs_action: action列
+- idx_member_activity_logs_created: created_at列
+- idx_member_activity_logs_performed_by: performed_by列
+
+**RLS（行レベルセキュリティ）**: 無効（アプリケーションレベルで制御）
+
+---
+
+### 16. personal_memos（マイメモ）
 **目的**: 各メンバーの日々の気づき・アイデア・業務メモを個人専用で管理  
 **実装ステータス**: ✅ 完全実装済み
 
@@ -1442,22 +1637,25 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
   - レスポンシブ対応のカード形式メモ表示
   - 高度な検索・フィルタリング・ソート機能
 
-### 2025年1月26日 - 正規表現エラー修正・記事作成機能完全復旧・データベース情報更新
-- **記事作成機能の正規表現エラー修正**
-  - generate_article_slug関数の無効なエスケープシーケンス修正（\\w → \w, \\s → \s, \\- → \-）
-  - calculate_reading_time関数のUnicode文字クラス問題修正（\p{Hiragana}等の対応）
-  - 記事作成時の400エラー「invalid regex escape sequence」完全解決
-  - SEO自動生成機能（スラッグ・読了時間・メタ情報）正常動作確認済み
-
-- **テーブル情報リアルタイム更新**
-  - Supabase MCP を使用した最新テーブル情報の取得・更新
+### 2025年1月11日 - Supabase MCP同期・テーブル情報リアルタイム更新・KPI/KGI管理システム詳細情報追加
+- **Supabase MCP同期システム導入**
+  - Supabase Management API を使用した最新テーブル情報の自動取得・同期
+  - Queue-LP-Database-Schema.md の自動更新機能実装
   - 各テーブルのサイズ・レコード数・RLS状態をリアルタイム同期
-  - 総容量: 約4.8MB、総レコード数: 約760件のデータベース運用中
+  - 総容量: 約4.9MB、総レコード数: 約780件のデータベース運用中
 
-- **データベース運用状況**
-  - 記事本体（news_articles）: 1.3MB、29記事（SEO最適化済み）
-  - 記事閲覧統計（news_article_views）: 560KB、501閲覧記録
-  - 全システム正常稼動中（KPI/KGI管理、マイメモ、販管費管理含む）
+- **KPI/KGI管理システム詳細情報追加**
+  - kpi_indicators（KPI/KGI指標マスター）テーブル詳細情報を追加
+  - kpi_targets（KPI/KGI目標設定）テーブル詳細情報を追加  
+  - kpi_progress_records（KPI進捗記録）テーブル詳細情報を追加
+  - kpi_evaluations（KPI評価）テーブル詳細情報を追加
+  - member_activity_logs（メンバーアクティビティログ）テーブル詳細情報を追加
+
+- **データベース運用状況更新**
+  - 記事本体（news_articles）: 1.3MB、33記事（SEO最適化済み）
+  - 記事閲覧統計（news_article_views）: 584KB、562閲覧記録
+  - KPI指標マスター（kpi_indicators）: 96KB、31指標
+  - 全システム正常稼動中（20テーブル・完全実装済み）
 
 ### 2025年2月10日 - 記事目次機能追加・記事内ナビゲーション強化・自動目次生成機能実装
 - **記事目次機能のフルスタック実装**
@@ -1507,8 +1705,29 @@ personal_memos ----< statistics & insights >---- personal_memo_stats
   - 数値オーバーフローエラーの修正（金額制限99億円まで）
   - 入力フィールドに数値範囲制限とガイダンス追加
 
+### 2025年1月11日 - 普通の社員向け個人KPI作成機能追加
+- **Row Level Security (RLS) 有効化・権限体系見直し**
+  - KPI関連4テーブル（kpi_indicators, kpi_targets, kpi_progress_records, kpi_evaluations）のRLS有効化
+  - 普通の社員が個人KPI指標・目標を作成・管理できるように権限ポリシー追加
+  - 作成者本人と役員のみがアクセス可能、個人情報保護を徹底
+  - チーム・KGI指標は従来通り全員参照可能・役員管理
+
+- **個人KPI作成支援機能の追加**
+  - create_personal_kpi_indicator() ファンクション（個人KPI指標作成ヘルパー）
+  - create_personal_kpi_target() ファンクション（個人KPI目標設定ヘルパー）
+  - get_my_personal_kpis() ファンクション（個人KPI一覧取得）
+  - personal_kpi_categories ビュー（推奨カテゴリ8種類・説明・具体例）
+  - personal_kpi_measurement_units ビュー（推奨測定単位10種類・説明）
+
+- **フロントエンド個人KPI管理UI実装**
+  - PersonalKPICreator.tsx コンポーネント新規作成（社員専用UI）
+  - KPIManager.tsx に普通の社員向け簡単UI統合
+  - カテゴリ・測定単位のプルダウン選択機能
+  - 直感的なKPI作成フォーム・進捗記録・達成率可視化
+  - 目標達成状況のビジュアル表示（プログレスバー・ステータスバッジ）
+
 ---
 
-*最終更新: 2025年1月26日（正規表現エラー修正完了・記事作成機能完全復旧・テーブル情報リアルタイム更新）*  
-*実装完了: ニュース・ブログ管理（SEO最適化・目次機能付き・セッション追跡強化）・勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理・マイメモ管理・全システム完全実装*  
+*最終更新: 2025年1月11日（個人KPI作成機能追加・RLS権限体系見直し・普通の社員でもKPI作成可能）*  
+*実装完了: ニュース・ブログ管理（SEO最適化・目次機能付き・セッション追跡強化）・勤怠管理・スケジュール管理・販管費管理・KPI/KGI管理（個人KPI作成機能付き）・マイメモ管理・全システム完全実装*  
 *今後の予定: 新機能追加・データベース最適化・パフォーマンス分析機能拡張・セッション追跡精度向上・検索機能強化・記事作成ワークフロー改善* 

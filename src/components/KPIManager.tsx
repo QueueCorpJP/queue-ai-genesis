@@ -13,6 +13,7 @@ import { Progress } from './ui/progress';
 import { useToast } from './ui/use-toast';
 import { useAdmin } from '../contexts/AdminContext';
 import { supabase } from '../lib/supabase';
+import PersonalKPICreator from './PersonalKPICreator';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -27,7 +28,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Activity
+  Activity,
+  User
 } from 'lucide-react';
 
 // 型定義
@@ -508,6 +510,110 @@ const KPIManager: React.FC = () => {
     }
   };
 
+  // KPI指標削除
+  const handleDeleteIndicator = async (indicatorId: string, indicatorName: string) => {
+    if (!window.confirm(`指標「${indicatorName}」を削除しますか？\n\n注意: この指標に関連する目標・進捗記録もすべて削除されます。`)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // まず関連する進捗記録を削除
+      const { error: progressError } = await supabase
+        .from('kpi_progress_records')
+        .delete()
+        .in('target_id', 
+          supabase
+            .from('kpi_targets')
+            .select('id')
+            .eq('indicator_id', indicatorId)
+        );
+
+      if (progressError) throw progressError;
+
+      // 次に関連する目標を削除
+      const { error: targetsError } = await supabase
+        .from('kpi_targets')
+        .delete()
+        .eq('indicator_id', indicatorId);
+
+      if (targetsError) throw targetsError;
+
+      // 最後に指標を削除
+      const { error: indicatorError } = await supabase
+        .from('kpi_indicators')
+        .delete()
+        .eq('id', indicatorId);
+
+      if (indicatorError) throw indicatorError;
+
+      toast({
+        title: '成功',
+        description: `指標「${indicatorName}」を削除しました。`,
+      });
+
+      // データを再取得
+      fetchIndicators();
+      fetchTargets();
+      fetchDashboardStats();
+    } catch (error) {
+      console.error('Error deleting indicator:', error);
+      toast({
+        title: 'エラー',
+        description: '指標の削除に失敗しました。',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // KPI目標削除
+  const handleDeleteTarget = async (targetId: string, indicatorName: string) => {
+    if (!window.confirm(`目標「${indicatorName}」を削除しますか？\n\n注意: この目標に関連する進捗記録もすべて削除されます。`)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // まず関連する進捗記録を削除
+      const { error: progressError } = await supabase
+        .from('kpi_progress_records')
+        .delete()
+        .eq('target_id', targetId);
+
+      if (progressError) throw progressError;
+
+      // 次に目標を削除
+      const { error: targetError } = await supabase
+        .from('kpi_targets')
+        .delete()
+        .eq('id', targetId);
+
+      if (targetError) throw targetError;
+
+      toast({
+        title: '成功',
+        description: `目標「${indicatorName}」を削除しました。`,
+      });
+
+      // データを再取得
+      fetchTargets();
+      fetchDashboardStats();
+    } catch (error) {
+      console.error('Error deleting target:', error);
+      toast({
+        title: 'エラー',
+        description: '目標の削除に失敗しました。',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // メールアドレスからメンバーIDを取得
   const fetchMemberId = async () => {
     if (!user?.email) return;
@@ -933,12 +1039,86 @@ const KPIManager: React.FC = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* 指標管理セクション */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>指標管理</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCreateDialog(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    新しい指標作成
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>指標名</TableHead>
+                      <TableHead>種別</TableHead>
+                      <TableHead>カテゴリ</TableHead>
+                      <TableHead>測定単位</TableHead>
+                      <TableHead>頻度</TableHead>
+                      <TableHead>作成日</TableHead>
+                      <TableHead>操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {indicators.map((indicator) => (
+                      <TableRow key={indicator.id}>
+                        <TableCell className="font-medium">{indicator.indicator_name}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            indicator.indicator_type === 'personal_kpi' ? 'default' :
+                            indicator.indicator_type === 'team_kpi' ? 'secondary' : 'destructive'
+                          }>
+                            {indicator.indicator_type === 'personal_kpi' ? '個人KPI' :
+                             indicator.indicator_type === 'team_kpi' ? 'チームKPI' : 'KGI'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{indicator.category}</TableCell>
+                        <TableCell>{indicator.measurement_unit}</TableCell>
+                        <TableCell>{indicator.frequency}</TableCell>
+                        <TableCell>{new Date(indicator.created_at).toLocaleDateString('ja-JP')}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteIndicator(indicator.id, indicator.indicator_name)}
+                            disabled={isLoading}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {indicators.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                          指標が作成されていません
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
         )}
 
         {/* 個人KPIタブ */}
         <TabsContent value="personal" className="space-y-6">
-          <div className="flex justify-between items-center">
+          {/* 普通の社員向け簡単な個人KPI作成・管理 */}
+          {isMember && !isExecutive ? (
+            <PersonalKPICreator />
+          ) : (
+            <div>
+              <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">個人KPI管理</h3>
             {isExecutive && (
               <Dialog open={showCreateTargetDialog} onOpenChange={setShowCreateTargetDialog}>
@@ -1197,6 +1377,16 @@ const KPIManager: React.FC = () => {
                             >
                               進捗記録
                             </Button>
+                            {isExecutive && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteTarget(target.target_id || target.id, target.indicator_name)}
+                                disabled={isLoading}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1212,6 +1402,8 @@ const KPIManager: React.FC = () => {
               </Table>
             </CardContent>
           </Card>
+            </div>
+          )}
         </TabsContent>
 
         {/* チームKPIタブ */}
@@ -1421,18 +1613,30 @@ const KPIManager: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedTargetForProgress(target);
-                              setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
-                              setRecordedValueInput('');
-                              setShowProgressDialog(true);
-                            }}
-                          >
-                            進捗記録
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedTargetForProgress(target);
+                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                                setRecordedValueInput('');
+                                setShowProgressDialog(true);
+                              }}
+                            >
+                              進捗記録
+                            </Button>
+                            {isExecutive && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteTarget(target.target_id || target.id, target.indicator_name)}
+                                disabled={isLoading}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1645,18 +1849,30 @@ const KPIManager: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedTargetForProgress(target);
-                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
-                                setRecordedValueInput('');
-                                setShowProgressDialog(true);
-                              }}
-                            >
-                              進捗記録
-                            </Button>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedTargetForProgress(target);
+                                  setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                                  setRecordedValueInput('');
+                                  setShowProgressDialog(true);
+                                }}
+                              >
+                                進捗記録
+                              </Button>
+                              {isExecutive && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteTarget(target.target_id || target.id, target.indicator_name)}
+                                  disabled={isLoading}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
