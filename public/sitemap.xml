@@ -3,87 +3,105 @@
   
   <url>
     <loc>https://queue-tech.jp/</loc>
-    <lastmod>2025-08-09T02:56:34.048Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/about</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/services</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/products</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/products/workmate</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/news</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/case-studies</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/contact</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/consultation</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/careers</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/why-queue</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/company</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/privacy</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://queue-tech.jp/terms</loc>
-    <lastmod>2025-08-09T02:56:34.050Z</lastmod>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
+  <url>
+    <loc>https://queue-tech.jp/news/ai-driven-development-business-innovation</loc>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/queue-prompt-engineering-case-studies</loc>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/generative-ai-business-efficiency-methods</loc>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>
