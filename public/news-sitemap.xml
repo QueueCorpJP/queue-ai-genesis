@@ -2,4 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
   
+  <url>
+    <loc>https://queue-tech.jp/news/ai-driven-development-business-innovation</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-08-12T06:29:39.430Z</news:publication_date>
+      <news:title>AI駆動開発で実現する次世代ビジネス革新</news:title>
+    </news:news>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/queue-prompt-engineering-case-studies</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-08-12T06:29:39.430Z</news:publication_date>
+      <news:title>Queue株式会社のプロンプトエンジニアリング事例</news:title>
+    </news:news>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/generative-ai-business-efficiency-methods</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-08-12T06:29:39.430Z</news:publication_date>
+      <news:title>生成AIを活用した業務効率化の実践方法</news:title>
+    </news:news>
+    <lastmod>2025-08-12T06:29:39.430Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>
