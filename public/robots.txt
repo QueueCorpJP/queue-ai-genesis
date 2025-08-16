@@ -107,10 +107,12 @@ Allow: /*.gif$
 Allow: /*.webp$
 Allow: /*.svg$
 
-# Sitemaps
+# Sitemaps (自動更新対応)
 Sitemap: https://queue-tech.jp/sitemap.xml
 Sitemap: https://queue-tech.jp/news-sitemap.xml
 Sitemap: https://queue-tech.jp/ai-sitemap.xml
+
+# Last updated: 2025-01-16 (自動サイトマップ更新機能追加)
 
 # RSS Feed
 # RSS: https://queue-tech.jp/rss.xml

@@ -1,36 +1,23 @@
-#!/usr/bin/env node
-
 /**
- * サイトマップ生成スクリプト
- * npm run generate:sitemap で実行
+ * Vercel Functions用 サイトマップ自動更新API
+ * /api/sitemap-update で呼び出し可能
  */
 
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-// Node.js 用のfetchポリフィル
-if (!global.fetch) {
-  const { default: fetch, Headers, Request, Response } = await import('node-fetch');
-  global.fetch = fetch;
-  global.Headers = Headers;
-  global.Request = Request;
-  global.Response = Response;
-}
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Supabase設定（環境変数から取得）
+// Supabase設定
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://vrpdhzbfnwljdsretjld.supabase.co';
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZycGRoemJmbndsamRzcmV0amxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0OTk0ODQsImV4cCI6MjA2ODA3NTQ4NH0.qGcEKtsF9jqa8Mg0Tc_M2MlC2s9DajhRJEs_PJ_UIE8';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// XML文字列をエスケープ
-const escapeXml = (str) => {
-  return str
+/**
+ * XML文字列エスケープ
+ */
+const escapeXml = (text) => {
+  return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -38,8 +25,10 @@ const escapeXml = (str) => {
     .replace(/'/g, '&#x27;');
 };
 
-// メインサイトマップ生成
-const generateMainSitemap = (articles = []) => {
+/**
+ * サイトマップXML生成
+ */
+const generateSitemapXML = (articles) => {
   const baseUrl = 'https://queue-tech.jp';
   
   // 静的ページ
@@ -60,7 +49,6 @@ const generateMainSitemap = (articles = []) => {
     { path: '/terms', changefreq: 'yearly', priority: 0.3 },
   ];
 
-  // 静的ページのXML
   const staticUrls = staticPages.map(page => `
   <url>
     <loc>${baseUrl}${page.path}</loc>
@@ -69,7 +57,6 @@ const generateMainSitemap = (articles = []) => {
     <priority>${page.priority}</priority>
   </url>`).join('');
 
-  // 記事ページのXML
   const articleUrls = articles.map(article => {
     const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
     return `
@@ -88,8 +75,10 @@ const generateMainSitemap = (articles = []) => {
 </urlset>`;
 };
 
-// ニュースサイトマップ生成
-const generateNewsSitemap = (articles = []) => {
+/**
+ * ニュースサイトマップXML生成
+ */
+const generateNewsSitemapXML = (articles) => {
   const baseUrl = 'https://queue-tech.jp';
   
   const newsUrls = articles.map(article => {
@@ -118,77 +107,71 @@ const generateNewsSitemap = (articles = []) => {
 </urlset>`;
 };
 
-// メイン実行関数
-async function generateSitemaps() {
+/**
+ * メインハンドラー関数
+ */
+export default async function handler(req, res) {
   try {
-    console.log('🚀 サイトマップ生成開始...');
+    // CORS設定
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    let publishedArticles = [];
-
-    try {
-      console.log('🔍 Supabase接続設定確認中...');
-      console.log('URL:', supabaseUrl);
-      console.log('Key:', supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'なし');
-      
-      // 公開済み記事を取得（エラーハンドリング強化）
-      console.log('📊 記事データ取得中...');
-      const { data: articles, error } = await supabase
-        .from('news_articles')
-        .select('id, title, slug, updated_at, published_at, status')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
-
-      console.log('💾 データベースレスポンス:', { 
-        error: error?.message || null, 
-        dataCount: articles?.length || 0 
-      });
-
-      if (error) {
-        console.warn('⚠️ 記事取得エラー（基本サイトマップのみ生成）:', error);
-        publishedArticles = [];
-      } else {
-        publishedArticles = articles || [];
-        console.log('✅ 記事取得成功:', publishedArticles.length, '件');
-        if (publishedArticles.length > 0) {
-          console.log('📰 取得記事例:', publishedArticles.slice(0, 2).map(a => ({ 
-            id: a.id, 
-            title: a.title.substring(0, 30) + '...', 
-            slug: a.slug 
-          })));
-        }
-      }
-    } catch (fetchError) {
-      console.warn('⚠️ データベース接続エラー（基本サイトマップのみ生成）:', fetchError);
-      publishedArticles = [];
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
     }
 
+    if (req.method !== 'POST' && req.method !== 'GET') {
+      return res.status(405).json({
+        success: false,
+        error: 'Method not allowed'
+      });
+    }
+
+    console.log('🚀 Vercel Functions: サイトマップ自動更新開始...');
+
+    // 公開済み記事を取得
+    const { data: articles, error } = await supabase
+      .from('news_articles')
+      .select('id, title, slug, updated_at, published_at, status')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ 記事取得エラー:', error);
+      return res.status(500).json({
+        success: false,
+        error: `記事取得エラー: ${error.message}`
+      });
+    }
+
+    const publishedArticles = articles || [];
     console.log(`📰 公開記事数: ${publishedArticles.length}件`);
 
-    // サイトマップ生成
-    const mainSitemap = generateMainSitemap(publishedArticles);
-    const newsSitemap = generateNewsSitemap(publishedArticles);
+    // サイトマップXML生成
+    const sitemapXml = generateSitemapXML(publishedArticles);
+    const newsSitemapXml = generateNewsSitemapXML(publishedArticles);
 
-    // ファイル保存
-    const publicDir = path.join(__dirname, '..', 'public');
-    
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
-    }
-
-    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), mainSitemap, 'utf-8');
-    fs.writeFileSync(path.join(publicDir, 'news-sitemap.xml'), newsSitemap, 'utf-8');
+    // Vercel環境では直接ファイル書き込みできないため、
+    // 生成されたXMLを返す（フロントエンドでダウンロード可能）
+    const responseData = {
+      success: true,
+      message: `✅ サイトマップを生成しました（${publishedArticles.length}記事）`,
+      articleCount: publishedArticles.length,
+      timestamp: new Date().toISOString(),
+      sitemapXml,
+      newsSitemapXml,
+      note: 'Vercel環境のため、XMLデータを返します。フロントエンドでファイル更新してください。'
+    };
 
     console.log('✅ サイトマップ生成完了');
-    console.log(`📄 公開記事: ${publishedArticles.length}件`);
-    console.log(`📁 保存先: ${publicDir}/`);
-    console.log('   - sitemap.xml');
-    console.log('   - news-sitemap.xml');
+    return res.status(200).json(responseData);
 
   } catch (error) {
-    console.error('❌ エラー:', error);
-    process.exit(1);
+    console.error('❌ API エラー:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error'
+    });
   }
 }
-
-// 実行
-generateSitemaps();

@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIcon, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
+import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIcon, ArrowUp, ArrowDown, GripVertical, Globe } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import NewsEditor from './NewsEditor';
 import NewsEditorForm from './NewsEditorForm';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { onArticlePublished, onArticleUnpublished, autoUpdateSitemaps, downloadFile } from '@/utils/autoSitemapUpdate';
 
 interface NewsArticle {
   id: string;
@@ -92,6 +93,19 @@ const NewsManager: React.FC = () => {
     }
   };
 
+  // サイトマップ生成機能（手動実行用）
+  const generateSitemapFiles = async () => {
+    const result = await autoUpdateSitemaps(undefined, true);
+    
+    if (result.success && result.sitemapXml && result.newsSitemapXml) {
+      // 生成されたサイトマップをダウンロード
+      downloadFile('sitemap.xml', result.sitemapXml);
+      downloadFile('news-sitemap.xml', result.newsSitemapXml);
+    }
+  };
+
+
+
   // 表示順序を上げる（数値を増やす）
   const moveUp = async (id: string, currentOrder: number) => {
     const newOrder = currentOrder + 1;
@@ -138,9 +152,16 @@ const NewsManager: React.FC = () => {
     const newStatus = currentStatus === 'published' ? 'archived' : 'published';
     
     try {
+      // 記事情報を取得（タイトルが必要）
+      const article = articles.find(a => a.id === id);
+      const articleTitle = article?.title || '記事';
+      
       const { error } = await supabase
         .from('news_articles')
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          published_at: newStatus === 'published' ? new Date().toISOString() : null
+        })
         .eq('id', id);
 
       if (error) {
@@ -149,13 +170,29 @@ const NewsManager: React.FC = () => {
         return;
       }
 
+      // ローカル状態を更新
       setArticles(prev =>
         prev.map(article =>
-          article.id === id ? { ...article, status: newStatus as NewsArticle['status'] } : article
+          article.id === id ? { 
+            ...article, 
+            status: newStatus as NewsArticle['status'],
+            published_at: newStatus === 'published' ? new Date().toISOString() : null
+          } : article
         )
       );
 
-      toast.success('ステータスを更新しました');
+      // 🚀 自動サイトマップ更新
+      if (newStatus === 'published') {
+        // 記事公開時
+        await onArticlePublished(id, articleTitle);
+      } else if (currentStatus === 'published' && newStatus === 'archived') {
+        // 記事非公開時
+        await onArticleUnpublished(id, articleTitle);
+      } else {
+        // その他の場合（下書き→アーカイブなど）
+        toast.success('ステータスを更新しました');
+      }
+
     } catch (error) {
       console.error('Error:', error);
       toast.error('ステータスの更新に失敗しました');
@@ -358,6 +395,9 @@ const NewsManager: React.FC = () => {
             </Select>
                   <Button onClick={exportToCSV} variant="outline" size="icon">
                     <Download className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={generateSitemapFiles} variant="outline" size="icon" title="サイトマップ生成">
+                    <Globe className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

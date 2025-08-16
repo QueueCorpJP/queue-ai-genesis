@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { sitemapPlugin } from "./vite-sitemap-plugin";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -11,6 +12,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // Sitemap auto-generation plugin
+    sitemapPlugin(),
     // Disable componentTagger in development to prevent service worker issues
     // mode === 'development' && componentTagger(),
   ].filter(Boolean),

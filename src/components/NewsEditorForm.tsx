@@ -10,7 +10,7 @@ import { X, Plus, Upload, Image as ImageIcon, MessageCircle, Table, Sparkles } f
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { generateSlug, calculateReadingTime } from '@/utils/seoUtils';
-import { onArticlePublished } from '@/utils/sitemapUpdater';
+import { onArticlePublished, onArticleUnpublished } from '@/utils/autoSitemapUpdate';
 // @ts-ignore - react-quillのタイプ定義が存在しないため
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -720,9 +720,12 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         }
         toast.success('記事を更新しました');
         
-        // 記事が公開状態の場合、サイトマップを更新
+        // 記事が公開状態の場合、サイトマップを自動更新
         if (formData.status === 'published') {
-          onArticlePublished(article.id);
+          await onArticlePublished(article.id, formData.title);
+        } else if (article.status === 'published' && formData.status !== 'published') {
+          // 公開状態から非公開に変更された場合
+          await onArticleUnpublished(article.id, formData.title);
         }
       } else {
         // 新規記事の作成
@@ -738,9 +741,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         }
         toast.success('記事を作成しました');
         
-        // 記事が公開状態の場合、サイトマップを更新
+        // 新規記事が公開状態の場合、サイトマップを自動更新
         if (formData.status === 'published' && insertedData) {
-          onArticlePublished(insertedData.id);
+          await onArticlePublished(insertedData.id, formData.title);
         }
       }
 
