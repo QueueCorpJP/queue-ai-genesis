@@ -39,8 +39,9 @@ import {
 import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAdmin } from '@/contexts/AdminContext';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, isSameDay, parseISO } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, isSameDay, parseISO, eachDayOfInterval } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import MemberScheduleDetail from './MemberScheduleDetail';
 
 interface MemberCalendarData {
   member_id: string;
@@ -109,6 +110,9 @@ const AdminCalendarOverview: React.FC = () => {
   const [showPrivateEvents, setShowPrivateEvents] = useState(false);
   const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
   
+  // メンバー詳細表示
+  const [selectedMemberForDetail, setSelectedMemberForDetail] = useState<{ id: string; name: string } | null>(null);
+  
   // 部署とメンバーのリスト
   const [departments, setDepartments] = useState<string[]>([]);
   const [members, setMembers] = useState<{ id: string; name: string; department: string }[]>([]);
@@ -168,15 +172,100 @@ const AdminCalendarOverview: React.FC = () => {
       const adminClient = getSupabaseAdmin();
       const client = adminClient || supabase;
 
-      const { data, error } = await client.rpc('get_all_members_calendar_overview', {
-        start_date_param: format(startDate, 'yyyy-MM-dd'),
-        end_date_param: format(endDate, 'yyyy-MM-dd')
-      });
+      // 代替実装：直接データベースからメンバーとスケジュール情報を取得
+      const { data: memberData, error: memberError } = await client
+        .from('members')
+        .select('id, name, email, department, position')
+        .eq('is_active', true);
 
-      if (error) throw error;
+      if (memberError) throw memberError;
 
-      console.log('📅 Calendar data fetched:', data?.length || 0, 'members');
-      setMembersCalendarData(data || []);
+      // 各メンバーのカレンダーデータを構築
+      const membersCalendarData: MemberCalendarData[] = [];
+
+      for (const member of memberData || []) {
+        // 企業スケジュールを取得
+        const { data: companySchedules, error: companyError } = await client
+          .from('company_schedules')
+          .select('*')
+          .gte('start_date', format(startDate, 'yyyy-MM-dd'))
+          .lte('start_date', format(endDate, 'yyyy-MM-dd'))
+          .eq('is_active', true);
+
+        if (companyError) {
+          console.error('Error fetching company schedules:', companyError);
+        }
+
+        // 勤怠記録を取得（スケジュール的な要素として扱う）
+        const { data: attendanceRecords, error: attendanceError } = await client
+          .from('attendance_records')
+          .select('*')
+          .eq('member_id', member.id)
+          .gte('date', format(startDate, 'yyyy-MM-dd'))
+          .lte('date', format(endDate, 'yyyy-MM-dd'));
+
+        if (attendanceError) {
+          console.error('Error fetching attendance records:', attendanceError);
+        }
+
+        // イベント詳細を構築
+        const events_detail: CalendarEvent[] = [];
+
+        // 企業スケジュールをイベントとして追加
+        (companySchedules || []).forEach(schedule => {
+          events_detail.push({
+            calendar_type: 'company',
+            title: schedule.title,
+            start_date: schedule.start_date,
+            start_time: schedule.start_time,
+            event_type: schedule.schedule_type,
+            priority: schedule.priority,
+            color: schedule.color,
+            is_private: false
+          });
+        });
+
+        // 勤怠記録をイベントとして追加
+        (attendanceRecords || []).forEach(record => {
+          if (record.status !== 'scheduled') {
+            events_detail.push({
+              calendar_type: 'personal',
+              title: `勤怠: ${getAttendanceTypeLabel(record.attendance_type)}`,
+              start_date: record.date,
+              start_time: record.start_time,
+              event_type: record.attendance_type,
+              priority: 'medium',
+              color: getAttendanceColor(record.status),
+              is_private: false
+            });
+          }
+        });
+
+        // 今日と今後のイベント数を計算
+        const today = new Date();
+        const todayStr = format(today, 'yyyy-MM-dd');
+        
+        const todayEvents = events_detail.filter(event => event.start_date === todayStr);
+        const upcomingEvents = events_detail.filter(event => 
+          new Date(event.start_date) > today
+        );
+
+        membersCalendarData.push({
+          member_id: member.id,
+          member_name: member.name,
+          member_email: member.email,
+          department: member.department || '未設定',
+          total_events: events_detail.length,
+          company_events: events_detail.filter(e => e.calendar_type === 'company').length,
+          personal_events: events_detail.filter(e => e.calendar_type === 'personal').length,
+          today_events: todayEvents.length,
+          upcoming_events: upcomingEvents.length,
+          events_detail: events_detail
+        });
+      }
+
+      console.log('📅 Calendar data fetched:', membersCalendarData.length, 'members');
+      setMembersCalendarData(membersCalendarData);
 
     } catch (error) {
       console.error('Error fetching calendar data:', error);
@@ -185,6 +274,30 @@ const AdminCalendarOverview: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 勤怠タイプのラベル取得
+  const getAttendanceTypeLabel = (type: string) => {
+    const labels: { [key: string]: string } = {
+      regular: '通常勤務',
+      remote: 'リモート',
+      business_trip: '出張',
+      sick_leave: '病欠',
+      vacation: '有給'
+    };
+    return labels[type] || type;
+  };
+
+  // 勤怠ステータスの色取得
+  const getAttendanceColor = (status: string) => {
+    const colors: { [key: string]: string } = {
+      present: '#10B981',
+      absent: '#EF4444',
+      late: '#F59E0B',
+      early_leave: '#F97316',
+      scheduled: '#6B7280'
+    };
+    return colors[status] || '#6B7280';
   };
 
   // 勤怠データ取得
@@ -238,13 +351,90 @@ const AdminCalendarOverview: React.FC = () => {
       const adminClient = getSupabaseAdmin();
       const client = adminClient || supabase;
 
-      const { data, error } = await client.rpc('get_calendar_insights');
+      // 統計を手動で計算
+      const insights: CalendarInsights = {
+        total_members: 0,
+        total_events: 0,
+        company_events: 0,
+        personal_events: 0,
+        events_today: 0,
+        events_this_week: 0,
+        most_active_member: '',
+        most_common_event_type: '',
+        average_events_per_member: 0
+      };
 
-      if (error) throw error;
+      // アクティブメンバー数を取得
+      const { data: membersCount, error: membersError } = await client
+        .from('members')
+        .select('id', { count: 'exact' })
+        .eq('is_active', true);
 
-      if (data && data.length > 0) {
-        setCalendarInsights(data[0]);
+      if (!membersError) {
+        insights.total_members = membersCount?.length || 0;
       }
+
+      // 企業スケジュール数を取得
+      const { data: companySchedules, error: companyError } = await client
+        .from('company_schedules')
+        .select('*')
+        .eq('is_active', true);
+
+      if (!companyError) {
+        insights.company_events = companySchedules?.length || 0;
+        insights.total_events += insights.company_events;
+      }
+
+      // 勤怠記録（個人イベント）数を取得
+      const { data: attendanceRecords, error: attendanceError } = await client
+        .from('attendance_records')
+        .select('*');
+
+      if (!attendanceError) {
+        insights.personal_events = attendanceRecords?.length || 0;
+        insights.total_events += insights.personal_events;
+      }
+
+      // 今日のイベント数を計算
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const todayCompanyEvents = companySchedules?.filter(s => s.start_date === today).length || 0;
+      const todayAttendanceEvents = attendanceRecords?.filter(a => a.date === today).length || 0;
+      insights.events_today = todayCompanyEvents + todayAttendanceEvents;
+
+      // 今週のイベント数を計算
+      const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const weekEnd = format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const thisWeekCompanyEvents = companySchedules?.filter(s => 
+        s.start_date >= weekStart && s.start_date <= weekEnd
+      ).length || 0;
+      const thisWeekAttendanceEvents = attendanceRecords?.filter(a => 
+        a.date >= weekStart && a.date <= weekEnd
+      ).length || 0;
+      insights.events_this_week = thisWeekCompanyEvents + thisWeekAttendanceEvents;
+
+      // 平均イベント数を計算
+      if (insights.total_members > 0) {
+        insights.average_events_per_member = Math.round(insights.total_events / insights.total_members * 10) / 10;
+      }
+
+      // 最も活発なメンバーを計算（簡略化）
+      insights.most_active_member = 'データ分析中...';
+
+      // 最も一般的なイベントタイプを計算
+      const eventTypes: { [key: string]: number } = {};
+      companySchedules?.forEach(s => {
+        eventTypes[s.schedule_type] = (eventTypes[s.schedule_type] || 0) + 1;
+      });
+      attendanceRecords?.forEach(a => {
+        eventTypes[a.attendance_type] = (eventTypes[a.attendance_type] || 0) + 1;
+      });
+
+      const mostCommonType = Object.entries(eventTypes).reduce((a, b) => 
+        eventTypes[a[0]] > eventTypes[b[0]] ? a : b, ['', 0]
+      );
+      insights.most_common_event_type = mostCommonType[0] || '未分類';
+
+      setCalendarInsights(insights);
 
     } catch (error) {
       console.error('Error fetching calendar insights:', error);
@@ -375,6 +565,107 @@ const AdminCalendarOverview: React.FC = () => {
     setExpandedMembers(newExpanded);
   };
 
+  // イベントタイプのラベル取得
+  const getEventTypeLabel = (eventType: string) => {
+    const labels: { [key: string]: string } = {
+      // 企業スケジュール
+      event: 'イベント',
+      meeting: '会議',
+      holiday: '休暇',
+      deadline: '締切',
+      training: '研修',
+      other: 'その他',
+      // 勤怠タイプ
+      regular: '通常勤務',
+      remote: 'リモート',
+      business_trip: '出張',
+      sick_leave: '病欠',
+      vacation: '有給'
+    };
+    return labels[eventType] || eventType;
+  };
+
+  // 月間カレンダービューコンポーネント
+  const MonthlyCalendarView: React.FC<{ 
+    selectedDate: Date; 
+    membersData: MemberCalendarData[] 
+  }> = ({ selectedDate, membersData }) => {
+    const monthStart = startOfMonth(selectedDate);
+    const monthEnd = endOfMonth(selectedDate);
+    const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+    // 日付ごとのイベントを集計
+    const getEventsForDate = (date: Date) => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const events: { event: CalendarEvent; memberName: string }[] = [];
+      
+      membersData.forEach(member => {
+        member.events_detail.forEach(event => {
+          if (event.start_date === dateStr) {
+            events.push({ event, memberName: member.member_name });
+          }
+        });
+      });
+      
+      return events;
+    };
+
+    return (
+      <div className="grid grid-cols-7 gap-2">
+        {/* 曜日ヘッダー */}
+        {['月', '火', '水', '木', '金', '土', '日'].map(day => (
+          <div key={day} className="text-center font-medium text-sm text-gray-600 p-2">
+            {day}
+          </div>
+        ))}
+        
+        {/* カレンダー日付 */}
+        {calendarDays.map(day => {
+          const events = getEventsForDate(day);
+          const isToday = isSameDay(day, new Date());
+          
+          return (
+            <div 
+              key={day.toISOString()} 
+              className={`min-h-24 p-2 border border-gray-100 ${
+                isToday ? 'bg-blue-50 border-blue-200' : 'bg-white'
+              }`}
+            >
+              <div className={`text-sm font-medium ${
+                isToday ? 'text-blue-600' : 'text-gray-900'
+              }`}>
+                {format(day, 'd')}
+              </div>
+              
+              {/* イベント表示 */}
+              <div className="mt-1 space-y-1">
+                {events.slice(0, 3).map((item, index) => (
+                  <div 
+                    key={index}
+                    className="text-xs p-1 rounded truncate"
+                    style={{ 
+                      backgroundColor: item.event.color + '20',
+                      borderLeft: `2px solid ${item.event.color}`
+                    }}
+                    title={`${item.memberName}: ${item.event.title}`}
+                  >
+                    <div className="font-medium truncate">{item.event.title}</div>
+                    <div className="text-gray-600 truncate">{item.memberName}</div>
+                  </div>
+                ))}
+                {events.length > 3 && (
+                  <div className="text-xs text-gray-500 text-center">
+                    +{events.length - 3} 件
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (!isExecutive) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -384,6 +675,17 @@ const AdminCalendarOverview: React.FC = () => {
           <p className="text-gray-500">このページは役員のみアクセス可能です。</p>
         </div>
       </div>
+    );
+  }
+
+  // メンバー詳細表示が選択されている場合
+  if (selectedMemberForDetail) {
+    return (
+      <MemberScheduleDetail
+        memberId={selectedMemberForDetail.id}
+        memberName={selectedMemberForDetail.name}
+        onClose={() => setSelectedMemberForDetail(null)}
+      />
     );
   }
 
@@ -621,6 +923,18 @@ const AdminCalendarOverview: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
+                  {/* 月間カレンダー表示 */}
+                  <div className="bg-white border rounded-lg p-4">
+                    <h3 className="text-lg font-medium mb-4">
+                      {format(selectedDate, 'yyyy年MM月', { locale: ja })} カレンダー
+                    </h3>
+                    <MonthlyCalendarView 
+                      selectedDate={selectedDate}
+                      membersData={filteredMembersData}
+                    />
+                  </div>
+
+                  {/* メンバー別詳細表示 */}
                   {filteredMembersData.map(member => (
                     <div key={member.member_id} className="border border-gray-200 rounded-lg p-4">
                       <div 
@@ -641,19 +955,40 @@ const AdminCalendarOverview: React.FC = () => {
                           <Badge variant="outline" className="text-xs">
                             総計: {member.total_events}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
                             会社: {member.company_events}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            個人: {member.personal_events}
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                            勤怠: {member.personal_events}
                           </Badge>
+                          {member.today_events > 0 && (
+                            <Badge variant="default" className="text-xs">
+                              今日: {member.today_events}
+                            </Badge>
+                          )}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMemberForDetail({
+                                id: member.member_id,
+                                name: member.member_name
+                              });
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            詳細
+                          </Button>
                         </div>
                       </div>
 
                       {expandedMembers.has(member.member_id) && (
                         <div className="mt-4 space-y-2">
                           {member.events_detail.length > 0 ? (
-                            member.events_detail.map((event, index) => (
+                            member.events_detail
+                              .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+                              .map((event, index) => (
                               <div 
                                 key={index}
                                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
@@ -667,14 +1002,14 @@ const AdminCalendarOverview: React.FC = () => {
                                     <h4 className="font-medium text-sm">{event.title}</h4>
                                     {event.is_private && <EyeOff className="w-3 h-3 text-gray-400" />}
                                     <Badge variant="outline" className="text-xs">
-                                      {event.calendar_type === 'company' ? '会社' : '個人'}
+                                      {event.calendar_type === 'company' ? '会社' : '勤怠'}
                                     </Badge>
                                     {getPriorityBadge(event.priority)}
                                   </div>
                                   <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
                                     <span>{format(new Date(event.start_date), 'MM/dd (E)', { locale: ja })}</span>
                                     {event.start_time && <span>{event.start_time}</span>}
-                                    <span>{event.event_type}</span>
+                                    <span>{getEventTypeLabel(event.event_type)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -713,6 +1048,7 @@ const AdminCalendarOverview: React.FC = () => {
                       <TableHead>個人イベント</TableHead>
                       <TableHead>今日</TableHead>
                       <TableHead>今後</TableHead>
+                      <TableHead>操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -751,6 +1087,19 @@ const AdminCalendarOverview: React.FC = () => {
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedMemberForDetail({
+                              id: member.member_id,
+                              name: member.member_name
+                            })}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            詳細
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

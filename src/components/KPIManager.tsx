@@ -29,7 +29,9 @@ import {
   CheckCircle,
   Clock,
   Activity,
-  User
+  User,
+  LineChart,
+  Calculator
 } from 'lucide-react';
 
 // 型定義
@@ -115,6 +117,26 @@ interface DashboardStats {
   critical_at_risk: number;
   due_soon_count: number;
   overdue_count: number;
+}
+
+interface KPIPrediction {
+  target_id: string;
+  indicator_name: string;
+  current_progress_rate: number;
+  monthly_progress_rate: number;
+  predicted_completion_percentage: number;
+  months_to_completion: number;
+  predicted_completion_date: string;
+  trend_status: 'improving' | 'declining' | 'stable';
+  required_monthly_rate: number;
+  on_track: boolean;
+  prediction_confidence: 'high' | 'medium' | 'low';
+}
+
+interface ProgressTrend {
+  month: string;
+  value: number;
+  achievement_rate: number;
 }
 
 const KPIManager: React.FC = () => {
@@ -208,6 +230,219 @@ const KPIManager: React.FC = () => {
   });
 
   const [recordedValueInput, setRecordedValueInput] = useState('');
+  const [predictions, setPredictions] = useState<KPIPrediction[]>([]);
+  const [showPredictionDialog, setShowPredictionDialog] = useState(false);
+  const [selectedTargetForPrediction, setSelectedTargetForPrediction] = useState<KPITarget | null>(null);
+
+  // 進捗予測計算関数
+  const calculateKPIPrediction = async (target: KPITarget): Promise<KPIPrediction | null> => {
+    try {
+      // 進捗記録を取得（過去6ヶ月分）
+      const { data: progressRecords, error } = await supabase
+        .from('kpi_progress_records')
+        .select('*')
+        .eq('target_id', target.target_id || target.id)
+        .gte('record_date', new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+        .order('record_date', { ascending: true });
+
+      if (error) throw error;
+
+      if (!progressRecords || progressRecords.length < 2) {
+        // データが不足している場合はnullを返す
+        return null;
+      }
+
+      // 月次進捗率を計算
+      const monthlyTrends = calculateMonthlyTrends(progressRecords, target);
+      
+      if (monthlyTrends.length === 0) {
+        return null;
+      }
+
+      // 平均月次進捗率を計算（月間の進捗増加量）
+      let monthlyProgressRate = 0;
+      
+      if (monthlyTrends.length >= 2) {
+        const progressIncreases = [];
+        for (let i = 1; i < monthlyTrends.length; i++) {
+          const increase = monthlyTrends[i].achievement_rate - monthlyTrends[i - 1].achievement_rate;
+          progressIncreases.push(Math.max(0, increase)); // 負の値は0とする
+        }
+        monthlyProgressRate = progressIncreases.length > 0 ? 
+          progressIncreases.reduce((sum, inc) => sum + inc, 0) / progressIncreases.length : 0;
+      } else if (monthlyTrends.length === 1) {
+        // データが1つしかない場合は、現在の達成率を元に直近の進捗を推定
+        const currentDate = new Date();
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const daysIntoMonth = Math.max(1, Math.ceil((currentDate.getTime() - startOfMonth.getTime()) / (1000 * 60 * 60 * 24)));
+        
+        // 今月の進捗を日割りで月次進捗率に換算
+        const monthlyEstimate = (target.achievement_rate || 0) * (30 / daysIntoMonth);
+        monthlyProgressRate = Math.min(monthlyEstimate, 100); // 最大100%に制限
+      }
+
+      // トレンド状況の判定（月次進捗率計算の後に移動）
+      const recentTrends = monthlyTrends.slice(-3);
+      let trendStatus: 'improving' | 'declining' | 'stable' = 'stable';
+      
+      if (recentTrends.length >= 2) {
+        const firstHalf = recentTrends.slice(0, Math.floor(recentTrends.length / 2));
+        const secondHalf = recentTrends.slice(Math.floor(recentTrends.length / 2));
+        
+        const firstAvg = firstHalf.reduce((sum, t) => sum + t.achievement_rate, 0) / firstHalf.length;
+        const secondAvg = secondHalf.reduce((sum, t) => sum + t.achievement_rate, 0) / secondHalf.length;
+        
+        if (secondAvg > firstAvg + 5) {
+          trendStatus = 'improving';
+        } else if (secondAvg < firstAvg - 5) {
+          trendStatus = 'declining';
+        }
+      }
+
+      // 予測信頼度
+      const predictionConfidence: 'high' | 'medium' | 'low' = 
+        progressRecords.length >= 6 ? 'high' :
+        progressRecords.length >= 3 ? 'medium' : 'low';
+
+      // 期限までの残り日数を正確に計算
+      const endDate = new Date(target.end_date + 'T23:59:59'); // 期限日の最後の時刻に設定
+      const currentDate = new Date();
+      
+      const timeDiff = endDate.getTime() - currentDate.getTime();
+      const daysRemaining = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+      const monthsRemaining = daysRemaining / 30; // 30日 = 1ヶ月として概算
+
+      // 現在の達成率
+      const currentAchievementRate = target.achievement_rate || 0;
+      
+      // 既に100%達成している場合の処理
+      if (currentAchievementRate >= 100) {
+        return {
+          target_id: target.target_id || target.id,
+          indicator_name: target.indicator_name,
+          current_progress_rate: currentAchievementRate,
+          monthly_progress_rate: monthlyProgressRate,
+          predicted_completion_percentage: 100,
+          months_to_completion: 0,
+          predicted_completion_date: currentDate.toISOString().split('T')[0],
+          trend_status: trendStatus,
+          required_monthly_rate: 0,
+          on_track: true,
+          prediction_confidence: predictionConfidence
+        };
+      }
+
+      // 期限切れの場合の処理
+      if (daysRemaining <= 0) {
+        return {
+          target_id: target.target_id || target.id,
+          indicator_name: target.indicator_name,
+          current_progress_rate: currentAchievementRate,
+          monthly_progress_rate: monthlyProgressRate,
+          predicted_completion_percentage: currentAchievementRate, // 現在の達成率で固定
+          months_to_completion: Infinity, // 期限切れなので達成困難
+          predicted_completion_date: target.end_date, // 期限日
+          trend_status: trendStatus,
+          required_monthly_rate: Infinity, // 期限切れなので計算不可
+          on_track: false,
+          prediction_confidence: predictionConfidence
+        };
+      }
+
+      // 現在のペースでの予測達成率
+      const predictedCompletionPercentage = Math.min(100, currentAchievementRate + (monthlyProgressRate * monthsRemaining));
+
+      // 目標達成に必要な月次進捗率
+      const remainingProgress = 100 - currentAchievementRate;
+      const requiredMonthlyRate = monthsRemaining > 0 ? remainingProgress / monthsRemaining : Infinity;
+
+      // 完了予測期間の計算を修正
+      let monthsToCompletion = Infinity;
+      
+      // 期限内に達成可能かを判定
+      if (monthlyProgressRate > 0) {
+        const theoreticalMonthsToCompletion = remainingProgress / monthlyProgressRate;
+        
+        // 期限内に達成可能な場合は期限までの期間、不可能な場合は理論値
+        if (theoreticalMonthsToCompletion <= monthsRemaining) {
+          monthsToCompletion = monthsRemaining; // 期限までの実際の期間
+        } else {
+          monthsToCompletion = theoreticalMonthsToCompletion; // 現在ペースでの予測期間
+        }
+      }
+      
+
+
+      // 予測完了日
+      const predictedCompletionDate = monthlyProgressRate > 0 ? 
+        new Date(currentDate.getTime() + monthsToCompletion * 30 * 24 * 60 * 60 * 1000) : 
+        new Date('9999-12-31');
+
+      // 達成可能性の判定
+      const onTrack = predictedCompletionPercentage >= 90 && monthsToCompletion <= monthsRemaining + 1;
+
+      return {
+        target_id: target.target_id || target.id,
+        indicator_name: target.indicator_name,
+        current_progress_rate: currentAchievementRate,
+        monthly_progress_rate: monthlyProgressRate,
+        predicted_completion_percentage: predictedCompletionPercentage,
+        months_to_completion: monthsToCompletion,
+        predicted_completion_date: predictedCompletionDate.toISOString().split('T')[0],
+        trend_status: trendStatus,
+        required_monthly_rate: requiredMonthlyRate,
+        on_track: onTrack,
+        prediction_confidence: predictionConfidence
+      };
+    } catch (error) {
+      console.error('Error calculating KPI prediction:', error);
+      return null;
+    }
+  };
+
+  // 月次トレンドの計算
+  const calculateMonthlyTrends = (records: any[], target: KPITarget): ProgressTrend[] => {
+    const trends: ProgressTrend[] = [];
+    const monthlyData: { [key: string]: any[] } = {};
+
+    // 月別にレコードをグループ化
+    records.forEach(record => {
+      const month = record.record_date.substring(0, 7); // YYYY-MM
+      if (!monthlyData[month]) {
+        monthlyData[month] = [];
+      }
+      monthlyData[month].push(record);
+    });
+
+    // 各月の平均値と達成率を計算
+    Object.keys(monthlyData).sort().forEach(month => {
+      const monthRecords = monthlyData[month];
+      const avgValue = monthRecords.reduce((sum, r) => sum + r.recorded_value, 0) / monthRecords.length;
+      const achievementRate = target.target_value > 0 ? (avgValue / target.target_value) * 100 : 0;
+
+      trends.push({
+        month,
+        value: avgValue,
+        achievement_rate: achievementRate
+      });
+    });
+
+    return trends;
+  };
+
+  // 全ターゲットの予測を計算
+  const calculateAllPredictions = async () => {
+    const calculatedPredictions: KPIPrediction[] = [];
+
+    for (const target of targets) {
+      const prediction = await calculateKPIPrediction(target);
+      if (prediction) {
+        calculatedPredictions.push(prediction);
+      }
+    }
+
+    setPredictions(calculatedPredictions);
+  };
 
   // データ取得関数
   const fetchIndicators = useCallback(async () => {
@@ -496,8 +731,10 @@ const KPIManager: React.FC = () => {
         evidence_url: '',
       });
       setRecordedValueInput('');
-      fetchTargets();
-      fetchDashboardStats();
+      await fetchTargets();
+      await fetchDashboardStats();
+      // 進捗記録後に予測を再計算
+      await calculateAllPredictions();
     } catch (error) {
       console.error('Error recording progress:', error);
       toast({
@@ -650,14 +887,28 @@ const KPIManager: React.FC = () => {
 
   useEffect(() => {
     if (user?.role && (isExecutive || isMember) && currentMemberId) {
-      fetchIndicators();
-      fetchTargets();
-      if (isExecutive) {
-        fetchDashboardStats();
-      }
-      fetchMembers();
+      const loadData = async () => {
+        await fetchIndicators();
+        await fetchTargets();
+        if (isExecutive) {
+          await fetchDashboardStats();
+        }
+        await fetchMembers();
+        // 予測計算も実行
+        if (targets.length > 0) {
+          await calculateAllPredictions();
+        }
+      };
+      loadData();
     }
   }, [selectedPeriod, user, isExecutive, isMember, currentMemberId, fetchIndicators, fetchTargets, fetchDashboardStats, fetchMembers]);
+
+  // targetsが更新されたときに予測を再計算
+  useEffect(() => {
+    if (targets.length > 0) {
+      calculateAllPredictions();
+    }
+  }, [targets]);
 
   // ヘルパー関数
   const getPerformanceIcon = (status: string) => {
@@ -716,6 +967,50 @@ const KPIManager: React.FC = () => {
       default:
         return <BarChart3 className="w-4 h-4" />;
     }
+  };
+
+  // 進捗予測ヘルパー関数
+  const getTrendIcon = (trendStatus: string) => {
+    switch (trendStatus) {
+      case 'improving':
+        return <TrendingUp className="w-4 h-4 text-green-600" />;
+      case 'declining':
+        return <TrendingDown className="w-4 h-4 text-red-600" />;
+      case 'stable':
+        return <LineChart className="w-4 h-4 text-blue-600" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getTrendColor = (trendStatus: string) => {
+    switch (trendStatus) {
+      case 'improving':
+        return 'bg-green-100 text-green-800';
+      case 'declining':
+        return 'bg-red-100 text-red-800';
+      case 'stable':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getConfidenceColor = (confidence: string) => {
+    switch (confidence) {
+      case 'high':
+        return 'bg-green-100 text-green-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPredictionForTarget = (targetId: string): KPIPrediction | undefined => {
+    return predictions.find(p => p.target_id === targetId);
   };
 
   return (
@@ -1320,6 +1615,8 @@ const KPIManager: React.FC = () => {
                     <TableHead>目標値</TableHead>
                     <TableHead>現在値</TableHead>
                     <TableHead>達成率</TableHead>
+                    <TableHead>予測達成率</TableHead>
+                    <TableHead>完了予測</TableHead>
                     <TableHead>ステータス</TableHead>
                     <TableHead>優先度</TableHead>
                     <TableHead>期限</TableHead>
@@ -1340,6 +1637,90 @@ const KPIManager: React.FC = () => {
                             <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
                             <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const prediction = getPredictionForTarget(target.target_id || target.id);
+                            return prediction ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center space-x-2">
+                                  <Progress value={Math.min(prediction.predicted_completion_percentage, 100)} className="w-16" />
+                                  <span className="text-sm font-medium">
+                                    {prediction.predicted_completion_percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  {getTrendIcon(prediction.trend_status)}
+                                  <Badge className={`text-xs ${getTrendColor(prediction.trend_status)}`}>
+                                    {prediction.trend_status === 'improving' ? '改善' :
+                                     prediction.trend_status === 'declining' ? '悪化' : '安定'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-500">データ不足</span>
+                            );
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const prediction = getPredictionForTarget(target.target_id || target.id);
+                            return prediction ? (
+                              <div className="space-y-1">
+                                <div className="text-sm">
+                                  {(() => {
+                                    // 期限までの残り日数を計算
+                                    const endDate = new Date(target.end_date + 'T23:59:59');
+                                    const currentDate = new Date();
+                                    const daysUntilDeadline = Math.max(0, Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)));
+                                    
+                                    if (prediction.months_to_completion === Infinity) {
+                                      return <span className="text-red-600">達成困難</span>;
+                                    }
+                                    
+                                    // 期限内に達成可能かチェック
+                                    const theoreticalDays = Math.ceil(prediction.months_to_completion * 30);
+                                    const canAchieveByDeadline = theoreticalDays <= daysUntilDeadline;
+                                    
+                                    if (daysUntilDeadline <= 30) {
+                                      // 期限が1ヶ月以内の場合は日数で表示
+                                      return (
+                                        <div>
+                                          <span className={canAchieveByDeadline ? 'text-green-600' : 'text-red-600'}>
+                                            期限まで{daysUntilDeadline}日
+                                          </span>
+                                          {!canAchieveByDeadline && (
+                                            <div className="text-xs text-red-500">
+                                              (現ペース: {theoreticalDays}日必要)
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    } else {
+                                      // 期限が1ヶ月以上先の場合は月数で表示
+                                      return (
+                                        <span className={prediction.on_track ? 'text-green-600' : 'text-yellow-600'}>
+                                          あと{Math.round(prediction.months_to_completion * 10) / 10}ヶ月
+                                        </span>
+                                      );
+                                    }
+                                  })()}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  必要進捗: {
+                                    prediction.required_monthly_rate === Infinity ? '計算不可' :
+                                    prediction.required_monthly_rate.toFixed(1) + '%/月'
+                                  }
+                                </div>
+                                <Badge className={`text-xs ${getConfidenceColor(prediction.prediction_confidence)}`}>
+                                  信頼度: {prediction.prediction_confidence === 'high' ? '高' :
+                                           prediction.prediction_confidence === 'medium' ? '中' : '低'}
+                                </Badge>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-500">-</span>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
@@ -1377,6 +1758,17 @@ const KPIManager: React.FC = () => {
                             >
                               進捗記録
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedTargetForPrediction(target);
+                                setShowPredictionDialog(true);
+                              }}
+                              title="予測詳細"
+                            >
+                              <Calculator className="w-4 h-4" />
+                            </Button>
                             {isExecutive && (
                               <Button
                                 size="sm"
@@ -1393,7 +1785,7 @@ const KPIManager: React.FC = () => {
                     ))}
                   {targets.filter(t => t.indicator_type === 'personal_kpi').length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
                         個人KPIが設定されていません
                       </TableCell>
                     </TableRow>
@@ -1559,7 +1951,7 @@ const KPIManager: React.FC = () => {
             )}
           </div>
 
-          <Card>
+                      <Card>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -1569,6 +1961,8 @@ const KPIManager: React.FC = () => {
                     <TableHead>目標値</TableHead>
                     <TableHead>現在値</TableHead>
                     <TableHead>達成率</TableHead>
+                    <TableHead>予測達成率</TableHead>
+                    <TableHead>完了予測</TableHead>
                     <TableHead>ステータス</TableHead>
                     <TableHead>優先度</TableHead>
                     <TableHead>期限</TableHead>
@@ -1589,6 +1983,90 @@ const KPIManager: React.FC = () => {
                             <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
                             <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const prediction = getPredictionForTarget(target.target_id || target.id);
+                            return prediction ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center space-x-2">
+                                  <Progress value={Math.min(prediction.predicted_completion_percentage, 100)} className="w-16" />
+                                  <span className="text-sm font-medium">
+                                    {prediction.predicted_completion_percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  {getTrendIcon(prediction.trend_status)}
+                                  <Badge className={`text-xs ${getTrendColor(prediction.trend_status)}`}>
+                                    {prediction.trend_status === 'improving' ? '改善' :
+                                     prediction.trend_status === 'declining' ? '悪化' : '安定'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-500">データ不足</span>
+                            );
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const prediction = getPredictionForTarget(target.target_id || target.id);
+                            return prediction ? (
+                              <div className="space-y-1">
+                                <div className="text-sm">
+                                  {(() => {
+                                    // 期限までの残り日数を計算
+                                    const endDate = new Date(target.end_date + 'T23:59:59');
+                                    const currentDate = new Date();
+                                    const daysUntilDeadline = Math.max(0, Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)));
+                                    
+                                    if (prediction.months_to_completion === Infinity) {
+                                      return <span className="text-red-600">達成困難</span>;
+                                    }
+                                    
+                                    // 期限内に達成可能かチェック
+                                    const theoreticalDays = Math.ceil(prediction.months_to_completion * 30);
+                                    const canAchieveByDeadline = theoreticalDays <= daysUntilDeadline;
+                                    
+                                    if (daysUntilDeadline <= 30) {
+                                      // 期限が1ヶ月以内の場合は日数で表示
+                                      return (
+                                        <div>
+                                          <span className={canAchieveByDeadline ? 'text-green-600' : 'text-red-600'}>
+                                            期限まで{daysUntilDeadline}日
+                                          </span>
+                                          {!canAchieveByDeadline && (
+                                            <div className="text-xs text-red-500">
+                                              (現ペース: {theoreticalDays}日必要)
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    } else {
+                                      // 期限が1ヶ月以上先の場合は月数で表示
+                                      return (
+                                        <span className={prediction.on_track ? 'text-green-600' : 'text-yellow-600'}>
+                                          あと{Math.round(prediction.months_to_completion * 10) / 10}ヶ月
+                                        </span>
+                                      );
+                                    }
+                                  })()}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  必要進捗: {
+                                    prediction.required_monthly_rate === Infinity ? '計算不可' :
+                                    prediction.required_monthly_rate.toFixed(1) + '%/月'
+                                  }
+                                </div>
+                                <Badge className={`text-xs ${getConfidenceColor(prediction.prediction_confidence)}`}>
+                                  信頼度: {prediction.prediction_confidence === 'high' ? '高' :
+                                           prediction.prediction_confidence === 'medium' ? '中' : '低'}
+                                </Badge>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-500">-</span>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
@@ -1626,6 +2104,17 @@ const KPIManager: React.FC = () => {
                             >
                               進捗記録
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedTargetForPrediction(target);
+                                setShowPredictionDialog(true);
+                              }}
+                              title="予測詳細"
+                            >
+                              <Calculator className="w-4 h-4" />
+                            </Button>
                             {isExecutive && (
                               <Button
                                 size="sm"
@@ -1642,7 +2131,7 @@ const KPIManager: React.FC = () => {
                     ))}
                   {targets.filter(t => t.indicator_type === 'team_kpi').length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
                         チームKPIが設定されていません
                       </TableCell>
                     </TableRow>
@@ -1803,6 +2292,8 @@ const KPIManager: React.FC = () => {
                       <TableHead>目標値</TableHead>
                       <TableHead>現在値</TableHead>
                       <TableHead>達成率</TableHead>
+                      <TableHead>予測達成率</TableHead>
+                      <TableHead>完了予測</TableHead>
                       <TableHead>ステータス</TableHead>
                       <TableHead>優先度</TableHead>
                       <TableHead>期限</TableHead>
@@ -1825,6 +2316,57 @@ const KPIManager: React.FC = () => {
                               <Progress value={Math.min(target.achievement_rate || 0, 100)} className="w-16" />
                               <span className="text-sm">{(target.achievement_rate || 0).toFixed(1)}%</span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const prediction = getPredictionForTarget(target.target_id || target.id);
+                              return prediction ? (
+                                <div className="space-y-1">
+                                  <div className="flex items-center space-x-2">
+                                    <Progress value={Math.min(prediction.predicted_completion_percentage, 100)} className="w-16" />
+                                    <span className="text-sm font-medium">
+                                      {prediction.predicted_completion_percentage.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    {getTrendIcon(prediction.trend_status)}
+                                    <Badge className={`text-xs ${getTrendColor(prediction.trend_status)}`}>
+                                      {prediction.trend_status === 'improving' ? '改善' :
+                                       prediction.trend_status === 'declining' ? '悪化' : '安定'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">データ不足</span>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const prediction = getPredictionForTarget(target.target_id || target.id);
+                              return prediction ? (
+                                <div className="space-y-1">
+                                  <div className="text-sm">
+                                    {prediction.months_to_completion === Infinity ? (
+                                      <span className="text-red-600">達成困難</span>
+                                    ) : (
+                                      <span className={prediction.on_track ? 'text-green-600' : 'text-yellow-600'}>
+                                        あと{prediction.months_to_completion}ヶ月
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    必要進捗: {prediction.required_monthly_rate.toFixed(1)}%/月
+                                  </div>
+                                  <Badge className={`text-xs ${getConfidenceColor(prediction.prediction_confidence)}`}>
+                                    信頼度: {prediction.prediction_confidence === 'high' ? '高' :
+                                             prediction.prediction_confidence === 'medium' ? '中' : '低'}
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <Badge className={`${getPerformanceColor(target.performance_status)} flex items-center space-x-1`}>
@@ -1878,7 +2420,7 @@ const KPIManager: React.FC = () => {
                       ))}
                     {targets.filter(t => t.indicator_type === 'kgi').length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={11} className="text-center py-8 text-gray-500">
                           KGIが設定されていません
                         </TableCell>
                       </TableRow>
@@ -1959,6 +2501,246 @@ const KPIManager: React.FC = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 進捗予測詳細ダイアログ */}
+      <Dialog open={showPredictionDialog} onOpenChange={setShowPredictionDialog}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>進捗予測詳細</DialogTitle>
+            <DialogDescription>
+              現在の進捗データを基に、目標達成見込みと必要な対策を分析します。
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTargetForPrediction && (() => {
+            const prediction = getPredictionForTarget(selectedTargetForPrediction.target_id || selectedTargetForPrediction.id);
+            return (
+              <div className="space-y-6">
+                {/* KPI基本情報 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{selectedTargetForPrediction.indicator_name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label className="text-sm text-gray-600">目標値</Label>
+                        <p className="text-xl font-bold">{selectedTargetForPrediction.target_value}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">現在値</Label>
+                        <p className="text-xl font-bold">{selectedTargetForPrediction.current_value}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">現在の達成率</Label>
+                        <p className="text-xl font-bold text-blue-600">
+                          {(selectedTargetForPrediction.achievement_rate || 0).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">期限</Label>
+                        <p className="text-lg font-semibold">
+                          {new Date(selectedTargetForPrediction.end_date).toLocaleDateString('ja-JP')}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {prediction ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* 予測結果 */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <LineChart className="w-5 h-5 mr-2" />
+                          予測結果
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label className="text-sm text-gray-600">予測達成率</Label>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Progress value={Math.min(prediction.predicted_completion_percentage, 100)} className="flex-1" />
+                            <span className="text-lg font-bold">
+                              {prediction.predicted_completion_percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm text-gray-600">完了予測</Label>
+                          <p className="text-lg font-semibold">
+                            {(() => {
+                              // 期限までの残り日数を計算
+                              const endDate = new Date(selectedTargetForPrediction.end_date + 'T23:59:59');
+                              const currentDate = new Date();
+                              const daysUntilDeadline = Math.max(0, Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)));
+                              
+                              if (prediction.months_to_completion === Infinity) {
+                                return <span className="text-red-600">現在のペースでは達成困難</span>;
+                              }
+                              
+                              // 期限内に達成可能かチェック
+                              const theoreticalDays = Math.ceil(prediction.months_to_completion * 30);
+                              const canAchieveByDeadline = theoreticalDays <= daysUntilDeadline;
+                              
+                              if (daysUntilDeadline <= 30) {
+                                // 期限が1ヶ月以内の場合
+                                return (
+                                  <div>
+                                    <span className={canAchieveByDeadline ? 'text-green-600' : 'text-red-600'}>
+                                      期限まで{daysUntilDeadline}日
+                                    </span>
+                                    {!canAchieveByDeadline && (
+                                      <div className="text-sm text-red-500 mt-1">
+                                        現在のペースでは{theoreticalDays}日必要（期限オーバー）
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              } else {
+                                // 期限が1ヶ月以上先の場合
+                                return (
+                                  <span className={prediction.on_track ? 'text-green-600' : 'text-yellow-600'}>
+                                    あと{Math.round(prediction.months_to_completion * 10) / 10}ヶ月で100%達成
+                                  </span>
+                                );
+                              }
+                            })()}
+                          </p>
+                          {prediction.months_to_completion !== Infinity && (
+                            <p className="text-sm text-gray-600">
+                              予測完了日: {new Date(prediction.predicted_completion_date).toLocaleDateString('ja-JP')}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-sm text-gray-600">トレンド状況</Label>
+                          <div className="flex items-center space-x-2 mt-1">
+                            {getTrendIcon(prediction.trend_status)}
+                            <Badge className={getTrendColor(prediction.trend_status)}>
+                              {prediction.trend_status === 'improving' ? '改善傾向' :
+                               prediction.trend_status === 'declining' ? '悪化傾向' : '安定'}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm text-gray-600">予測信頼度</Label>
+                          <Badge className={getConfidenceColor(prediction.prediction_confidence)}>
+                            {prediction.prediction_confidence === 'high' ? '高信頼度' :
+                             prediction.prediction_confidence === 'medium' ? '中信頼度' : '低信頼度'}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 必要な対策 */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <Target className="w-5 h-5 mr-2" />
+                          必要な対策
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label className="text-sm text-gray-600">現在の月次進捗率</Label>
+                          <p className="text-lg font-semibold">
+                            {prediction.monthly_progress_rate.toFixed(1)}% / 月
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm text-gray-600">目標達成に必要な月次進捗率</Label>
+                          <p className="text-lg font-bold text-blue-600">
+                            {prediction.required_monthly_rate === Infinity ? '計算不可（期限切れ）' : 
+                             `${prediction.required_monthly_rate.toFixed(1)}% / 月`}
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm text-gray-600">進捗改善の必要性</Label>
+                          {prediction.required_monthly_rate === Infinity ? (
+                            <div className="bg-red-50 p-3 rounded-lg">
+                              <p className="text-red-800 font-semibold">
+                                🚨 期限切れ
+                              </p>
+                              <p className="text-red-600 text-sm mt-1">
+                                設定期限を既に過ぎています。期限の見直しまたは緊急対応が必要です。
+                              </p>
+                            </div>
+                          ) : prediction.required_monthly_rate > prediction.monthly_progress_rate ? (
+                            <div className="bg-red-50 p-3 rounded-lg">
+                              <p className="text-red-800 font-semibold">
+                                ⚠️ 進捗加速が必要
+                              </p>
+                              <p className="text-red-600 text-sm mt-1">
+                                月次進捗率を{(prediction.required_monthly_rate - prediction.monthly_progress_rate).toFixed(1)}%向上させる必要があります
+                              </p>
+                            </div>
+                          ) : prediction.on_track ? (
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <p className="text-green-800 font-semibold">
+                                ✅ 順調に進捗中
+                              </p>
+                              <p className="text-green-600 text-sm mt-1">
+                                現在のペースで目標達成可能です
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="bg-yellow-50 p-3 rounded-lg">
+                              <p className="text-yellow-800 font-semibold">
+                                ⚠️ 注意が必要
+                              </p>
+                              <p className="text-yellow-600 text-sm mt-1">
+                                進捗状況の監視と改善策の検討が推奨されます
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {prediction.trend_status === 'declining' && (
+                          <div className="bg-red-50 p-3 rounded-lg">
+                            <p className="text-red-800 font-semibold">
+                              📉 悪化傾向への対策
+                            </p>
+                            <p className="text-red-600 text-sm mt-1">
+                              最近の進捗が悪化しています。原因分析と改善施策の実施を推奨します。
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                          <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900">予測データが不足しています</h3>
+                        <p className="text-gray-600 max-w-md">
+                          進捗予測を行うには、最低2回以上の進捗記録が必要です。<br />
+                          定期的に進捗を記録して予測精度を向上させてください。
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <div className="flex justify-end">
+                  <Button variant="outline" onClick={() => setShowPredictionDialog(false)}>
+                    閉じる
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

@@ -52,13 +52,14 @@ import CTAAnalytics from '@/components/CTAAnalytics';
 import ReadingTimeAnalytics from '@/components/ReadingTimeAnalytics';
 import MemberManager from '@/components/MemberManager';
 import TodoManager from '@/components/TodoManager';
-import TodoProgress from '@/components/TodoProgress';
+
 import AttendanceManager from '@/components/AttendanceManager';
 import PayrollManager from '@/components/PayrollManager';
 import ScheduleManager from '@/components/ScheduleManager';
 import ScheduleWidget from '@/components/ScheduleWidget';
 import ExpenseManager from '@/components/ExpenseManager';
 import KPIManager from '@/components/KPIManager';
+import AdminCalendarOverview from '@/components/AdminCalendarOverview';
 import MemoManager from '@/components/MemoManager';
 import RecruitmentManager from '@/components/RecruitmentManager';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -1047,7 +1048,7 @@ const AdminDashboard: React.FC = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
-                      variant={['schedule', 'todo-progress'].includes(activeTab) ? 'default' : 'ghost'} 
+                      variant={['schedule'].includes(activeTab) ? 'default' : 'ghost'} 
                       className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
                     >
                       <Building className="w-4 h-4" />
@@ -1060,12 +1061,7 @@ const AdminDashboard: React.FC = () => {
                       <Calendar className="w-4 h-4 mr-2" />
                       スケジュール
                     </DropdownMenuItem>
-                    {(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp') && (
-                      <DropdownMenuItem onClick={() => setActiveTab('todo-progress')}>
-                        <ClipboardList className="w-4 h-4 mr-2" />
-                        全体Todo進捗
-                      </DropdownMenuItem>
-                    )}
+
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -1252,7 +1248,9 @@ const AdminDashboard: React.FC = () => {
                   {[
                     { value: 'schedule', icon: Calendar, label: 'スケジュール' },
                     ...(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp' ? 
-                        [{ value: 'todo-progress', icon: ClipboardList, label: '全体Todo進捗' }] : [])
+                        [
+                          { value: 'calendar-overview', icon: Users, label: 'カレンダー・勤怠管理' }
+                        ] : [])
                   ].map((tab) => (
                     <button
                       key={tab.value}
@@ -1393,9 +1391,7 @@ const AdminDashboard: React.FC = () => {
             <TodoManager />
           </TabsContent>
 
-          <TabsContent value="todo-progress">
-            <TodoProgress />
-          </TabsContent>
+
 
           <TabsContent value="attendance">
             <AttendanceManager />
@@ -1403,6 +1399,10 @@ const AdminDashboard: React.FC = () => {
 
           <TabsContent value="schedule">
             <ScheduleManager />
+          </TabsContent>
+
+          <TabsContent value="calendar-overview">
+            <AdminCalendarOverview />
           </TabsContent>
 
           {user?.role && ['executive', 'ceo', 'admin'].includes(user.role) && (
@@ -1764,7 +1764,7 @@ const getTabIcon = (tab: string) => {
   const icons = {
     overview: <Home className="w-4 h-4" />,
     todos: <Target className="w-4 h-4" />,
-    'todo-progress': <ClipboardList className="w-4 h-4" />,
+
     attendance: <Calendar className="w-4 h-4" />,
     schedule: <Calendar className="w-4 h-4" />,
     expenses: <DollarSign className="w-4 h-4" />,
@@ -1789,7 +1789,7 @@ const getTabLabel = (tab: string) => {
   const labels = {
     overview: '概要',
     todos: 'Todo',
-    'todo-progress': 'Todo進捗',
+
     attendance: '勤怠管理',
     schedule: 'スケジュール',
     expenses: '販管費管理',
