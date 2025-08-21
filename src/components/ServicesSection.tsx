@@ -7,54 +7,53 @@ import { ArrowRight } from 'lucide-react';
 const ServicesSection: React.FC = () => {
   const services = [
     {
-      title: "AI受託開発（AIエージェント / RAG / 機械学習）",
+      title: "Web受託開発",
       color: "from-navy-500 to-navy-700",
-      description: "LangChainやLangGraphを用いた業務自動化AIエージェントで、PoCで終わらせず実務に組み込まれるAIプロダクトを構築します。",
+      description: "クライアントのニーズに合わせたWebアプリケーション開発を手掛けています。企画から実装まで一気通貫でサポートします。",
       features: [
-        "LangChain / LangGraphによる業務自動化エージェント開発",
-        "RAG による社内文書検索AI", 
-        "ChatGPT / Claude / Gemini API連携による高度な推論処理",
-        "画像解析・音声認識・レコメンドなどのML実装"
+        "芸能事務所向けファンギフトアプリケーション開発",
+        "企画から実装まで一気通貫サポート",
+        "クライアントニーズに完全対応したカスタム開発"
       ]
     },
     {
-      title: "業務DX・自動化開発",
+      title: "AIコンサルティング",
       color: "from-emerald-500 to-emerald-700",
-      description: "\"AIを使わずとも\"圧倒的に業務改善できる領域に対し、堅実かつスピーディーに対応。",
+      description: "企業の課題解決に向けたAI導入のコンサルティングを提供します。現状の業務フローに合わせた最適なAI活用法を提案します。",
       features: [
-        "Slack / Notion / Google Workspace連携オートメーション",
-        "Excel業務のWebアプリ化",
-        "社内申請・報告フローのデジタル化"
+        "既存社内チャットボット機能改善コンサルティング",
+        "業務フロー分析とAI導入戦略策定",
+        "ROI最大化のためのAI活用法提案"
       ]
     },
     {
-      title: "高速プロトタイピング & PoC開発",
-      color: "from-orange-500 to-orange-700",
-      description: "「とりあえず相談してみたら、次の日にはもう動いてた」と言われるスピードが強みです。",
-      features: [
-        "最短数日でのMVP構築",
-        "MCPチャットボット「Workmate」を活用した即日動作デモ",
-        "KGI/KPI設計から本導入まで一貫支援"
-      ]
-    },
-    {
-      title: "Webサービス・業務システム開発",
+      title: "Web制作",
       color: "from-blue-500 to-blue-700",
-      description: "SaaS、社内ポータル、管理画面、帳票出力など、柔軟な業務アプリを構築可能。",
+      description: "企業の顔となるWebサイト制作を行います。デザインからコーディング、CMS導入まで、クライアントのビジネス成長に貢献する魅力的なウェブサイトを構築します。",
       features: [
-        "React / Next.js / Flutter Web",
-        "Node.js / Python / Supabase / Firebase",
-        "BigQuery / Google Sheets / PostgreSQL"
+        "企業ブランディングに特化したデザイン設計",
+        "レスポンシブ対応・SEO最適化",
+        "CMS導入による更新性向上"
       ]
     },
     {
-      title: "AI導入コンサルティング／内製化支援",
-      color: "from-teal-500 to-teal-700",
-      description: "\"なんとなくのAI活用\"ではなく、成果から逆算した技術戦略を描きます。",
+      title: "AI受託開発",
+      color: "from-purple-500 to-purple-700",
+      description: "業務効率化や新規事業創出のためのAIアプリケーションをオーダーメイドで開発します。クライアントの具体的な要望を形にします。",
       features: [
-        "課題のAI化可能性評価",
-        "導入ステップの整理と体制構築支援",
-        "経営層／現場向けの説明資料作成サポート"
+        "AIエージェントによるブログ投稿自動化",
+        "業務効率化AI開発",
+        "新規事業創出支援AIソリューション"
+      ]
+    },
+    {
+      title: "AI顧問",
+      color: "from-orange-500 to-orange-700",
+      description: "継続的なAI活用を顧問としてサポートします。事業フェーズに合わせた実践的なアドバイスを提供します。",
+      features: [
+        "看護人材紹介会社におけるAI活用法提案",
+        "画像仕分けシステム提案・導入支援",
+        "事業フェーズに応じた戦略的アドバイス"
       ]
     }
   ];
@@ -67,8 +66,8 @@ const ServicesSection: React.FC = () => {
             🛠️ Queue株式会社のサービス
           </h2>
           <p className="text-navy-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed">
-            Queueは、AI開発だけでなく、業務DX・業務自動化・Webシステム構築まで一気通貫で支援するテクノロジーパートナーです。
-            単なる開発にとどまらず、「課題整理 → 要件設計 → 実装 → 運用」のすべてを伴走します。
+            Queueは、Web開発からAI活用まで幅広い技術領域でクライアントのビジネス成長を支援するテクノロジーパートナーです。
+            企画から実装、運用まで一気通貫でサポートし、お客様の課題解決に最適なソリューションを提供します。
           </p>
         </div>
 
@@ -108,7 +107,7 @@ const ServicesSection: React.FC = () => {
               その他のサービスも充実
             </h3>
             <p className="text-navy-600 text-sm sm:text-base leading-relaxed mb-5 sm:mb-6">
-              プロンプトエンジニアリング支援、AI教育・実践トレーニング、自社製AIプロダクト提供など、
+              SESサービス（AIが使えるPM・バックエンドエンジニア派遣）など、
               さらに詳しいサービス内容をご覧いただけます。
             </p>
             <Button asChild className="bg-navy-800 hover:bg-navy-700 text-white">
