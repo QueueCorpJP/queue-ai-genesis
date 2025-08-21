@@ -8,109 +8,93 @@ const Services = () => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Service",
-    "name": "AI・DX・Webシステム開発サービス",
+    "name": "Web・AI・システム開発サービス",
     "provider": {
       "@type": "Organization",
       "name": "Queue株式会社",
       "url": "https://queue-tech.jp"
     },
-    "description": "AI開発から業務DX・自動化・Webシステム構築まで一気通貫で支援するテクノロジーパートナー",
+    "description": "Web開発からAI活用まで幅広い技術領域でクライアントのビジネス成長を支援するテクノロジーパートナー",
     "serviceType": [
-      "AIエージェント受託開発",
-      "業務DX・自動化開発", 
-      "Webサービス・業務システム開発",
-      "プロンプトエンジニアリング支援",
-      "高速プロトタイピング",
-      "AI導入コンサルティング",
-      "AI教育・実践トレーニング",
-      "自社製AIプロダクト提供"
+      "Web受託開発",
+      "AIコンサルティング", 
+      "Web制作",
+      "AI受託開発",
+      "AI顧問",
+      "SES（システムエンジニアリングサービス）"
     ],
     "areaServed": "JP"
   };
 
   useEffect(() => {
-    document.title = "Queue株式会社のサービス | AI・DX・Web開発の一気通貫支援";
+    document.title = "Queue株式会社のサービス | Web・AI・システム開発の総合支援";
   }, []);
 
   const services = [
     {
-      title: "AI受託開発（AIエージェント / RAG / 機械学習）",
+      title: "Web受託開発",
       color: "from-navy-500 to-navy-700",
-      description: "LangChainやLangGraphを用いた業務自動化AIエージェントで、PoCで終わらせず実務に組み込まれるAIプロダクトを構築します。",
+      description: "クライアントのニーズに合わせたWebアプリケーション開発を手掛けています。企画から実装まで一気通貫でサポートします。",
       features: [
-        "LangChain / LangGraphによる業務自動化エージェント開発",
-        "RAG（Retrieval-Augmented Generation）による社内文書検索AI", 
-        "ChatGPT / Claude / Gemini API連携による高度な推論処理",
-        "画像解析・音声認識・レコメンドなどのML実装"
+        "芸能事務所向けファンギフトアプリケーション開発",
+        "企画から実装まで一気通貫サポート",
+        "クライアントニーズに完全対応したカスタム開発",
+        "レスポンシブ対応・高パフォーマンス設計"
       ]
     },
     {
-      title: "業務DX・自動化開発（ノーコード連携／業務フロー改善）",
+      title: "AIコンサルティング",
       color: "from-emerald-500 to-emerald-700",
-      description: "\"AIを使わずとも\"圧倒的に業務改善できる領域に対し、堅実かつスピーディーに対応。",
+      description: "企業の課題解決に向けたAI導入のコンサルティングを提供します。現状の業務フローに合わせた最適なAI活用法を提案します。",
       features: [
-        "Slack / Notion / Google Workspaceと連携した業務オートメーション",
-        "Excel業務のWebアプリ化",
-        "社内申請・報告フローのデジタル化",
-        "営業活動の自動化（顧客管理、日報Bot、メール連携）"
+        "既存社内チャットボット機能改善コンサルティング",
+        "業務フロー分析とAI導入戦略策定",
+        "ROI最大化のためのAI活用法提案",
+        "段階的導入によるリスク最小化"
       ]
     },
     {
-      title: "Webサービス・業務システム開発",
+      title: "Web制作",
       color: "from-blue-500 to-blue-700",
-      description: "SaaS、社内ポータル、管理画面、帳票出力など、柔軟な業務アプリを構築可能。",
+      description: "企業の顔となるWebサイト制作を行います。デザインからコーディング、CMS導入まで、クライアントのビジネス成長に貢献する魅力的なウェブサイトを構築します。",
       features: [
-        "フロント：React / Next.js / Flutter Web",
-        "バックエンド：Node.js / Python / Supabase / Firebase",
-        "データ基盤：BigQuery / Google Sheets / Notion DB / PostgreSQL"
+        "企業ブランディングに特化したデザイン設計",
+        "レスポンシブ対応・SEO最適化",
+        "CMS導入による更新性向上",
+        "ビジネス成長を支援するサイト構築"
       ]
     },
     {
-      title: "プロンプトエンジニアリング支援（生成AI特化）",
+      title: "AI受託開発",
       color: "from-purple-500 to-purple-700",
-      description: "社内でプロンプトを育てていくための運用支援も可能です。",
+      description: "業務効率化や新規事業創出のためのAIアプリケーションをオーダーメイドで開発します。クライアントの具体的な要望を形にします。",
       features: [
-        "業務特化型プロンプト設計（FAQ、営業、コンテンツ生成）",
-        "複数モデル（GPT-4 / Claude / Gemini）の適用比較",
-        "マルチチャネル向けテンプレート化（Slack / LINE / Web）"
+        "AIエージェントによるブログ投稿自動化",
+        "業務効率化AI開発",
+        "新規事業創出支援AIソリューション",
+        "オーダーメイド開発による完全カスタマイズ"
       ]
     },
     {
-      title: "高速プロトタイピング & PoC開発",
+      title: "AI顧問",
       color: "from-orange-500 to-orange-700",
-      description: "「とりあえず相談してみたら、次の日にはもう動いてた」と言われるスピードが強みです。",
+      description: "継続的なAI活用を顧問としてサポートします。事業フェーズに合わせた実践的なアドバイスを提供します。",
       features: [
-        "最短数日でのMVP構築",
-        "MCPチャットボット「Workmate」を活用した即日動作デモ",
-        "KGI/KPI設計から本導入まで一貫支援"
+        "看護人材紹介会社におけるAI活用法提案",
+        "画像仕分けシステム提案・導入支援",
+        "事業フェーズに応じた戦略的アドバイス",
+        "継続的なAI活用サポート・改善提案"
       ]
     },
     {
-      title: "AI導入コンサルティング／内製化支援",
+      title: "SES",
       color: "from-teal-500 to-teal-700",
-      description: "\"なんとなくのAI活用\"ではなく、成果から逆算した技術戦略を描きます。",
+      description: "クライアントのプロジェクトに対し、専門的なスキルを持つITエンジニアやプロジェクトマネージャー（PM）の技術力を提供します。",
       features: [
-        "課題のAI化可能性評価",
-        "導入ステップの整理と体制構築支援",
-        "経営層／現場向けの説明資料作成サポート"
-      ]
-    },
-    {
-      title: "AI教育・実践トレーニング",
-      color: "from-indigo-500 to-indigo-700",
-      description: "社内PoC作成ハンズオン付き研修プログラムも提供可能",
-      features: [
-        "社内エンジニア向けの実践型AI講座（RAG、LangChain、プロンプト）",
-        "非エンジニア向け：生成AIリテラシー研修／業務活用ワークショップ"
-      ]
-    },
-    {
-      title: "自社製AIプロダクト提供（Workmateなど）",
-      color: "from-rose-500 to-rose-700",
-      description: "Slack、Notion、Googleカレンダー連携など多チャネル対応",
-      features: [
-        "MCPチャットボット「Workmate」：社内外の情報を横断検索",
-        "ドキュメント検索AI、業務フロー対応Bot、ナレッジ即答エージェントなど"
+        "AIが使えるプロジェクトマネージャー派遣",
+        "バックエンドエンジニア技術力提供",
+        "開発現場ニーズに応じた人材アサイン",
+        "プロジェクト成功に向けた専門技術支援"
       ]
     }
   ];
@@ -118,9 +102,9 @@ const Services = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SEOHead
-        title="Queue株式会社のサービス | AI・DX・Web開発の一気通貫支援"
-        description="Queue株式会社は、AI開発だけでなく、業務DX・業務自動化・Webシステム構築まで一気通貫で支援するテクノロジーパートナーです。課題整理から要件設計・実装・運用のすべてを伴走します。"
-        keywords="AI開発,業務DX,自動化開発,Webシステム開発,プロンプトエンジニアリング,高速プロトタイピング,AI導入コンサルティング,Queue株式会社"
+        title="Queue株式会社のサービス | Web・AI・システム開発の総合支援"
+        description="Queue株式会社は、Web受託開発、AIコンサルティング、Web制作、AI受託開発、AI顧問、SESまで幅広い技術領域でクライアントのビジネス成長を支援するテクノロジーパートナーです。企画から実装、運用まで一気通貫でサポートします。"
+        keywords="Web受託開発,AIコンサルティング,Web制作,AI受託開発,AI顧問,SES,システム開発,Queue株式会社"
         canonicalUrl="/services"
         structuredData={structuredData}
       />
@@ -136,8 +120,8 @@ const Services = () => {
                 🛠️ Queue株式会社のサービス
               </h1>
               <p className="text-sm md:text-base text-navy-600 max-w-3xl mx-auto leading-relaxed">
-                Queueは、AI開発だけでなく、業務DX・業務自動化・Webシステム構築まで一気通貫で支援するテクノロジーパートナーです。
-                単なる開発にとどまらず、「課題整理 → 要件設計 → 実装 → 運用」のすべてを伴走します。
+                Queueは、Web開発からAI活用まで幅広い技術領域でクライアントのビジネス成長を支援するテクノロジーパートナーです。
+                企画から実装、運用まで一気通貫でサポートし、お客様の課題解決に最適なソリューションを提供します。
               </p>
             </div>
           </Container>
@@ -229,7 +213,7 @@ const Services = () => {
           <Container>
             <div className="text-center max-w-3xl mx-auto px-4">
               <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-navy-800">
-                「AIだけでなく、現場のシステムや運用も含めて相談したい」
+                「Web開発からAI活用まで、総合的にサポートしてほしい」
               </h2>
               <p className="text-sm md:text-base text-navy-600 mb-6 md:mb-8 leading-relaxed">
                 という方に、Queueは最適なパートナーです。まずは無料相談で、貴社の課題をお聞かせください。
