@@ -3,6 +3,34 @@
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
   
   <url>
+    <loc>https://queue-tech.jp/news/dx-small-business-poc</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-08-20T00:42:57.385Z</news:publication_date>
+      <news:title>DXとは？バズワードで終わらせないために、まず押さえるべき本質</news:title>
+    </news:news>
+    <lastmod>2025-08-19T15:52:24.151Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/rag-retrieval-augmented-generation</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-08-19T16:28:25.790Z</news:publication_date>
+      <news:title>RAGとは？ChatGPTが“会社の頭脳”になる技術の正体</news:title>
+    </news:news>
+    <lastmod>2025-08-19T16:28:25.790Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://queue-tech.jp/news/inhouse-gpt-customization-benefits</loc>
     <news:news>
       <news:publication>

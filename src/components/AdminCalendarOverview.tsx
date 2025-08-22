@@ -9,6 +9,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Table, 
   TableBody, 
@@ -34,7 +36,10 @@ import {
   ChevronDown,
   ChevronRight,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Edit,
+  Save,
+  X
 } from 'lucide-react';
 import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -76,6 +81,30 @@ interface AttendanceStatus {
   work_hours: number | null;
 }
 
+interface TodayAttendee {
+  member_id: string;
+  member_name: string;
+  department: string;
+  start_time: string | null;
+  end_time: string | null;
+  work_hours: number;
+  attendance_type: string;
+  status: string;
+}
+
+interface AttendanceEditForm {
+  id: string;
+  member_id: string;
+  member_name: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  break_time_minutes: number;
+  status: 'scheduled' | 'present' | 'absent' | 'late' | 'early_leave';
+  attendance_type: 'regular' | 'remote' | 'business_trip' | 'sick_leave' | 'vacation';
+  notes: string;
+}
+
 interface CalendarInsights {
   total_members: number;
   total_events: number;
@@ -115,7 +144,14 @@ const AdminCalendarOverview: React.FC = () => {
   
   // 部署とメンバーのリスト
   const [departments, setDepartments] = useState<string[]>([]);
-  const [members, setMembers] = useState<{ id: string; name: string; department: string }[]>([]);
+  const [members, setMembers] = useState<{ id: string; name: string; email: string; department: string; position: string }[]>([]);
+  
+  // 今日の出勤者リスト
+  const [todayAttendees, setTodayAttendees] = useState<TodayAttendee[]>([]);
+  
+  // 勤怠編集モーダル
+  const [editAttendanceModalOpen, setEditAttendanceModalOpen] = useState(false);
+  const [editingAttendance, setEditingAttendance] = useState<AttendanceEditForm | null>(null);
   
   // 役員権限チェック
   const isExecutive = user?.role && ['executive', 'ceo', 'admin'].includes(user.role);
@@ -131,6 +167,7 @@ const AdminCalendarOverview: React.FC = () => {
       fetchCalendarData();
       fetchAttendanceData();
       fetchCalendarInsights();
+      fetchTodayAttendees();
     }
   }, [isExecutive, members, selectedDate, dateRange, customStartDate, customEndDate]);
 
@@ -149,10 +186,13 @@ const AdminCalendarOverview: React.FC = () => {
 
       if (error) throw error;
 
+      console.log('👥 Members fetched:', data?.length || 0, 'members');
+      console.log('👥 Members data:', data);
       setMembers(data || []);
       
       // 部署一覧を抽出
       const uniqueDepartments = [...new Set(data?.map(m => m.department).filter(Boolean))] as string[];
+      console.log('🏢 Departments:', uniqueDepartments);
       setDepartments(uniqueDepartments);
 
     } catch (error) {
@@ -265,6 +305,7 @@ const AdminCalendarOverview: React.FC = () => {
       }
 
       console.log('📅 Calendar data fetched:', membersCalendarData.length, 'members');
+      console.log('📅 Members calendar data:', membersCalendarData);
       setMembersCalendarData(membersCalendarData);
 
     } catch (error) {
@@ -274,18 +315,6 @@ const AdminCalendarOverview: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // 勤怠タイプのラベル取得
-  const getAttendanceTypeLabel = (type: string) => {
-    const labels: { [key: string]: string } = {
-      regular: '通常勤務',
-      remote: 'リモート',
-      business_trip: '出張',
-      sick_leave: '病欠',
-      vacation: '有給'
-    };
-    return labels[type] || type;
   };
 
   // 勤怠ステータスの色取得
@@ -314,7 +343,7 @@ const AdminCalendarOverview: React.FC = () => {
         .from('attendance_records')
         .select(`
           member_id,
-          members!inner(name, email, department),
+          members!member_id(name, email, department),
           date,
           status,
           attendance_type,
@@ -326,15 +355,18 @@ const AdminCalendarOverview: React.FC = () => {
 
       if (error) throw error;
 
+      console.log('📊 Raw attendance data:', data);
+
       const formattedData: AttendanceStatus[] = (data || []).map(record => ({
         member_id: record.member_id,
-        member_name: record.members.name,
+        member_name: record.members?.name || 'Unknown',
         date: record.date,
         status: record.status,
         attendance_type: record.attendance_type,
         work_hours: record.work_hours
       }));
 
+      console.log('📊 Formatted attendance data:', formattedData);
       setAttendanceData(formattedData);
 
     } catch (error) {
@@ -442,6 +474,52 @@ const AdminCalendarOverview: React.FC = () => {
     }
   };
 
+  // 今日の出勤者取得
+  const fetchTodayAttendees = async () => {
+    if (!isExecutive) return;
+    
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+
+      const { data, error } = await client
+        .from('attendance_records')
+        .select(`
+          member_id,
+          members!member_id(name, email, department),
+          start_time,
+          end_time,
+          work_hours,
+          attendance_type,
+          status
+        `)
+        .eq('date', today)
+        .in('status', ['scheduled', 'present', 'late', 'early_leave'])
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+
+      const todayData: TodayAttendee[] = (data || []).map(record => ({
+        member_id: record.member_id,
+        member_name: record.members?.name || 'Unknown',
+        department: record.members?.department || '未設定',
+        start_time: record.start_time,
+        end_time: record.end_time,
+        work_hours: record.work_hours || 0,
+        attendance_type: record.attendance_type,
+        status: record.status
+      }));
+
+      console.log('📅 今日の出勤者:', todayData);
+      setTodayAttendees(todayData);
+
+    } catch (error) {
+      console.error('Error fetching today attendees:', error);
+      // エラーは表示しない（補助的な機能のため）
+    }
+  };
+
   // 日付範囲計算
   const getDateRange = () => {
     switch (dateRange) {
@@ -488,14 +566,139 @@ const AdminCalendarOverview: React.FC = () => {
     return true;
   });
 
+  // デバッグ: フィルタリング結果（開発時のみ）
+  if (process.env.NODE_ENV === 'development') {
+    console.log('📋 Raw members data:', membersCalendarData.length);
+    console.log('📋 Filtered members data:', filteredMembersData.length);
+    console.log('📋 Search term:', searchTerm);
+    console.log('📋 Selected department:', selectedDepartment);
+    console.log('📋 Selected member:', selectedMember);
+  }
+
   // データリフレッシュ
   const refreshData = async () => {
     await Promise.all([
       fetchCalendarData(),
       fetchAttendanceData(),
-      fetchCalendarInsights()
+      fetchCalendarInsights(),
+      fetchTodayAttendees()
     ]);
     toast.success('データを更新しました');
+  };
+
+  // 勤怠編集関数
+  const openEditAttendanceModal = async (attendee: TodayAttendee) => {
+    try {
+      // 詳細な勤怠データを取得
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+
+      const { data, error } = await client
+        .from('attendance_records')
+        .select('*')
+        .eq('member_id', attendee.member_id)
+        .eq('date', format(new Date(), 'yyyy-MM-dd'))
+        .single();
+
+      if (error) throw error;
+
+      setEditingAttendance({
+        id: data.id,
+        member_id: data.member_id,
+        member_name: attendee.member_name,
+        date: data.date,
+        start_time: data.start_time || '09:00',
+        end_time: data.end_time || '17:00',
+        break_time_minutes: data.break_time_minutes || 60,
+        status: data.status,
+        attendance_type: data.attendance_type,
+        notes: data.notes || ''
+      });
+      setEditAttendanceModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching attendance details:', error);
+      toast.error('勤怠データの取得に失敗しました');
+    }
+  };
+
+  // 勤怠テーブルから編集モーダルを開く関数
+  const openEditAttendanceFromTable = async (record: AttendanceStatus) => {
+    try {
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+
+      const { data, error } = await client
+        .from('attendance_records')
+        .select('*')
+        .eq('member_id', record.member_id)
+        .eq('date', record.date)
+        .single();
+
+      if (error) throw error;
+
+      setEditingAttendance({
+        id: data.id,
+        member_id: data.member_id,
+        member_name: record.member_name,
+        date: data.date,
+        start_time: data.start_time || '09:00',
+        end_time: data.end_time || '17:00',
+        break_time_minutes: data.break_time_minutes || 60,
+        status: data.status,
+        attendance_type: data.attendance_type,
+        notes: data.notes || ''
+      });
+      setEditAttendanceModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching attendance details:', error);
+      toast.error('勤怠データの取得に失敗しました');
+    }
+  };
+
+  const updateAttendanceRecord = async (formData: AttendanceEditForm) => {
+    try {
+      const adminClient = getSupabaseAdmin();
+      const client = adminClient || supabase;
+
+      // 労働時間を自動計算
+      let workHours = 0;
+      if (formData.start_time && formData.end_time) {
+        const start = new Date(`2000-01-01T${formData.start_time}:00`);
+        const end = new Date(`2000-01-01T${formData.end_time}:00`);
+        const diffMs = end.getTime() - start.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+        workHours = Math.max(0, diffHours - (formData.break_time_minutes / 60));
+      }
+
+      const { error } = await client
+        .from('attendance_records')
+        .update({
+          start_time: formData.start_time,
+          end_time: formData.end_time,
+          break_time_minutes: formData.break_time_minutes,
+          work_hours: workHours,
+          status: formData.status,
+          attendance_type: formData.attendance_type,
+          notes: formData.notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', formData.id);
+
+      if (error) throw error;
+
+      toast.success('勤怠データを更新しました');
+      setEditAttendanceModalOpen(false);
+      setEditingAttendance(null);
+      
+      // データを再取得
+      await Promise.all([
+        fetchTodayAttendees(),
+        fetchAttendanceData()
+      ]);
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      toast.error('勤怠データの更新に失敗しました');
+    }
   };
 
   // イベント種別アイコン
@@ -552,6 +755,36 @@ const AdminCalendarOverview: React.FC = () => {
       default:
         return <Badge variant="outline" className="text-xs">{status}</Badge>;
     }
+  };
+
+  // 勤怠タイプアイコン取得
+  const getAttendanceTypeIcon = (type: string) => {
+    switch (type) {
+      case 'regular': return '🏢';
+      case 'remote': return '🏠';
+      case 'business_trip': return '✈️';
+      case 'sick_leave': return '🤒';
+      case 'vacation': return '🏖️';
+      default: return '📅';
+    }
+  };
+
+  // 勤怠タイプラベル取得
+  const getAttendanceTypeLabel = (type: string) => {
+    switch (type) {
+      case 'regular': return '通常勤務';
+      case 'remote': return 'リモート';
+      case 'business_trip': return '出張';
+      case 'sick_leave': return '病気休暇';
+      case 'vacation': return '有給休暇';
+      default: return type;
+    }
+  };
+
+  // 時間フォーマット
+  const formatTime = (time: string | null) => {
+    if (!time) return '-';
+    return time.substring(0, 5); // HH:MM形式
   };
 
   // メンバー展開/折りたたみ
@@ -758,6 +991,67 @@ const AdminCalendarOverview: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* 今日の出勤者 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-lg">
+            <Clock className="w-5 h-5 mr-2" />
+            今日の出勤予定 ({format(new Date(), 'yyyy年MM月dd日', { locale: ja })})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {todayAttendees.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              今日の出勤予定はありません
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {todayAttendees.map((attendee) => (
+                <div key={attendee.member_id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-lg">{getAttendanceTypeIcon(attendee.attendance_type)}</span>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{attendee.member_name}</h4>
+                          <p className="text-sm text-gray-500">{attendee.department}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-3 h-3 text-gray-400" />
+                          <span>{formatTime(attendee.start_time)} - {formatTime(attendee.end_time)}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-400">勤務時間:</span>
+                          <span className="font-medium">{attendee.work_hours}h</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-400">形態:</span>
+                          <span>{getAttendanceTypeLabel(attendee.attendance_type)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="ml-2 flex flex-col space-y-2">
+                      {getAttendanceStatusBadge(attendee.status)}
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => openEditAttendanceModal(attendee)}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        編集
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* フィルタ・設定 */}
       <Card>
@@ -1037,22 +1331,107 @@ const AdminCalendarOverview: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>メンバー</TableHead>
-                      <TableHead>部署</TableHead>
-                      <TableHead>総イベント</TableHead>
-                      <TableHead>会社イベント</TableHead>
-                      <TableHead>個人イベント</TableHead>
-                      <TableHead>今日</TableHead>
-                      <TableHead>今後</TableHead>
-                      <TableHead>操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredMembersData.map(member => (
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-2">読み込み中...</span>
+                </div>
+              ) : filteredMembersData.length === 0 ? (
+                members.length > 0 ? (
+                  // カレンダーデータはないが、基本メンバー情報は表示
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>メンバー</TableHead>
+                          <TableHead>部署</TableHead>
+                          <TableHead>役職</TableHead>
+                          <TableHead>ステータス</TableHead>
+                          <TableHead>操作</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {members
+                          .filter(member => {
+                            // フィルタリング条件を適用
+                            if (searchTerm && !member.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
+                                !member.email.toLowerCase().includes(searchTerm.toLowerCase())) {
+                              return false;
+                            }
+                            if (selectedDepartment !== 'all' && member.department !== selectedDepartment) {
+                              return false;
+                            }
+                            if (selectedMember !== 'all' && member.id !== selectedMember) {
+                              return false;
+                            }
+                            return true;
+                          })
+                          .map(member => (
+                            <TableRow key={member.id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">{member.name}</div>
+                                  <div className="text-sm text-gray-500">{member.email}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell>{member.department || '未設定'}</TableCell>
+                              <TableCell>{member.position || '-'}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="bg-green-50 text-green-700">
+                                  アクティブ
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setSelectedMemberForDetail({
+                                    id: member.id,
+                                    name: member.name
+                                  })}
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  詳細
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                    <div className="p-4 bg-blue-50 border-t">
+                      <p className="text-sm text-blue-700">
+                        📅 カレンダーデータを読み込み中です。イベント情報は準備でき次第表示されます。
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium mb-2">メンバーデータがありません</p>
+                    <p className="text-sm">データを読み込んでいるか、条件に一致するメンバーが見つかりません。</p>
+                    <Button onClick={refreshData} className="mt-4" variant="outline">
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      データを再読み込み
+                    </Button>
+                  </div>
+                )
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>メンバー</TableHead>
+                        <TableHead>部署</TableHead>
+                        <TableHead>総イベント</TableHead>
+                        <TableHead>会社イベント</TableHead>
+                        <TableHead>個人イベント</TableHead>
+                        <TableHead>今日</TableHead>
+                        <TableHead>今後</TableHead>
+                        <TableHead>操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredMembersData.map(member => (
                       <TableRow key={member.member_id}>
                         <TableCell>
                           <div>
@@ -1102,10 +1481,11 @@ const AdminCalendarOverview: React.FC = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1129,6 +1509,7 @@ const AdminCalendarOverview: React.FC = () => {
                       <TableHead>ステータス</TableHead>
                       <TableHead>勤務形態</TableHead>
                       <TableHead>労働時間</TableHead>
+                      <TableHead>操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1173,6 +1554,17 @@ const AdminCalendarOverview: React.FC = () => {
                           <TableCell>
                             {record.work_hours ? `${record.work_hours}時間` : '-'}
                           </TableCell>
+                          <TableCell>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => openEditAttendanceFromTable(record)}
+                              className="h-8 px-3 text-xs"
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              編集
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                   </TableBody>
@@ -1182,6 +1574,122 @@ const AdminCalendarOverview: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* 勤怠編集モーダル */}
+      <Dialog open={editAttendanceModalOpen} onOpenChange={setEditAttendanceModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>勤怠データ編集</DialogTitle>
+          </DialogHeader>
+          {editingAttendance && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">メンバー</Label>
+                <div className="mt-1 p-2 bg-gray-50 rounded border">
+                  {editingAttendance.member_name}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-700">日付</Label>
+                <div className="mt-1 p-2 bg-gray-50 rounded border">
+                  {format(new Date(editingAttendance.date), 'yyyy年MM月dd日', { locale: ja })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start_time">開始時刻</Label>
+                  <Input
+                    id="start_time"
+                    type="time"
+                    value={editingAttendance.start_time}
+                    onChange={(e) => setEditingAttendance(prev => prev ? {...prev, start_time: e.target.value} : null)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end_time">終了時刻</Label>
+                  <Input
+                    id="end_time"
+                    type="time"
+                    value={editingAttendance.end_time}
+                    onChange={(e) => setEditingAttendance(prev => prev ? {...prev, end_time: e.target.value} : null)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="break_time">休憩時間（分）</Label>
+                <Input
+                  id="break_time"
+                  type="number"
+                  value={editingAttendance.break_time_minutes}
+                  onChange={(e) => setEditingAttendance(prev => prev ? {...prev, break_time_minutes: parseInt(e.target.value) || 0} : null)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="status">ステータス</Label>
+                <Select 
+                  value={editingAttendance.status} 
+                  onValueChange={(value) => setEditingAttendance(prev => prev ? {...prev, status: value as any} : null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">予定</SelectItem>
+                    <SelectItem value="present">出勤</SelectItem>
+                    <SelectItem value="absent">欠勤</SelectItem>
+                    <SelectItem value="late">遅刻</SelectItem>
+                    <SelectItem value="early_leave">早退</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="attendance_type">勤務形態</Label>
+                <Select 
+                  value={editingAttendance.attendance_type} 
+                  onValueChange={(value) => setEditingAttendance(prev => prev ? {...prev, attendance_type: value as any} : null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="regular">通常勤務</SelectItem>
+                    <SelectItem value="remote">リモート</SelectItem>
+                    <SelectItem value="business_trip">出張</SelectItem>
+                    <SelectItem value="sick_leave">病気休暇</SelectItem>
+                    <SelectItem value="vacation">有給休暇</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="notes">備考</Label>
+                <Textarea
+                  id="notes"
+                  value={editingAttendance.notes}
+                  onChange={(e) => setEditingAttendance(prev => prev ? {...prev, notes: e.target.value} : null)}
+                  placeholder="備考を入力してください"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex space-x-2">
+            <Button variant="outline" onClick={() => setEditAttendanceModalOpen(false)}>
+              <X className="w-4 h-4 mr-2" />
+              キャンセル
+            </Button>
+            <Button onClick={() => editingAttendance && updateAttendanceRecord(editingAttendance)}>
+              <Save className="w-4 h-4 mr-2" />
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

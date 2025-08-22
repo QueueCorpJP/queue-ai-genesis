@@ -52,6 +52,8 @@ const suppressChromeExtensionErrors = () => {
 
   // Suppress console errors from Chrome extensions
   const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+  
   console.error = (...args) => {
     const message = args.join(' ').toString();
     if (message.includes('Could not establish connection') ||
@@ -59,11 +61,22 @@ const suppressChromeExtensionErrors = () => {
         message.includes('No tab with id') ||
         message.includes('Extension context invalidated') ||
         message.includes('runtime.lastError') ||
+        message.includes('The message port closed before a response was received') ||
         message.includes('chrome-extension://') ||
         message.includes('service-worker-loader.js')) {
       return;
     }
     originalConsoleError.apply(console, args);
+  };
+  
+  console.warn = (...args) => {
+    const message = args.join(' ').toString();
+    if (message.includes('Multiple GoTrueClient instances detected') ||
+        message.includes('chrome-extension://') ||
+        message.includes('service-worker')) {
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
   };
 };
 

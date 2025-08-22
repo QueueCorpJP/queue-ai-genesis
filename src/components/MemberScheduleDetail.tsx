@@ -190,18 +190,34 @@ const MemberScheduleDetail: React.FC<MemberScheduleDetailProps> = ({ memberId, m
   };
 
   const calculateMonthlyStats = (attendanceRecords: AttendanceRecord[]): MonthlyStats => {
+    // 出勤として計算対象とする記録（予定・出勤・遅刻・早退）
+    const workingRecords = attendanceRecords.filter(r => 
+      ['present', 'late', 'early_leave', 'scheduled'].includes(r.status)
+    );
     const presentRecords = attendanceRecords.filter(r => r.status === 'present');
     const absentRecords = attendanceRecords.filter(r => r.status === 'absent');
     const lateRecords = attendanceRecords.filter(r => r.status === 'late');
     const remoteRecords = attendanceRecords.filter(r => r.attendance_type === 'remote');
     const vacationRecords = attendanceRecords.filter(r => r.attendance_type === 'vacation');
 
-    const totalWorkHours = presentRecords.reduce((sum, r) => sum + (r.work_hours || 0), 0);
-    const totalOvertimeHours = presentRecords.reduce((sum, r) => sum + r.overtime_hours, 0);
-    const avgWorkHours = presentRecords.length > 0 ? totalWorkHours / presentRecords.length : 0;
+    // 労働時間計算（予定も含める）
+    const totalWorkHours = workingRecords.reduce((sum, r) => sum + (r.work_hours || 0), 0);
+    const totalOvertimeHours = workingRecords.reduce((sum, r) => sum + r.overtime_hours, 0);
+    const avgWorkHours = workingRecords.length > 0 ? totalWorkHours / workingRecords.length : 0;
+
+    console.log('📊 統計計算詳細:', {
+      totalRecords: attendanceRecords.length,
+      workingRecords: workingRecords.length,
+      presentRecords: presentRecords.length,
+      remoteRecords: remoteRecords.length,
+      totalWorkHours,
+      totalOvertimeHours,
+      avgWorkHours,
+      recordStatuses: attendanceRecords.map(r => ({ date: r.date, status: r.status, hours: r.work_hours }))
+    });
 
     return {
-      present_days: presentRecords.length,
+      present_days: workingRecords.length, // 予定も含めた出勤日数
       absent_days: absentRecords.length,
       late_days: lateRecords.length,
       total_work_hours: totalWorkHours,

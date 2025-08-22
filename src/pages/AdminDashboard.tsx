@@ -1048,7 +1048,7 @@ const AdminDashboard: React.FC = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
-                      variant={['schedule'].includes(activeTab) ? 'default' : 'ghost'} 
+                      variant={['schedule', 'calendar-overview'].includes(activeTab) ? 'default' : 'ghost'} 
                       className="flex items-center space-x-2 px-3 py-2 h-auto text-sm font-medium whitespace-nowrap flex-shrink-0"
                     >
                       <Building className="w-4 h-4" />
@@ -1061,7 +1061,12 @@ const AdminDashboard: React.FC = () => {
                       <Calendar className="w-4 h-4 mr-2" />
                       スケジュール
                     </DropdownMenuItem>
-
+                    {(user?.role === 'executive' || user?.email === 'queue@queue-tech.jp') && (
+                      <DropdownMenuItem onClick={() => setActiveTab('calendar-overview')}>
+                        <Users className="w-4 h-4 mr-2" />
+                        カレンダー・勤怠管理
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -1764,9 +1769,9 @@ const getTabIcon = (tab: string) => {
   const icons = {
     overview: <Home className="w-4 h-4" />,
     todos: <Target className="w-4 h-4" />,
-
     attendance: <Calendar className="w-4 h-4" />,
     schedule: <Calendar className="w-4 h-4" />,
+    'calendar-overview': <Users className="w-4 h-4" />,
     expenses: <DollarSign className="w-4 h-4" />,
     recruitment: <Users className="w-4 h-4" />,
     kpi: <Target className="w-4 h-4" />,
@@ -1789,9 +1794,9 @@ const getTabLabel = (tab: string) => {
   const labels = {
     overview: '概要',
     todos: 'Todo',
-
     attendance: '勤怠管理',
     schedule: 'スケジュール',
+    'calendar-overview': 'カレンダー・勤怠管理',
     expenses: '販管費管理',
     recruitment: '採用管理',
     kpi: 'KPI/KGI管理',
