@@ -40,13 +40,73 @@ interface KPIIndicator {
   indicator_name: string;
   indicator_type: 'personal_kpi' | 'team_kpi' | 'kgi';
   description: string;
-  measurement_unit: string;
+  measurement_unit: string; // 後方互換性のため残す
   measurement_method: string;
   category: string;
-  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'project-based';
   target_type: 'increase' | 'decrease' | 'maintain';
   is_active: boolean;
   created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// 複数測定単位対応の新しい型定義
+interface MeasurementUnit {
+  unit_id: string;
+  unit_name: string;
+  unit_symbol: string;
+  unit_type: 'count' | 'amount' | 'percentage' | 'ratio' | 'time' | 'score';
+  is_primary: boolean;
+  display_order: number;
+  conversion_factor: number;
+  description: string;
+}
+
+interface KPIIndicatorWithUnits {
+  indicator_id: string;
+  indicator_name: string;
+  indicator_type: 'personal_kpi' | 'team_kpi' | 'kgi';
+  description: string;
+  category: string;
+  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'project-based';
+  target_type: 'increase' | 'decrease' | 'maintain';
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  measurement_units: MeasurementUnit[];
+  unit_count: number;
+}
+
+interface MultiUnitTarget {
+  target_id: string;
+  indicator_id: string;
+  indicator_name: string;
+  indicator_type: string;
+  category: string;
+  frequency: string;
+  measurement_unit_id: string;
+  unit_name: string;
+  unit_symbol: string;
+  unit_type: string;
+  is_primary: boolean;
+  target_period: string;
+  assigned_member_id: string;
+  assigned_member_name: string;
+  assigned_member_email: string;
+  assigned_team: string;
+  target_value: number;
+  baseline_value: number;
+  current_value: number;
+  achievement_rate: number;
+  status: string;
+  priority: string;
+  start_date: string;
+  end_date: string;
+  notes: string;
+  created_by: string;
+  created_by_name: string;
   created_at: string;
   updated_at: string;
 }
@@ -57,6 +117,7 @@ interface KPITarget {
   indicator_id: string;
   indicator_name: string;
   indicator_type: string;
+  frequency?: string; // 測定頻度
   target_period: string;
   assigned_member_id?: string;
   assigned_member_name?: string;
@@ -198,6 +259,11 @@ const KPIManager: React.FC = () => {
   const [showProgressDialog, setShowProgressDialog] = useState(false);
   const [selectedTargetForProgress, setSelectedTargetForProgress] = useState<KPITarget | null>(null);
 
+  // 複数測定単位対応のstate
+  const [indicatorsWithUnits, setIndicatorsWithUnits] = useState<KPIIndicatorWithUnits[]>([]);
+  const [multiUnitTargets, setMultiUnitTargets] = useState<MultiUnitTarget[]>([]);
+  const [showMultiUnitMode, setShowMultiUnitMode] = useState(false);
+
   // フォーム状態
   const [newIndicator, setNewIndicator] = useState({
     indicator_name: '',
@@ -206,9 +272,20 @@ const KPIManager: React.FC = () => {
     measurement_unit: '',
     measurement_method: '',
     category: '',
-    frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly',
+    frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'project-based',
     target_type: 'increase' as 'increase' | 'decrease' | 'maintain',
   });
+
+  // 複数測定単位フォーム
+  const [newMeasurementUnits, setNewMeasurementUnits] = useState<Array<{
+    unit_name: string;
+    unit_symbol: string;
+    unit_type: 'count' | 'amount' | 'percentage' | 'ratio' | 'time' | 'score';
+    is_primary: boolean;
+    description: string;
+  }>>([
+    { unit_name: '', unit_symbol: '', unit_type: 'count', is_primary: true, description: '' }
+  ]);
 
   const [newTarget, setNewTarget] = useState({
     indicator_id: '',
@@ -227,7 +304,15 @@ const KPIManager: React.FC = () => {
     recorded_value: 0,
     comments: '',
     evidence_url: '',
+    project_case_id: '', // 案件ID
   });
+
+  // 案件データ管理
+  const [projectCases, setProjectCases] = useState<Array<{
+    id: string;
+    case_name: string;
+    status: string;
+  }>>([]);
 
   const [recordedValueInput, setRecordedValueInput] = useState('');
   const [predictions, setPredictions] = useState<KPIPrediction[]>([]);
@@ -400,6 +485,19 @@ const KPIManager: React.FC = () => {
     }
   };
 
+  // 頻度ラベルの取得
+  const getFrequencyLabel = (frequency: string) => {
+    const labels: { [key: string]: string } = {
+      'daily': '日次',
+      'weekly': '週次', 
+      'monthly': '月次',
+      'quarterly': '四半期',
+      'yearly': '年次',
+      'project-based': '案件ごと'
+    };
+    return labels[frequency] || frequency;
+  };
+
   // 月次トレンドの計算
   const calculateMonthlyTrends = (records: any[], target: KPITarget): ProgressTrend[] => {
     const trends: ProgressTrend[] = [];
@@ -492,6 +590,60 @@ const KPIManager: React.FC = () => {
     }
   }, [selectedPeriod, isMember, isExecutive, currentMemberId, currentMemberInfo?.department, toast]);
 
+  // 案件データ取得
+  const fetchProjectCases = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('project_cases')
+        .select('id, case_name, status')
+        .in('status', ['in_progress', 'planning', 'pending'])
+        .order('case_name', { ascending: true });
+
+      if (error) throw error;
+      setProjectCases(data || []);
+    } catch (error) {
+      console.error('Error fetching project cases:', error);
+    }
+  };
+
+  // 複数測定単位対応のKPI指標取得
+  const fetchIndicatorsWithUnits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('kpi_indicators_with_units')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setIndicatorsWithUnits(data || []);
+    } catch (error) {
+      console.error('Error fetching indicators with units:', error);
+    }
+  };
+
+  // 複数測定単位対応のKPI目標取得
+  const fetchMultiUnitTargets = async () => {
+    try {
+      let query = supabase
+        .from('kpi_multi_unit_targets_detail')
+        .select('*')
+        .eq('target_period', selectedPeriod);
+
+      // メンバーの場合は自分に関連するKPIのみ取得
+      if (isMember && !isExecutive && currentMemberId) {
+        const teamFilter = currentMemberInfo?.department ? `,assigned_team.eq.${currentMemberInfo.department}` : '';
+        query = query.or(`assigned_member_id.eq.${currentMemberId}${teamFilter}`);
+      }
+
+      const { data, error } = await query.order('priority', { ascending: false });
+
+      if (error) throw error;
+      setMultiUnitTargets(data || []);
+    } catch (error) {
+      console.error('Error fetching multi-unit targets:', error);
+    }
+  };
+
   const fetchDashboardStats = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -538,31 +690,123 @@ const KPIManager: React.FC = () => {
 
   // 新しい指標作成
   const handleCreateIndicator = async () => {
-    if (!newIndicator.indicator_name.trim() || !newIndicator.category.trim() || !newIndicator.measurement_unit.trim()) {
-      toast({
-        title: 'エラー',
-        description: '指標名、カテゴリ、測定単位は必須です。',
-        variant: 'destructive',
-      });
-      return;
+    // バリデーション
+    if (showMultiUnitMode) {
+      // 複数測定単位モードの場合
+      if (!newIndicator.indicator_name.trim() || !newIndicator.category.trim()) {
+        toast({
+          title: 'エラー',
+          description: '指標名とカテゴリは必須です。',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const validUnits = newMeasurementUnits.filter(unit => 
+        unit.unit_name.trim() && unit.unit_symbol.trim()
+      );
+
+      if (validUnits.length === 0) {
+        toast({
+          title: 'エラー',
+          description: '少なくとも1つの測定単位（単位名・記号）を入力してください。',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const primaryUnits = validUnits.filter(unit => unit.is_primary);
+      if (primaryUnits.length === 0) {
+        toast({
+          title: 'エラー',
+          description: '主要単位を1つ選択してください。',
+          variant: 'destructive',
+        });
+        return;
+      }
+    } else {
+      // 標準モードの場合
+      if (!newIndicator.indicator_name.trim() || !newIndicator.category.trim() || !newIndicator.measurement_unit.trim()) {
+        toast({
+          title: 'エラー',
+          description: '指標名、カテゴリ、測定単位は必須です。',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     try {
       setIsLoading(true);
 
-      const { error } = await supabase
-        .from('kpi_indicators')
-        .insert([{
-          ...newIndicator,
-          created_by: user?.id,
-        }]);
+      if (showMultiUnitMode) {
+        // 複数測定単位での指標作成
+        const validUnits = newMeasurementUnits.filter(unit => 
+          unit.unit_name.trim() && unit.unit_symbol.trim()
+        );
 
-      if (error) throw error;
+        // 指標作成
+        const { data: indicatorData, error: indicatorError } = await supabase
+          .from('kpi_indicators')
+          .insert([{
+            indicator_name: newIndicator.indicator_name,
+            indicator_type: newIndicator.indicator_type,
+            description: newIndicator.description,
+            measurement_unit: validUnits.find(u => u.is_primary)?.unit_symbol || validUnits[0].unit_symbol, // 後方互換性
+            measurement_method: newIndicator.measurement_method,
+            category: newIndicator.category,
+            frequency: newIndicator.frequency,
+            target_type: newIndicator.target_type,
+            created_by: user?.id,
+          }])
+          .select()
+          .single();
 
-      toast({
-        title: '成功',
-        description: 'KPI指標を作成しました。',
-      });
+        if (indicatorError) throw indicatorError;
+
+        // 測定単位を作成
+        const unitsToInsert = validUnits.map((unit, index) => ({
+          indicator_id: indicatorData.id,
+          unit_name: unit.unit_name,
+          unit_symbol: unit.unit_symbol,
+          unit_type: unit.unit_type,
+          is_primary: unit.is_primary,
+          display_order: index + 1,
+          conversion_factor: 1,
+          description: unit.description,
+        }));
+
+        const { error: unitsError } = await supabase
+          .from('kpi_measurement_units')
+          .insert(unitsToInsert);
+
+        if (unitsError) throw unitsError;
+
+        toast({
+          title: '成功',
+          description: `KPI/KGI指標が${validUnits.length}つの測定単位で作成されました。`,
+        });
+
+        // 複数測定単位のフォームをリセット
+        setNewMeasurementUnits([
+          { unit_name: '', unit_symbol: '', unit_type: 'count', is_primary: true, description: '' }
+        ]);
+      } else {
+        // 標準モードでの指標作成
+        const { error } = await supabase
+          .from('kpi_indicators')
+          .insert([{
+            ...newIndicator,
+            created_by: user?.id,
+          }]);
+
+        if (error) throw error;
+
+        toast({
+          title: '成功',
+          description: 'KPI指標を作成しました。',
+        });
+      }
 
       setShowCreateDialog(false);
       setNewIndicator({
@@ -575,7 +819,12 @@ const KPIManager: React.FC = () => {
         frequency: 'monthly',
         target_type: 'increase',
       });
+      
+      // データを再取得
       fetchIndicators();
+      if (showMultiUnitMode) {
+        fetchIndicatorsWithUnits();
+      }
     } catch (error) {
       console.error('Error creating indicator:', error);
       toast({
@@ -699,6 +948,7 @@ const KPIManager: React.FC = () => {
         comments: newProgress.comments || '',
         evidence_url: newProgress.evidence_url || '',
         recorded_by: currentMemberId,
+        project_case_id: newProgress.project_case_id || null, // 案件ID
       };
       
       console.log('Progress data to insert:', progressData);
@@ -729,6 +979,7 @@ const KPIManager: React.FC = () => {
         recorded_value: 0,
         comments: '',
         evidence_url: '',
+        project_case_id: '',
       });
       setRecordedValueInput('');
       await fetchTargets();
@@ -890,10 +1141,16 @@ const KPIManager: React.FC = () => {
       const loadData = async () => {
         await fetchIndicators();
         await fetchTargets();
+        // 複数測定単位対応データも取得
+        if (showMultiUnitMode) {
+          await fetchIndicatorsWithUnits();
+          await fetchMultiUnitTargets();
+        }
         if (isExecutive) {
           await fetchDashboardStats();
         }
         await fetchMembers();
+        await fetchProjectCases();
         // 予測計算も実行
         if (targets.length > 0) {
           await calculateAllPredictions();
@@ -1033,6 +1290,22 @@ const KPIManager: React.FC = () => {
               className="w-40"
             />
           </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant={showMultiUnitMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setShowMultiUnitMode(!showMultiUnitMode);
+                if (!showMultiUnitMode) {
+                  fetchIndicatorsWithUnits();
+                  fetchMultiUnitTargets();
+                }
+              }}
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              {showMultiUnitMode ? "標準モード" : "複数単位モード"}
+            </Button>
+          </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button>
@@ -1078,16 +1351,142 @@ const KPIManager: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="measurement_unit">測定単位 *</Label>
-                    <Input
-                      id="measurement_unit"
-                      value={newIndicator.measurement_unit}
-                      onChange={(e) => setNewIndicator({ ...newIndicator, measurement_unit: e.target.value })}
-                      placeholder="例: 万円、件、%"
-                    />
+                {/* 測定単位セクション - 複数対応時は独立した行として配置 */}
+                {showMultiUnitMode ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">測定単位設定（複数対応）*</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewMeasurementUnits([
+                          ...newMeasurementUnits,
+                          { unit_name: '', unit_symbol: '', unit_type: 'count', is_primary: false, description: '' }
+                        ])}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        単位追加
+                      </Button>
+                    </div>
+                    <div className="grid gap-4 max-h-60 overflow-y-auto">
+                      {newMeasurementUnits.map((unit, index) => (
+                        <div key={index} className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium bg-blue-100 px-2 py-1 rounded">
+                                単位 {index + 1}
+                              </span>
+                              {unit.is_primary && (
+                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                  主要
+                                </span>
+                              )}
+                            </div>
+                            {newMeasurementUnits.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setNewMeasurementUnits(newMeasurementUnits.filter((_, i) => i !== index))}
+                                className="h-8 w-8 p-0"
+                              >
+                                ×
+                              </Button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs text-gray-600">単位名</Label>
+                              <Input
+                                placeholder="例: 売上金額"
+                                value={unit.unit_name}
+                                onChange={(e) => {
+                                  const updated = [...newMeasurementUnits];
+                                  updated[index].unit_name = e.target.value;
+                                  setNewMeasurementUnits(updated);
+                                }}
+                                className="h-9"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600">記号</Label>
+                              <Input
+                                placeholder="例: 万円"
+                                value={unit.unit_symbol}
+                                onChange={(e) => {
+                                  const updated = [...newMeasurementUnits];
+                                  updated[index].unit_symbol = e.target.value;
+                                  setNewMeasurementUnits(updated);
+                                }}
+                                className="h-9"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between space-x-3">
+                            <div className="flex-1">
+                              <Label className="text-xs text-gray-600">単位タイプ</Label>
+                              <Select
+                                value={unit.unit_type}
+                                onValueChange={(value: 'count' | 'amount' | 'percentage' | 'ratio' | 'time' | 'score') => {
+                                  const updated = [...newMeasurementUnits];
+                                  updated[index].unit_type = value;
+                                  setNewMeasurementUnits(updated);
+                                }}
+                              >
+                                <SelectTrigger className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="count">🔢 数量</SelectItem>
+                                  <SelectItem value="amount">💰 金額</SelectItem>
+                                  <SelectItem value="percentage">📊 割合</SelectItem>
+                                  <SelectItem value="ratio">⚖️ 比率</SelectItem>
+                                  <SelectItem value="time">⏰ 時間</SelectItem>
+                                  <SelectItem value="score">🏆 スコア</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex items-center space-x-2 pt-5">
+                              <input
+                                type="checkbox"
+                                id={`primary-${index}`}
+                                checked={unit.is_primary}
+                                onChange={(e) => {
+                                  const updated = [...newMeasurementUnits];
+                                  // 主要単位は1つだけ
+                                  if (e.target.checked) {
+                                    updated.forEach((u, i) => u.is_primary = i === index);
+                                  } else {
+                                    updated[index].is_primary = false;
+                                  }
+                                  setNewMeasurementUnits(updated);
+                                }}
+                                className="rounded"
+                              />
+                              <Label htmlFor={`primary-${index}`} className="text-sm cursor-pointer">
+                                主要単位
+                              </Label>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                ) : null}
+
+                <div className="grid grid-cols-3 gap-4">
+                  {!showMultiUnitMode && (
+                    <div>
+                      <Label htmlFor="measurement_unit">測定単位 *</Label>
+                      <Input
+                        id="measurement_unit"
+                        value={newIndicator.measurement_unit}
+                        onChange={(e) => setNewIndicator({ ...newIndicator, measurement_unit: e.target.value })}
+                        placeholder="例: 万円、件、%"
+                      />
+                    </div>
+                  )}
                   <div>
                     <Label htmlFor="category">カテゴリ *</Label>
                     <Select
@@ -1114,7 +1513,7 @@ const KPIManager: React.FC = () => {
                     <Label htmlFor="frequency">測定頻度</Label>
                     <Select
                       value={newIndicator.frequency}
-                      onValueChange={(value: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly') => 
+                      onValueChange={(value: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'project-based') => 
                         setNewIndicator({ ...newIndicator, frequency: value })
                       }
                     >
@@ -1127,6 +1526,7 @@ const KPIManager: React.FC = () => {
                         <SelectItem value="monthly">月次</SelectItem>
                         <SelectItem value="quarterly">四半期</SelectItem>
                         <SelectItem value="yearly">年次</SelectItem>
+                        <SelectItem value="project-based">案件ごと</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1378,7 +1778,7 @@ const KPIManager: React.FC = () => {
                         </TableCell>
                         <TableCell>{indicator.category}</TableCell>
                         <TableCell>{indicator.measurement_unit}</TableCell>
-                        <TableCell>{indicator.frequency}</TableCell>
+                        <TableCell>{getFrequencyLabel(indicator.frequency)}</TableCell>
                         <TableCell>{new Date(indicator.created_at).toLocaleDateString('ja-JP')}</TableCell>
                         <TableCell>
                           <Button
@@ -1751,7 +2151,7 @@ const KPIManager: React.FC = () => {
                               variant="outline"
                               onClick={() => {
                                 setSelectedTargetForProgress(target);
-                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '', project_case_id: '' });
                                 setRecordedValueInput('');
                                 setShowProgressDialog(true);
                               }}
@@ -2097,7 +2497,7 @@ const KPIManager: React.FC = () => {
                               variant="outline"
                               onClick={() => {
                                 setSelectedTargetForProgress(target);
-                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                                setNewProgress({ recorded_value: 0, comments: '', evidence_url: '', project_case_id: '' });
                                 setRecordedValueInput('');
                                 setShowProgressDialog(true);
                               }}
@@ -2397,7 +2797,7 @@ const KPIManager: React.FC = () => {
                                 variant="outline"
                                 onClick={() => {
                                   setSelectedTargetForProgress(target);
-                                  setNewProgress({ recorded_value: 0, comments: '', evidence_url: '' });
+                                  setNewProgress({ recorded_value: 0, comments: '', evidence_url: '', project_case_id: '' });
                                   setRecordedValueInput('');
                                   setShowProgressDialog(true);
                                 }}
@@ -2479,6 +2879,28 @@ const KPIManager: React.FC = () => {
                   rows={3}
                 />
               </div>
+
+              {/* 案件ごと測定の場合の案件選択 */}
+              {selectedTargetForProgress?.frequency === 'project-based' && (
+                <div>
+                  <Label htmlFor="project_case">関連案件</Label>
+                  <Select
+                    value={newProgress.project_case_id}
+                    onValueChange={(value) => setNewProgress({ ...newProgress, project_case_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="案件を選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projectCases.map((projectCase) => (
+                        <SelectItem key={projectCase.id} value={projectCase.id}>
+                          {projectCase.case_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="evidence_url">根拠資料URL</Label>

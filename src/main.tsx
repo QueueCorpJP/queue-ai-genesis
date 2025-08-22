@@ -63,7 +63,10 @@ const suppressChromeExtensionErrors = () => {
         message.includes('runtime.lastError') ||
         message.includes('The message port closed before a response was received') ||
         message.includes('chrome-extension://') ||
-        message.includes('service-worker-loader.js')) {
+        message.includes('service-worker-loader.js') ||
+        message.includes('service-worker') ||
+        message.includes('Uncaught (in promise)') ||
+        message.includes('Could not establish connection')) {
       return;
     }
     originalConsoleError.apply(console, args);
