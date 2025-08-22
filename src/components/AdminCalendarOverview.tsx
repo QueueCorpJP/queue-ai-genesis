@@ -248,6 +248,14 @@ const AdminCalendarOverview: React.FC = () => {
           console.error('Error fetching attendance records:', attendanceError);
         }
 
+        // デバッグ: 出勤予定データ確認
+        if (process.env.NODE_ENV === 'development') {
+          const scheduledRecords = (attendanceRecords || []).filter(r => r.status === 'scheduled');
+          if (scheduledRecords.length > 0) {
+            console.log(`📅 ${member.name} の出勤予定:`, scheduledRecords);
+          }
+        }
+
         // イベント詳細を構築
         const events_detail: CalendarEvent[] = [];
 
@@ -265,20 +273,23 @@ const AdminCalendarOverview: React.FC = () => {
           });
         });
 
-        // 勤怠記録をイベントとして追加
+        // 勤怠記録をイベントとして追加（予定も含む）
         (attendanceRecords || []).forEach(record => {
-          if (record.status !== 'scheduled') {
-            events_detail.push({
-              calendar_type: 'personal',
-              title: `勤怠: ${getAttendanceTypeLabel(record.attendance_type)}`,
-              start_date: record.date,
-              start_time: record.start_time,
-              event_type: record.attendance_type,
-              priority: 'medium',
-              color: getAttendanceColor(record.status),
-              is_private: false
-            });
-          }
+          const isScheduled = record.status === 'scheduled';
+          const title = isScheduled 
+            ? `出勤予定: ${getAttendanceTypeLabel(record.attendance_type)}`
+            : `勤怠: ${getAttendanceTypeLabel(record.attendance_type)}`;
+          
+          events_detail.push({
+            calendar_type: 'personal',
+            title: title,
+            start_date: record.date,
+            start_time: record.start_time,
+            event_type: record.attendance_type,
+            priority: isScheduled ? 'low' : 'medium',
+            color: getAttendanceColor(record.status),
+            is_private: false
+          });
         });
 
         // 今日と今後のイベント数を計算
@@ -320,11 +331,11 @@ const AdminCalendarOverview: React.FC = () => {
   // 勤怠ステータスの色取得
   const getAttendanceColor = (status: string) => {
     const colors: { [key: string]: string } = {
-      present: '#10B981',
-      absent: '#EF4444',
-      late: '#F59E0B',
-      early_leave: '#F97316',
-      scheduled: '#6B7280'
+      present: '#10B981',      // 緑：出勤済み
+      absent: '#EF4444',       // 赤：欠勤
+      late: '#F59E0B',         // 黄色：遅刻
+      early_leave: '#F97316',  // オレンジ：早退
+      scheduled: '#3B82F6'     // 青：出勤予定（より目立つ色に変更）
     };
     return colors[status] || '#6B7280';
   };
@@ -712,7 +723,13 @@ const AdminCalendarOverview: React.FC = () => {
         default: return '📅';
       }
     } else {
+      // 勤怠関連のアイコン
       switch (eventType) {
+        case 'normal': return '🏢';      // 通常出勤
+        case 'overtime': return '⏰';    // 残業
+        case 'holiday': return '🏖️';    // 休日出勤
+        case 'remote': return '💻';      // リモートワーク
+        case 'halfday': return '🕐';     // 半日勤務
         case 'personal': return '📅';
         case 'meeting': return '🤝';
         case 'appointment': return '📋';
@@ -1282,12 +1299,22 @@ const AdminCalendarOverview: React.FC = () => {
                           {member.events_detail.length > 0 ? (
                             member.events_detail
                               .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
-                              .map((event, index) => (
-                              <div 
-                                key={index}
-                                className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
-                                style={{ borderLeft: `4px solid ${event.color}` }}
-                              >
+                              .map((event, index) => {
+                                const isToday = event.start_date === format(new Date(), 'yyyy-MM-dd');
+                                const isScheduled = event.title.includes('出勤予定');
+                                
+                                return (
+                                <div 
+                                  key={index}
+                                  className={`flex items-center space-x-3 p-3 rounded-lg ${
+                                    isToday 
+                                      ? isScheduled 
+                                        ? 'bg-blue-50 border border-blue-200' 
+                                        : 'bg-green-50 border border-green-200'
+                                      : 'bg-gray-50'
+                                  }`}
+                                  style={{ borderLeft: `4px solid ${event.color}` }}
+                                >
                                 <span className="text-lg">
                                   {getEventTypeIcon(event.event_type, event.calendar_type)}
                                 </span>
@@ -1295,6 +1322,11 @@ const AdminCalendarOverview: React.FC = () => {
                                   <div className="flex items-center space-x-2">
                                     <h4 className="font-medium text-sm">{event.title}</h4>
                                     {event.is_private && <EyeOff className="w-3 h-3 text-gray-400" />}
+                                    {isToday && (
+                                      <Badge variant="default" className="text-xs bg-blue-600 text-white">
+                                        今日
+                                      </Badge>
+                                    )}
                                     <Badge variant="outline" className="text-xs">
                                       {event.calendar_type === 'company' ? '会社' : '勤怠'}
                                     </Badge>
@@ -1307,7 +1339,8 @@ const AdminCalendarOverview: React.FC = () => {
                                   </div>
                                 </div>
                               </div>
-                            ))
+                                );
+                              })
                           ) : (
                             <p className="text-sm text-gray-500 py-4">この期間にイベントはありません</p>
                           )}
