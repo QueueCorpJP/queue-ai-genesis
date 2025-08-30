@@ -9,10 +9,25 @@ import {
   Dialog, 
   DialogContent, 
   DialogDescription, 
+  DialogFooter,
   DialogHeader, 
   DialogTitle,
   DialogTrigger 
 } from '@/components/ui/dialog';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Table, 
   TableBody, 
@@ -36,7 +51,9 @@ import {
   Coffee,
   CheckCircle,
   AlertCircle,
-  Eye
+  Eye,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { supabase, getSupabaseAdmin } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -112,6 +129,20 @@ const MemberScheduleDetail: React.FC<MemberScheduleDetailProps> = ({ memberId, m
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   
+  // 編集・削除機能用のstate
+  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    start_time: '',
+    end_time: '',
+    break_time_minutes: 60,
+    attendance_type: 'regular' as AttendanceRecord['attendance_type'],
+    notes: ''
+  });
+  
+  // admin権限チェック
+  const isAdmin = user?.role && ['executive', 'ceo', 'admin'].includes(user.role);
+  
   // 役員権限チェック
   const isExecutive = user?.role && ['executive', 'ceo', 'admin'].includes(user.role);
 
@@ -186,6 +217,68 @@ const MemberScheduleDetail: React.FC<MemberScheduleDetailProps> = ({ memberId, m
       toast.error('スケジュールデータの取得に失敗しました');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 編集ダイアログを開く
+  const openEditDialog = (record: AttendanceRecord) => {
+    setEditingRecord(record);
+    setFormData({
+      start_time: record.start_time || '09:00',
+      end_time: record.end_time || '17:00',
+      break_time_minutes: record.break_time_minutes,
+      attendance_type: record.attendance_type,
+      notes: record.notes || ''
+    });
+    setEditDialogOpen(true);
+  };
+
+  // 編集を保存
+  const handleSaveEdit = async () => {
+    if (!editingRecord || !isAdmin) return;
+
+    try {
+      const { error } = await getSupabaseAdmin()
+        .from('attendance_records')
+        .update({
+          start_time: formData.start_time,
+          end_time: formData.end_time,
+          break_time_minutes: formData.break_time_minutes,
+          attendance_type: formData.attendance_type,
+          notes: formData.notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingRecord.id);
+
+      if (error) throw error;
+
+      toast.success('勤怠記録を更新しました');
+      setEditDialogOpen(false);
+      setEditingRecord(null);
+      fetchMemberScheduleData(); // データを再取得
+    } catch (error) {
+      console.error('Error updating attendance record:', error);
+      toast.error('勤怠記録の更新に失敗しました');
+    }
+  };
+
+  // 記録を削除
+  const handleDeleteRecord = async (recordId: string) => {
+    if (!isAdmin) return;
+
+    try {
+      const { error } = await getSupabaseAdmin()
+        .from('attendance_records')
+        .delete()
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      toast.success('勤怠記録を削除しました');
+      fetchMemberScheduleData(); // データを再取得
+    } catch (error) {
+      console.error('Error deleting attendance record:', error);
+      toast.error('勤怠記録の削除に失敗しました');
     }
   };
 
@@ -393,6 +486,7 @@ const MemberScheduleDetail: React.FC<MemberScheduleDetailProps> = ({ memberId, m
                   <TableHead>労働時間</TableHead>
                   <TableHead>ステータス</TableHead>
                   <TableHead>備考</TableHead>
+                  {isAdmin && <TableHead>操作</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -429,6 +523,51 @@ const MemberScheduleDetail: React.FC<MemberScheduleDetailProps> = ({ memberId, m
                         {record.notes || '-'}
                       </div>
                     </TableCell>
+                    {isAdmin && (
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(record)}
+                            title="勤怠記録を編集"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="勤怠記録を削除"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>勤怠記録を削除しますか？</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {memberName}さんの{format(new Date(record.date), 'yyyy年MM月dd日 (E)', { locale: ja })}の勤怠記録を削除します。
+                                  この操作は取り消すことができません。
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteRecord(record.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  削除
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -442,6 +581,93 @@ const MemberScheduleDetail: React.FC<MemberScheduleDetailProps> = ({ memberId, m
           )}
         </CardContent>
       </Card>
+
+      {/* 編集ダイアログ */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>勤怠記録を編集</DialogTitle>
+            <DialogDescription>
+              {editingRecord && (
+                <>
+                  {memberName}さんの{format(new Date(editingRecord.date), 'yyyy年MM月dd日 (E)', { locale: ja })}の勤怠記録を編集します
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="start_time">開始時刻</Label>
+                <Input
+                  id="start_time"
+                  type="time"
+                  value={formData.start_time}
+                  onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="end_time">終了時刻</Label>
+                <Input
+                  id="end_time"
+                  type="time"
+                  value={formData.end_time}
+                  onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="break_time">休憩時間（分）</Label>
+              <Input
+                id="break_time"
+                type="number"
+                min="0"
+                max="480"
+                value={formData.break_time_minutes}
+                onChange={(e) => setFormData(prev => ({ ...prev, break_time_minutes: parseInt(e.target.value) || 0 }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="attendance_type">勤務形態</Label>
+              <Select value={formData.attendance_type} onValueChange={(value) => setFormData(prev => ({ ...prev, attendance_type: value as AttendanceRecord['attendance_type'] }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="regular">通常勤務</SelectItem>
+                  <SelectItem value="remote">リモート</SelectItem>
+                  <SelectItem value="business_trip">出張</SelectItem>
+                  <SelectItem value="sick_leave">病欠</SelectItem>
+                  <SelectItem value="vacation">有給</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="notes">備考</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="特記事項があれば入力してください"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              更新
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 企業スケジュール */}
       <Card>

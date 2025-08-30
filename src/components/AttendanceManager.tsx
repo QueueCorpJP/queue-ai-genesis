@@ -109,8 +109,13 @@ const AttendanceManager: React.FC = () => {
   // 現在のユーザーのメンバーID
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   
-  // 役員権限チェック
+  // 役員・管理者権限チェック
   const [isExecutive, setIsExecutive] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // admin用：全メンバーリストと選択中メンバー
+  const [allMembers, setAllMembers] = useState<{id: string, name: string, department: string}[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   // 複数日付選択機能のstate
   const [dateSelectionMode, setDateSelectionMode] = useState<DateSelectionMode>('single');
@@ -139,7 +144,7 @@ const AttendanceManager: React.FC = () => {
       fetchAttendance();
       fetchMonthlyStats();
     }
-  }, [currentMemberId, selectedMonth]);
+  }, [currentMemberId, selectedMonth, selectedMemberId]);
 
   // メールアドレスからメンバーIDを取得
   const fetchMemberId = async () => {
@@ -162,6 +167,13 @@ const AttendanceManager: React.FC = () => {
       if (data) {
         setCurrentMemberId(data.id);
         setIsExecutive(data.role === 'executive');
+        setIsAdmin(data.role === 'admin' || data.role === 'executive');
+        
+        // admin権限がある場合は全メンバーリストを取得
+        if (data.role === 'admin' || data.role === 'executive') {
+          fetchAllMembers();
+          setSelectedMemberId(data.id); // 初期値は自分
+        }
       }
     } catch (error) {
       console.error('Error fetching member ID:', error);
@@ -169,18 +181,40 @@ const AttendanceManager: React.FC = () => {
     }
   };
 
+  // 全メンバーリストを取得（admin用）
+  const fetchAllMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, name, department')
+        .eq('is_active', true)
+        .order('department', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setAllMembers(data || []);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      toast.error('メンバーリストの取得に失敗しました');
+    }
+  };
+
   const fetchAttendance = async () => {
-    if (!currentMemberId) return;
+    const targetMemberId = isAdmin ? selectedMemberId : currentMemberId;
+    if (!targetMemberId) return;
     
     setLoading(true);
     try {
       const monthStart = startOfMonth(selectedMonth);
       const monthEnd = endOfMonth(selectedMonth);
       
-      const { data, error } = await supabase
+      // admin権限の場合はAdmin Clientを使用
+      const client = isAdmin ? getSupabaseAdmin() : supabase;
+      
+      const { data, error } = await client
         .from('attendance_records')
         .select('*')
-        .eq('member_id', currentMemberId)
+        .eq('member_id', targetMemberId)
         .gte('date', format(monthStart, 'yyyy-MM-dd'))
         .lte('date', format(monthEnd, 'yyyy-MM-dd'))
         .order('date', { ascending: false });
@@ -197,18 +231,19 @@ const AttendanceManager: React.FC = () => {
   };
 
   const fetchMonthlyStats = async () => {
-    if (!currentMemberId) return;
+    const targetMemberId = isAdmin ? selectedMemberId : currentMemberId;
+    if (!targetMemberId) return;
     
     try {
       const yearMonth = format(selectedMonth, 'yyyy-MM');
       
       // 管理者権限がある場合はadminクライアントを使用
-      const client = isExecutive ? getSupabaseAdmin() : supabase;
+      const client = isAdmin ? getSupabaseAdmin() : supabase;
       
       const { data, error } = await client
         .from('monthly_attendance_stats')
         .select('*')
-        .eq('member_id', currentMemberId)
+        .eq('member_id', targetMemberId)
         .eq('year_month', yearMonth)
         .single();
 
@@ -326,7 +361,8 @@ const AttendanceManager: React.FC = () => {
   };
 
   const handleCreateRecord = async () => {
-    if (!currentMemberId) return;
+    const targetMemberId = isAdmin ? selectedMemberId : currentMemberId;
+    if (!targetMemberId) return;
 
     // 対象日付を取得
     const targetDates: Date[] = [];
@@ -355,7 +391,7 @@ const AttendanceManager: React.FC = () => {
     try {
       // 各日付に対して記録を作成
       const records = targetDates.map(date => ({
-        member_id: currentMemberId,
+        member_id: targetMemberId,
         date: format(date, 'yyyy-MM-dd'),
         start_time: formData.start_time || null,
         end_time: formData.end_time || null,
@@ -365,8 +401,9 @@ const AttendanceManager: React.FC = () => {
         notes: formData.notes
       }));
 
-      // 一括挿入を試行
-      const { error } = await supabase
+      // 一括挿入を試行（admin権限の場合はadmin clientを使用）
+      const client = isAdmin ? getSupabaseAdmin() : supabase;
+      const { error } = await client
         .from('attendance_records')
         .insert(records);
 
@@ -375,10 +412,10 @@ const AttendanceManager: React.FC = () => {
         if (error.code === '23505') {
           for (const date of targetDates) {
             try {
-              const { error: singleError } = await supabase
+              const { error: singleError } = await client
                 .from('attendance_records')
                 .insert({
-                  member_id: currentMemberId,
+                  member_id: targetMemberId,
                   date: format(date, 'yyyy-MM-dd'),
                   start_time: formData.start_time || null,
                   end_time: formData.end_time || null,
@@ -441,7 +478,9 @@ const AttendanceManager: React.FC = () => {
     if (!editingRecord) return;
 
     try {
-      const { error } = await supabase
+      // admin権限の場合はadmin clientを使用
+      const client = isAdmin ? getSupabaseAdmin() : supabase;
+      const { error } = await client
         .from('attendance_records')
         .update({
           start_time: formData.start_time || null,
@@ -480,7 +519,9 @@ const AttendanceManager: React.FC = () => {
 
   const handleDeleteRecord = async (recordId: string) => {
     try {
-      const { error } = await supabase
+      // admin権限の場合はadmin clientを使用
+      const client = isAdmin ? getSupabaseAdmin() : supabase;
+      const { error } = await client
         .from('attendance_records')
         .delete()
         .eq('id', recordId);
@@ -614,13 +655,34 @@ const AttendanceManager: React.FC = () => {
               <CardTitle className="flex items-center">
                 <BarChart3 className="w-5 h-5 mr-2" />
                 勤怠管理
+                {isAdmin && (
+                  <Badge variant="outline" className="ml-2 bg-red-50 text-red-700">
+                    Admin
+                  </Badge>
+                )}
               </CardTitle>
               <CardDescription>
-                出勤予定と勤務時間を管理します
+                {isAdmin ? 'メンバーの勤怠記録を管理・編集します' : '出勤予定と勤務時間を管理します'}
               </CardDescription>
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Admin用メンバー選択 */}
+              {isAdmin && allMembers.length > 0 && (
+                <Select value={selectedMemberId || ''} onValueChange={setSelectedMemberId}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="メンバーを選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name} ({member.department})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              
               {/* 月選択 */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -892,6 +954,20 @@ const AttendanceManager: React.FC = () => {
         </CardHeader>
 
         <CardContent>
+          {/* メンバー情報表示（admin用） */}
+          {isAdmin && selectedMemberId && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-600">
+                表示中: <span className="font-semibold text-gray-900">
+                  {allMembers.find(m => m.id === selectedMemberId)?.name || '不明なメンバー'}
+                </span>
+                <span className="ml-2 text-gray-500">
+                  ({allMembers.find(m => m.id === selectedMemberId)?.department || '不明な部署'})
+                </span>
+              </div>
+            </div>
+          )}
+          
           {/* 勤怠テーブル */}
           <div className="rounded-md border">
             <Table>
@@ -901,7 +977,7 @@ const AttendanceManager: React.FC = () => {
                   <TableHead>勤務形態</TableHead>
                   <TableHead>開始時刻</TableHead>
                   <TableHead>終了時刻</TableHead>
-                  <TableHead>労働時間</TableHead>
+                                        <TableHead>労働時間<br/><span className="text-xs text-gray-500">(休憩除く)</span></TableHead>
                   <TableHead>ステータス</TableHead>
                   <TableHead>操作</TableHead>
                 </TableRow>
@@ -926,6 +1002,11 @@ const AttendanceManager: React.FC = () => {
                       {record.work_hours ? (
                         <div>
                           <div className="text-sm font-medium">{record.work_hours}h</div>
+                          {record.break_time_minutes > 0 && (
+                            <div className="text-xs text-gray-500">
+                              休憩 {record.break_time_minutes}分
+                            </div>
+                          )}
                           {record.overtime_hours && record.overtime_hours > 0 && (
                             <div className="text-xs text-orange-600">
                               残業 {record.overtime_hours}h
@@ -937,16 +1018,17 @@ const AttendanceManager: React.FC = () => {
                     <TableCell>{getStatusBadge(record.status)}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(record)}
-                          disabled={record.status === 'present'}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                                                  <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(record)}
+                            disabled={false}
+                            title={isAdmin ? "管理者権限で編集可能" : "勤怠記録を編集"}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
                         
-                        {(isExecutive || record.member_id === currentMemberId) && (
+                        {(isAdmin || record.member_id === currentMemberId) && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button

@@ -129,6 +129,7 @@ const AdminCalendarOverview: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [dateRange, setDateRange] = useState<DateRange>('week');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
   
@@ -161,6 +162,13 @@ const AdminCalendarOverview: React.FC = () => {
       fetchMembers();
     }
   }, [isExecutive]);
+
+  useEffect(() => {
+    if (isExecutive) {
+      fetchCalendarData();
+      fetchAttendanceData();
+    }
+  }, [selectedMonth, dateRange, selectedDepartment, selectedMember, showPrivateEvents, isExecutive]);
 
   useEffect(() => {
     if (isExecutive && members.length > 0) {
@@ -543,8 +551,8 @@ const AdminCalendarOverview: React.FC = () => {
         };
       case 'month':
         return { 
-          startDate: startOfMonth(selectedDate), 
-          endDate: endOfMonth(selectedDate)
+          startDate: startOfMonth(selectedMonth), 
+          endDate: endOfMonth(selectedMonth)
         };
       case 'custom':
         return { 
@@ -1139,12 +1147,39 @@ const AdminCalendarOverview: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="today">今日</SelectItem>
                   <SelectItem value="week">今週</SelectItem>
-                  <SelectItem value="month">今月</SelectItem>
+                  <SelectItem value="month">指定月</SelectItem>
                   <SelectItem value="custom">カスタム</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          {/* 月選択 */}
+          {dateRange === 'month' && (
+            <div className="flex items-center space-x-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {format(selectedMonth, 'yyyy年MM月', { locale: ja })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={selectedMonth}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedMonth(date);
+                      }
+                    }}
+                    defaultMonth={selectedMonth}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
 
           {/* カスタム日付範囲 */}
           {dateRange === 'custom' && (
@@ -1237,10 +1272,10 @@ const AdminCalendarOverview: React.FC = () => {
                   {/* 月間カレンダー表示 */}
                   <div className="bg-white border rounded-lg p-4">
                     <h3 className="text-lg font-medium mb-4">
-                      {format(selectedDate, 'yyyy年MM月', { locale: ja })} カレンダー
+                      {format(dateRange === 'month' ? selectedMonth : selectedDate, 'yyyy年MM月', { locale: ja })} カレンダー
                     </h3>
-                    <MonthlyCalendarView 
-                      selectedDate={selectedDate}
+                                        <MonthlyCalendarView
+                      selectedDate={dateRange === 'month' ? selectedMonth : selectedDate}
                       membersData={filteredMembersData}
                     />
                   </div>

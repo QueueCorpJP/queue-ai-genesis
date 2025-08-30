@@ -484,6 +484,63 @@ const ExpenseManager: React.FC = () => {
     }
   };
 
+  // 人件費同期処理
+  const syncPersonnelCosts = async () => {
+    setIsLoading(true);
+    try {
+      // ユーザーIDの取得
+      let userId = user?.id;
+      
+      if (!userId || userId === '1') {
+        const { data: memberData } = await supabase
+          .from('members')
+          .select('id')
+          .eq('email', user?.email || 'queue@queue-tech.jp')
+          .eq('is_active', true)
+          .single();
+        
+        if (!memberData?.id) {
+          throw new Error('ユーザー情報が取得できません');
+        }
+        userId = memberData.id;
+      }
+
+      const { data, error } = await supabase.rpc('sync_personnel_costs_by_member', {
+        target_year_month: selectedMonth,
+        sync_user_id: userId,
+      });
+
+      if (error) throw error;
+
+      const result = data;
+      if (result.success) {
+        toast({
+          title: '成功',
+          description: `${result.synced_members}名のメンバー給与を個別同期しました。合計 ¥${Math.round(result.total_amount).toLocaleString()} (支払期限: ${result.month_end_date}) (新規:${result.created_entries}件、更新:${result.updated_entries}件)`,
+        });
+        
+        fetchExpenses();
+        fetchSummaries();
+        fetchOverview();
+      } else {
+        toast({
+          title: '情報',
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error syncing personnel costs:', error);
+      toast({
+        title: 'エラー',
+        description: '人件費の同期に失敗しました。',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // アクセス権限チェック
   if (!user?.role || !['executive', 'ceo', 'admin'].includes(user.role)) {
     return (
@@ -525,6 +582,10 @@ const ExpenseManager: React.FC = () => {
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="w-40"
           />
+          <Button onClick={syncPersonnelCosts} variant="outline" disabled={isLoading} className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+            <DollarSign className="h-4 w-4 mr-2" />
+            人件費同期（個別）
+          </Button>
           <Button onClick={copyRecurringExpenses} variant="outline" disabled={isLoading}>
             定期費用コピー
           </Button>
