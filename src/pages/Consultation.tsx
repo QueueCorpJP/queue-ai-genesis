@@ -105,9 +105,10 @@ const Consultation = () => {
           <Container>
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">無料相談予約</h1>
-              <p className="text-lg text-navy-100">
-                AIプロジェクトについてのご相談は無料で承ります。
-                お気軽にお問い合わせください。
+              <p className="text-lg text-navy-100 leading-relaxed">
+                「こういうアイディアがある」「こういうのやりたいけど実現できるかわからない」<br />
+                そんなお悩みをお持ちの方、Queueが相談にのり、<strong className="text-white">モックを作ってお見せします。</strong><br />
+                まずはお気軽にご相談ください。
               </p>
             </div>
           </Container>

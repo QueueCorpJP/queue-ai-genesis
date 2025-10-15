@@ -15,7 +15,36 @@ const ProductsSection: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
+          {/* App Exit Product */}
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div className="p-8">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl flex items-center justify-center mr-3">
+                  <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
+                    <div className="w-3 h-3 bg-emerald-700 rounded"></div>
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-navy-800">App Exit（アップエグジット）</h3>
+              </div>
+              <p className="font-medium text-navy-700 mb-3">開発者の努力を眠らせない。あなたのプロダクトに、次の経営者を。</p>
+              <p className="text-navy-600 mb-6">
+                個人・法人・開発チームが保有するアプリ・SaaS・AIツール・Webサービスを、<strong>安全・迅速・公正</strong>に売買できるプラットフォーム。<br />
+                Queue株式会社が運営する、日本初の<strong>"プロダクト流通インフラ"</strong>です。<br />
+                上場企業基準の安心で、マイクロM&Aをもっと身近に。
+              </p>
+              <Link to="/products">
+                <Button
+                  variant="outline"
+                  className="w-full border-navy-300 text-navy-800 hover:bg-navy-100"
+                >
+                  詳細を見る
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
           {/* Workmate Product (was AdGenome) */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
             <div className="p-8">
@@ -44,7 +73,6 @@ const ProductsSection: React.FC = () => {
               </a>
             </div>
           </div>
-
 
         </div>
       </div>
