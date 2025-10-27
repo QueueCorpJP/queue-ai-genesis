@@ -681,6 +681,31 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         table_of_contents: formData.table_of_contents || null,
         auto_generate_toc: formData.auto_generate_toc || false,
         toc_style: formData.toc_style || 'numbered',
+        // SEO関連フィールド
+        seo_title: formData.title?.substring(0, 60) || null,
+        meta_description: formData.summary?.substring(0, 160) || null,
+        meta_keywords: null,
+        slug: null, // 自動生成
+        canonical_url: null,
+        focus_keyword: null,
+        reading_time_minutes: null,
+        article_type: 'article',
+        author_name: 'Queue株式会社',
+        author_url: 'https://queue-tech.jp',
+        // Open Graph フィールド
+        og_title: formData.title?.substring(0, 95) || null,
+        og_description: formData.summary?.substring(0, 300) || null,
+        og_image: finalImageUrl || null,
+        og_type: 'article',
+        // Twitter Cards フィールド
+        twitter_title: formData.title?.substring(0, 70) || null,
+        twitter_description: formData.summary?.substring(0, 200) || null,
+        twitter_image: finalImageUrl || null,
+        twitter_card_type: 'summary_large_image',
+        // SEO管理フィールド
+        meta_robots: 'index, follow',
+        structured_data: null,
+        last_seo_update: now,
         status: formData.status,
         published_at: formData.status === 'published' ? now : null,
         updated_at: now,
