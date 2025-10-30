@@ -76,7 +76,7 @@ const WhyQueue = () => {
           <Container>
             <div className="max-w-4xl mx-auto text-center px-4">
               <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-navy-800">
-                ✅ Queueが選ばれる3つの理由
+                Queueが選ばれる3つの理由
               </h1>
               <p className="text-sm md:text-base text-navy-600 max-w-3xl mx-auto leading-relaxed">
                 既製APIやノーコードツールでは届かない\"リアルな現場課題\"を解決する、

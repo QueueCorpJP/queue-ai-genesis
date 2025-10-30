@@ -222,10 +222,10 @@ const AdminDashboard: React.FC = () => {
       }
 
       if (data) {
-        console.log('🏠 Member ID found:', data.id, 'for email:', user?.email);
+        console.log('Member ID found:', data.id, 'for email:', user?.email);
         setCurrentMemberId(data.id);
       } else {
-        console.log('🏠 No member found for email:', user?.email);
+        console.log('No member found for email:', user?.email);
       }
     } catch (error) {
       console.error('Error fetching member ID:', error);
@@ -234,9 +234,9 @@ const AdminDashboard: React.FC = () => {
 
   // 今日やることTodoを取得（期限が近い順）
   const fetchTodayTodos = async () => {
-    console.log('🏠 fetchTodayTodos called with currentMemberId:', currentMemberId, 'user:', user?.email);
+    console.log('fetchTodayTodos called with currentMemberId:', currentMemberId, 'user:', user?.email);
     if (!currentMemberId) {
-      console.log('🏠 No currentMemberId, skipping fetch');
+      console.log('No currentMemberId, skipping fetch');
       return;
     }
     
@@ -253,15 +253,15 @@ const AdminDashboard: React.FC = () => {
         .select('*');
 
       // 「今日やること」では役員も一般メンバーも自分のタスクのみを表示
-      console.log('🏠 Fetching personal todos for today:', currentMemberId);
+      console.log('Fetching personal todos for today:', currentMemberId);
       todosQuery = todosQuery.eq('member_id', currentMemberId).order('created_at', { ascending: false });
 
       const { data: todosData, error: todosError } = await todosQuery;
       
       if (todosError) throw todosError;
 
-      console.log('🏠 Dashboard Todos fetched:', todosData?.length || 0, 'todos');
-      console.log('🏠 Dashboard Query Details:', {
+      console.log('Dashboard Todos fetched:', todosData?.length || 0, 'todos');
+      console.log('Dashboard Query Details:', {
         isExecutive,
         currentMemberId,
         userEmail: user?.email,
@@ -283,15 +283,15 @@ const AdminDashboard: React.FC = () => {
         };
       });
 
-      console.log('🏠 All todos processed:', allTodos.length);
+      console.log('All todos processed:', allTodos.length);
 
       // 未完了のタスクのみを対象とする
       const incompleteTasks = allTodos.filter(todo => 
         todo.status !== 'completed' && todo.status !== 'cancelled'
       );
       
-      console.log('🏠 Incomplete tasks:', incompleteTasks.length, 'out of', allTodos.length);
-      console.log('🏠 First few incomplete tasks:', incompleteTasks.slice(0, 3).map(t => ({
+      console.log('Incomplete tasks:', incompleteTasks.length, 'out of', allTodos.length);
+      console.log('First few incomplete tasks:', incompleteTasks.slice(0, 3).map(t => ({
         id: t.id,
         title: t.title,
         status: t.status,
@@ -310,7 +310,7 @@ const AdminDashboard: React.FC = () => {
         return dateA.getTime() - dateB.getTime();
       });
       
-      console.log('🏠 Sorted tasks (first 3):', sortedTasks.slice(0, 3).map(t => ({
+      console.log('Sorted tasks (first 3):', sortedTasks.slice(0, 3).map(t => ({
         title: t.title,
         due_date: t.due_date,
         days_until: t.days_until_due
@@ -322,8 +322,8 @@ const AdminDashboard: React.FC = () => {
       // 自分のタスクのみなので、メンバー情報の取得は不要
       const formattedTodos = topTasks;
       
-      console.log('🏠 Final today todos:', formattedTodos.length, 'tasks');
-      console.log('🏠 Today todos details:', formattedTodos.map(t => ({
+      console.log('Final today todos:', formattedTodos.length, 'tasks');
+      console.log('Today todos details:', formattedTodos.map(t => ({
         title: t.title,
         due_date: t.due_date,
         days_until_due: t.days_until_due,
@@ -332,7 +332,7 @@ const AdminDashboard: React.FC = () => {
       
       setTodayTodos(formattedTodos);
     } catch (error) {
-      console.error('🏠 Error fetching today todos:', error);
+      console.error('Error fetching today todos:', error);
       setTodayTodos([]);
     } finally {
       setTodosLoading(false);

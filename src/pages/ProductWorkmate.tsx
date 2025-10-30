@@ -53,12 +53,12 @@ const ProductWorkmate = () => {
             {/* Employee Benefits */}
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-navy-800 flex items-center">
-                <span className="text-3xl mr-2">👤</span> 従業員にとってのメリット
+                従業員にとってのメリット
               </h2>
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="p-8 space-y-6">
                   <div className="flex">
-                    <span className="text-2xl mr-3">💬</span>
+                    
                     <div>
                       <h3 className="font-bold text-navy-800 mb-2">Slack/チャットで即座に回答</h3>
                       <p className="text-navy-600">普段使っているSlackやチャットツールで質問するだけで、すぐに答えが返ってくる。</p>
@@ -74,7 +74,6 @@ const ProductWorkmate = () => {
                   </div>
 
                   <div className="flex">
-                    <span className="text-2xl mr-3">⚡</span>
                     <div>
                       <h3 className="font-bold text-navy-800 mb-2">業務効率が大幅に向上</h3>
                       <p className="text-navy-600">「これってどうなってたっけ？」の時間が激減。本来の業務に集中できる。</p>
@@ -121,7 +120,7 @@ const ProductWorkmate = () => {
             {/* Conclusion */}
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-navy-800 flex items-center">
-                <span className="text-3xl mr-2">🔄</span> すべての従業員と企業にとって"得"がある問い合わせ体験へ
+                すべての従業員と企業にとって"得"がある問い合わせ体験へ
               </h2>
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="p-8">

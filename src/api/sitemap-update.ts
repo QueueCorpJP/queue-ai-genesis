@@ -119,7 +119,7 @@ export const saveSitemapFiles = async (): Promise<{
   articleCount?: number;
 }> => {
   try {
-    console.log('🚀 自動サイトマップファイル更新開始...');
+    console.log('自動サイトマップファイル更新開始...');
 
     // 公開済み記事を取得
     const { data: articles, error } = await supabase
@@ -129,7 +129,7 @@ export const saveSitemapFiles = async (): Promise<{
       .order('published_at', { ascending: false });
 
     if (error) {
-      console.error('❌ 記事取得エラー:', error);
+      console.error('記事取得エラー:', error);
       return {
         success: false,
         message: `記事取得エラー: ${error.message}`
@@ -137,7 +137,7 @@ export const saveSitemapFiles = async (): Promise<{
     }
 
     const publishedArticles = articles || [];
-    console.log(`📰 公開記事数: ${publishedArticles.length}件`);
+    console.log(`公開記事数: ${publishedArticles.length}件`);
 
     // サイトマップXML生成
     const sitemapXml = generateSitemapXML(publishedArticles);
@@ -157,9 +157,9 @@ export const saveSitemapFiles = async (): Promise<{
     fs.writeFileSync(sitemapPath, sitemapXml, 'utf-8');
     fs.writeFileSync(newsSitemapPath, newsSitemapXml, 'utf-8');
 
-    const message = `✅ サイトマップファイルを自動更新しました（${publishedArticles.length}記事）`;
+    const message = `サイトマップファイルを自動更新しました（${publishedArticles.length}記事）`;
     console.log(message);
-    console.log(`📄 更新ファイル:`);
+    console.log(`更新ファイル:`);
     console.log(`  - ${sitemapPath}`);
     console.log(`  - ${newsSitemapPath}`);
 
@@ -170,7 +170,7 @@ export const saveSitemapFiles = async (): Promise<{
     };
 
   } catch (error) {
-    console.error('❌ サイトマップファイル保存エラー:', error);
+    console.error('サイトマップファイル保存エラー:', error);
     return {
       success: false,
       message: `ファイル保存エラー: ${error instanceof Error ? error.message : 'Unknown error'}`

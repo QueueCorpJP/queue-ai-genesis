@@ -252,7 +252,7 @@ Queueの"即体感デモ"は、「まだ検討中」を「もう任せたい」�
         
         // Add consultation link for relevant questions
         if (shouldIncludeConsultationLink) {
-          botResponse += "\n\n📞 **詳しくご相談されたい場合は、こちらから無料相談をご予約ください：**\nhttps://queue-tech.jp/consultation\n\n💬 **お問い合わせはこちら：**\nhttps://queue-tech.jp/contact";
+          botResponse += "\n\n**詳しくご相談されたい場合は、こちらから無料相談をご予約ください：**\nhttps://queue-tech.jp/consultation\n\n**お問い合わせはこちら：**\nhttps://queue-tech.jp/contact";
         }
         
         const botMessage: Message = {

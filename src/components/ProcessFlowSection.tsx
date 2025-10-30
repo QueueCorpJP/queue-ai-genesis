@@ -46,7 +46,7 @@ const ProcessFlowSection: React.FC = () => {
       <div className="container mx-auto relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">
-            ✅ ご依頼から開発までの流れ
+            ご依頼から開発までの流れ
           </h2>
         </div>
 
@@ -84,7 +84,7 @@ const ProcessFlowSection: React.FC = () => {
 
         <div className="mt-10 sm:mt-16 text-center bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-navy-100 max-w-3xl mx-auto">
           <h3 className="text-xl sm:text-2xl font-bold text-navy-800 mb-3 sm:mb-4">
-            ✅ 最後に一言
+            最後に一言
           </h3>
           <p className="text-navy-600 text-base sm:text-lg leading-relaxed mb-5 sm:mb-6 px-1">
             Queueは「スピード感」と「伴走」を大切にしています。<span className="hidden sm:inline"><br /></span>

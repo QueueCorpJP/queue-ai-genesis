@@ -117,7 +117,7 @@ const Services = () => {
           <Container>
             <div className="max-w-4xl mx-auto text-center px-4">
               <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-navy-800">
-                🛠️ Queue株式会社のサービス
+                Queue株式会社のサービス
               </h1>
               <p className="text-sm md:text-base text-navy-600 max-w-3xl mx-auto leading-relaxed">
                 Queueは、Web開発からAI活用まで幅広い技術領域でクライアントのビジネス成長を支援するテクノロジーパートナーです。
@@ -171,7 +171,7 @@ const Services = () => {
           <Container>
             <div className="max-w-4xl mx-auto px-4">
               <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-navy-800">
-                ✨ 一貫対応で提供する価値
+                一貫対応で提供する価値
               </h2>
               
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">

@@ -40,7 +40,7 @@ export const updateSitemaps = async (): Promise<{
     const sitemapXml = await generateSitemap(articles || []);
     const newsSitemapXml = await generateNewsSitemap(articles || []);
 
-    console.log('✅ サイトマップを更新しました:', {
+    console.log('サイトマップを更新しました:', {
       総記事数: articles?.length || 0,
       公開記事数: articles?.filter(a => a.published_at).length || 0
     });
@@ -66,17 +66,17 @@ export const updateSitemaps = async (): Promise<{
  */
 export const onArticlePublished = async (articleId: string): Promise<void> => {
   try {
-    console.log(`📝 記事公開検知: ${articleId} - サイトマップを更新中...`);
+    console.log(`記事公開検知: ${articleId} - サイトマップを更新中...`);
     
     const result = await updateSitemaps();
     
     if (result.success) {
-      console.log('✅ サイトマップ自動更新完了:', result.message);
+      console.log('サイトマップ自動更新完了:', result.message);
       
       // Webhook or external API call for search engines (optional)
       await notifySearchEngines();
     } else {
-      console.error('❌ サイトマップ自動更新失敗:', result.message);
+      console.error('サイトマップ自動更新失敗:', result.message);
     }
   } catch (error) {
     console.error('Error in onArticlePublished:', error);
@@ -97,9 +97,9 @@ const notifySearchEngines = async (): Promise<void> => {
     // Bing Webmaster Tools への ping（実際のAPIキーが必要）
     // const bingResponse = await fetch(`https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`);
     
-    console.log('🔔 検索エンジンに更新通知送信済み');
+    console.log('検索エンジンに更新通知送信済み');
   } catch (error) {
-    console.log('⚠️ 検索エンジン通知はスキップしました:', error);
+    console.log('検索エンジン通知はスキップしました:', error);
   }
 };
 

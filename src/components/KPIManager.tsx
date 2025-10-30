@@ -1438,12 +1438,12 @@ const KPIManager: React.FC = () => {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="count">🔢 数量</SelectItem>
-                                  <SelectItem value="amount">💰 金額</SelectItem>
-                                  <SelectItem value="percentage">📊 割合</SelectItem>
-                                  <SelectItem value="ratio">⚖️ 比率</SelectItem>
-                                  <SelectItem value="time">⏰ 時間</SelectItem>
-                                  <SelectItem value="score">🏆 スコア</SelectItem>
+                                  <SelectItem value="count">数量</SelectItem>
+                                  <SelectItem value="amount">金額</SelectItem>
+                                  <SelectItem value="percentage">割合</SelectItem>
+                                  <SelectItem value="ratio">比率</SelectItem>
+                                  <SelectItem value="time">時間</SelectItem>
+                                  <SelectItem value="score">スコア</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -3098,7 +3098,7 @@ const KPIManager: React.FC = () => {
                           ) : prediction.required_monthly_rate > prediction.monthly_progress_rate ? (
                             <div className="bg-red-50 p-3 rounded-lg">
                               <p className="text-red-800 font-semibold">
-                                ⚠️ 進捗加速が必要
+                                進捗加速が必要
                               </p>
                               <p className="text-red-600 text-sm mt-1">
                                 月次進捗率を{(prediction.required_monthly_rate - prediction.monthly_progress_rate).toFixed(1)}%向上させる必要があります
@@ -3107,7 +3107,7 @@ const KPIManager: React.FC = () => {
                           ) : prediction.on_track ? (
                             <div className="bg-green-50 p-3 rounded-lg">
                               <p className="text-green-800 font-semibold">
-                                ✅ 順調に進捗中
+                                順調に進捗中
                               </p>
                               <p className="text-green-600 text-sm mt-1">
                                 現在のペースで目標達成可能です
@@ -3116,7 +3116,7 @@ const KPIManager: React.FC = () => {
                           ) : (
                             <div className="bg-yellow-50 p-3 rounded-lg">
                               <p className="text-yellow-800 font-semibold">
-                                ⚠️ 注意が必要
+                                注意が必要
                               </p>
                               <p className="text-yellow-600 text-sm mt-1">
                                 進捗状況の監視と改善策の検討が推奨されます

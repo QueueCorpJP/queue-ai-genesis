@@ -181,7 +181,7 @@ const NewsManager: React.FC = () => {
         )
       );
 
-      // 🚀 自動サイトマップ更新
+      // 自動サイトマップ更新
       if (newStatus === 'published') {
         // 記事公開時
         await onArticlePublished(id, articleTitle);

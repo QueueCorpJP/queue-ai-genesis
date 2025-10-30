@@ -124,7 +124,7 @@ const AdminLogin: React.FC = () => {
               </div>
               {errors.email && (
                 <p className="text-red-500 text-sm flex items-center mt-1">
-                  <span className="w-4 h-4 text-red-500 mr-1">⚠</span>
+                  <span className="w-4 h-4 text-red-500 mr-1"></span>
                   {errors.email}
                 </p>
               )}
@@ -149,7 +149,7 @@ const AdminLogin: React.FC = () => {
               </div>
               {errors.password && (
                 <p className="text-red-500 text-sm flex items-center mt-1">
-                  <span className="w-4 h-4 text-red-500 mr-1">⚠</span>
+                  <span className="w-4 h-4 text-red-500 mr-1"></span>
                   {errors.password}
                 </p>
               )}

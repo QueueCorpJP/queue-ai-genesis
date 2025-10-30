@@ -371,7 +371,7 @@ const CTAAnalytics: React.FC = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">🎯 最適化のヒント</h4>
+                <h4 className="font-semibold text-blue-900 mb-2">最適化のヒント</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• クリック率5%以上が優秀とされています</li>
                   <li>• クリック率2%未満の記事はCTA配置を見直しましょう</li>
@@ -379,7 +379,7 @@ const CTAAnalytics: React.FC = () => {
                 </ul>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-green-900 mb-2">📊 統計の活用法</h4>
+                <h4 className="font-semibold text-green-900 mb-2">統計の活用法</h4>
                 <ul className="text-sm text-green-800 space-y-1">
                   <li>• 高いクリック率の記事パターンを分析</li>
                   <li>• 時期や内容による変動を確認</li>

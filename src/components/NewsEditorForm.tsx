@@ -250,7 +250,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     const quill = quillRef.current?.getEditor();
     if (quill) {
       const range = quill.getSelection(true);
-      const link = '<a href="/consultation" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; margin: 16px 0; transition: all 0.3s ease;"><span style="margin-right: 8px;">💬</span>無料相談を申し込む</a>';
+      const link = '<a href="/consultation" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; margin: 16px 0; transition: all 0.3s ease;">無料相談を申し込む</a>';
       quill.clipboard.dangerouslyPasteHTML(range.index, link);
       quill.setSelection(range.index + link.length);
     }
@@ -325,9 +325,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
   //           </tr>
   //           <tr style="background-color: #f0f9ff;">
   //             <td style="border: 1px solid #e2e8f0; padding: 12px; font-weight: 600;">おすすめ度</td>
-  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐</td>
-  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐⭐</td>
-  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">⭐⭐⭐⭐</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">★★★</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">★★★★★</td>
+  //             <td style="border: 1px solid #e2e8f0; padding: 12px; text-align: center;">★★★★</td>
   //           </tr>
   //         </tbody>
   //       </table>
@@ -555,19 +555,19 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     style.id = 'custom-quill-styles';
     style.textContent = `
       .ql-table::before {
-        content: "📊";
+        content: "";
         font-size: 14px;
       }
       .ql-comparison-table::before {
-        content: "⚖️";
+        content: "";
         font-size: 14px;
       }
       .ql-spec-table::before {
-        content: "📋";
+        content: "";
         font-size: 14px;
       }
       .ql-consultation-link::before {
-        content: "💬";
+        content: "";
         font-size: 14px;
       }
       .ql-undo::before {
@@ -629,7 +629,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
       if (toolbarContainer && !document.querySelector('.ql-consultation-link')) {
         const customButton = document.createElement('button');
         customButton.className = 'ql-consultation-link';
-        customButton.innerHTML = '💬';
+        customButton.innerHTML = '';
         customButton.title = '無料相談リンクを挿入';
         customButton.type = 'button';
         customButton.style.background = '#3b82f6';
@@ -1041,12 +1041,12 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           <div className="bg-amber-50 border-b px-4 py-2 text-sm text-amber-800">
             <div className="flex items-center space-x-2 flex-wrap gap-y-1">
               <MessageCircle className="h-4 w-4" />
-              <span className="flex-1">💬ボタンで無料相談リンクを挿入</span>
+              <span className="flex-1">ボタンで無料相談リンクを挿入</span>
             </div>
             <div className="mt-1 text-xs text-amber-700 flex flex-wrap gap-x-4 gap-y-1">
-              <span>📊基本テーブル</span>
-              <span>⚖️比較表テンプレート</span> 
-              <span>📋仕様表テンプレート</span>
+              <span>基本テーブル</span>
+              <span>比較表テンプレート</span> 
+              <span>仕様表テンプレート</span>
               <span>↶↷元に戻す/やり直し</span>
             </div>
           </div>

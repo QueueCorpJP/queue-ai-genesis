@@ -267,7 +267,7 @@ const ExpenseManager: React.FC = () => {
         
         if (memberData?.id) {
           userId = memberData.id;
-          console.log('💰 Retrieved user ID from database:', userId);
+          console.log('Retrieved user ID from database:', userId);
         } else {
           toast({
             title: 'エラー',
@@ -277,7 +277,7 @@ const ExpenseManager: React.FC = () => {
           return;
         }
       } catch (error) {
-        console.error('💰 Failed to get user ID:', error);
+        console.error('Failed to get user ID:', error);
         toast({
           title: 'エラー',
           description: 'ユーザー情報の取得に失敗しました。再ログインしてください。',
@@ -350,7 +350,7 @@ const ExpenseManager: React.FC = () => {
         updated_by: userId,
       };
 
-      console.log('💰 Saving expense data:', expenseData);
+      console.log('Saving expense data:', expenseData);
 
       let result;
       if (editingExpense) {
@@ -370,11 +370,11 @@ const ExpenseManager: React.FC = () => {
       }
 
       if (result.error) {
-        console.error('💰 Database error:', result.error);
+        console.error('Database error:', result.error);
         throw result.error;
       }
 
-      console.log('💰 Save successful:', result.data);
+      console.log('Save successful:', result.data);
 
       toast({
         title: '成功',
@@ -387,7 +387,7 @@ const ExpenseManager: React.FC = () => {
       fetchSummaries();
       fetchOverview();
     } catch (error: any) {
-      console.error('💰 Error saving expense:', error);
+      console.error('Error saving expense:', error);
       
       let errorMessage = '販管費の保存に失敗しました。';
       

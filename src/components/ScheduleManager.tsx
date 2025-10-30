@@ -181,18 +181,18 @@ const ScheduleManager: React.FC = () => {
 
   const fetchSchedules = async () => {
     if (!currentMemberId) {
-      console.log('📅 No current member ID, skipping schedule fetch');
+      console.log('No current member ID, skipping schedule fetch');
       return;
     }
     
-    console.log('📅 Fetching schedules for member:', currentMemberId);
+    console.log('Fetching schedules for member:', currentMemberId);
     
     setLoading(true);
     try {
       const monthStart = startOfMonth(selectedMonth);
       const monthEnd = endOfMonth(selectedMonth);
       
-      console.log('📅 Date range:', format(monthStart, 'yyyy-MM-dd'), 'to', format(monthEnd, 'yyyy-MM-dd'));
+      console.log('Date range:', format(monthStart, 'yyyy-MM-dd'), 'to', format(monthEnd, 'yyyy-MM-dd'));
       
       // 管理者クライアントを優先して使用し、認証エラーを回避
       const adminClient = getSupabaseAdmin();
@@ -207,14 +207,14 @@ const ScheduleManager: React.FC = () => {
         .order('start_date', { ascending: true });
 
       if (error) {
-        console.error('📅 Error fetching schedules:', error);
+        console.error('Error fetching schedules:', error);
         throw error;
       }
       
-      console.log('📅 Schedules fetched:', data?.length || 0, 'items');
+      console.log('Schedules fetched:', data?.length || 0, 'items');
       setSchedules(data || []);
     } catch (error) {
-      console.error('📅 Error fetching schedules:', error);
+      console.error('Error fetching schedules:', error);
       toast.error('スケジュールの取得に失敗しました');
       setSchedules([]);
     } finally {
@@ -236,10 +236,10 @@ const ScheduleManager: React.FC = () => {
 
       if (error) throw error;
       
-      console.log('📅 Upcoming events fetched:', data?.length || 0, 'items');
+      console.log('Upcoming events fetched:', data?.length || 0, 'items');
       setUpcomingEvents(data || []);
     } catch (error) {
-      console.error('📅 Error fetching upcoming events:', error);
+      console.error('Error fetching upcoming events:', error);
       toast.error('今後の予定の取得に失敗しました');
       setUpcomingEvents([]);
     }
@@ -264,10 +264,10 @@ const ScheduleManager: React.FC = () => {
   };
 
   const handleCreateSchedule = async () => {
-    console.log('📅 Creating schedule - Member ID:', currentMemberId, 'Is Executive:', isExecutive);
+    console.log('Creating schedule - Member ID:', currentMemberId, 'Is Executive:', isExecutive);
     
     if (!currentMemberId || !isExecutive) {
-      console.log('📅 Permission denied - Missing member ID or not executive');
+      console.log('Permission denied - Missing member ID or not executive');
       toast.error('スケジュールの作成権限がありません');
       return;
     }
@@ -290,15 +290,15 @@ const ScheduleManager: React.FC = () => {
         created_by: currentMemberId
       };
 
-      console.log('📅 Schedule data to insert:', scheduleData);
+      console.log('Schedule data to insert:', scheduleData);
 
       // 管理者クライアントを使用してRLSをバイパス
       const adminClient = getSupabaseAdmin();
-      console.log('📅 Admin client status:', adminClient ? 'Available' : 'Not available');
+      console.log('Admin client status:', adminClient ? 'Available' : 'Not available');
       
       if (!adminClient) {
-        console.warn('📅 Admin client not available, using regular client');
-        console.log('📅 Note: Set VITE_SUPABASE_SERVICE_ROLE_KEY in environment variables for admin access');
+        console.warn('Admin client not available, using regular client');
+        console.log('Note: Set VITE_SUPABASE_SERVICE_ROLE_KEY in environment variables for admin access');
       }
       
       const client = adminClient || supabase;
@@ -309,11 +309,11 @@ const ScheduleManager: React.FC = () => {
         .single();
 
       if (error) {
-        console.error('📅 Insert error:', error);
+        console.error('Insert error:', error);
         throw error;
       }
 
-      console.log('📅 Schedule created successfully:', insertedData);
+      console.log('Schedule created successfully:', insertedData);
       
       // 作成したスケジュールを即座にローカル状態に追加
       if (insertedData) {
@@ -328,14 +328,14 @@ const ScheduleManager: React.FC = () => {
       setTimeout(async () => {
         try {
           await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
-          console.log('📅 Data refreshed after schedule creation');
+          console.log('Data refreshed after schedule creation');
         } catch (refreshError) {
-          console.error('📅 Error refreshing data after creation:', refreshError);
+          console.error('Error refreshing data after creation:', refreshError);
         }
       }, 100);
       
     } catch (error) {
-      console.error('📅 Error creating schedule:', error);
+      console.error('Error creating schedule:', error);
       toast.error('スケジュールの作成に失敗しました');
     } finally {
       setLoading(false);
@@ -363,7 +363,7 @@ const ScheduleManager: React.FC = () => {
         updated_at: new Date().toISOString()
       };
 
-      console.log('📅 Updating schedule:', editingSchedule.id, scheduleData);
+      console.log('Updating schedule:', editingSchedule.id, scheduleData);
 
       // 管理者クライアントを使用してRLSをバイパス
       const adminClient = getSupabaseAdmin();
@@ -378,7 +378,7 @@ const ScheduleManager: React.FC = () => {
 
       if (error) throw error;
 
-      console.log('📅 Schedule updated successfully:', updatedData);
+      console.log('Schedule updated successfully:', updatedData);
       
       // 更新したスケジュールを即座にローカル状態に反映
       if (updatedData) {
@@ -397,14 +397,14 @@ const ScheduleManager: React.FC = () => {
       setTimeout(async () => {
         try {
           await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
-          console.log('📅 Data refreshed after schedule update');
+          console.log('Data refreshed after schedule update');
         } catch (refreshError) {
-          console.error('📅 Error refreshing data after update:', refreshError);
+          console.error('Error refreshing data after update:', refreshError);
         }
       }, 100);
       
     } catch (error) {
-      console.error('📅 Error updating schedule:', error);
+      console.error('Error updating schedule:', error);
       toast.error('スケジュールの更新に失敗しました');
     } finally {
       setLoading(false);
@@ -437,7 +437,7 @@ const ScheduleManager: React.FC = () => {
 
     setLoading(true);
     try {
-      console.log('📅 Deleting schedule:', scheduleId);
+      console.log('Deleting schedule:', scheduleId);
       
       // 管理者クライアントを使用してRLSをバイパス
       const adminClient = getSupabaseAdmin();
@@ -450,7 +450,7 @@ const ScheduleManager: React.FC = () => {
 
       if (error) throw error;
 
-      console.log('📅 Schedule deleted successfully');
+      console.log('Schedule deleted successfully');
       
       // 削除したスケジュールを即座にローカル状態から除去
       setSchedules(prevSchedules => 
@@ -463,14 +463,14 @@ const ScheduleManager: React.FC = () => {
       setTimeout(async () => {
         try {
           await Promise.all([fetchSchedules(), fetchUpcomingEvents()]);
-          console.log('📅 Data refreshed after schedule deletion');
+          console.log('Data refreshed after schedule deletion');
         } catch (refreshError) {
-          console.error('📅 Error refreshing data after deletion:', refreshError);
+          console.error('Error refreshing data after deletion:', refreshError);
         }
       }, 100);
       
     } catch (error) {
-      console.error('📅 Error deleting schedule:', error);
+      console.error('Error deleting schedule:', error);
       toast.error('スケジュールの削除に失敗しました');
     } finally {
       setLoading(false);

@@ -253,7 +253,7 @@ const Blog: React.FC = () => {
                           {/* ブログタグ */}
                           <div className="absolute top-2 right-2 z-10">
                             <Badge className="bg-navy-600 text-white text-xs px-2 py-1 shadow-sm">
-                              📝 ブログ
+                              ブログ
                             </Badge>
                           </div>
 

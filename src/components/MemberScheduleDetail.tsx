@@ -298,7 +298,7 @@ const MemberScheduleDetail: React.FC<MemberScheduleDetailProps> = ({ memberId, m
     const totalOvertimeHours = workingRecords.reduce((sum, r) => sum + r.overtime_hours, 0);
     const avgWorkHours = workingRecords.length > 0 ? totalWorkHours / workingRecords.length : 0;
 
-    console.log('📊 統計計算詳細:', {
+    console.log('統計計算詳細:', {
       totalRecords: attendanceRecords.length,
       workingRecords: workingRecords.length,
       presentRecords: presentRecords.length,

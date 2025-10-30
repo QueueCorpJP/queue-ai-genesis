@@ -117,11 +117,11 @@ const MemoManager: React.FC = () => {
   // メモ取得
   const fetchMemos = useCallback(async () => {
     if (!user?.id) {
-      console.log('📝 User ID not available for memo fetch');
+      console.log('User ID not available for memo fetch');
       return;
     }
 
-    console.log('📝 Fetching memos for user:', user.id);
+    console.log('Fetching memos for user:', user.id);
     setIsLoading(true);
     try {
       // まずテーブルの存在を確認するためのクエリ
@@ -133,7 +133,7 @@ const MemoManager: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('📝 Supabase error details:', {
+        console.error('Supabase error details:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
@@ -143,9 +143,9 @@ const MemoManager: React.FC = () => {
       }
       
       setMemos(data || []);
-      console.log('📝 Memos fetched successfully:', data?.length || 0);
+      console.log('Memos fetched successfully:', data?.length || 0);
     } catch (error: any) {
-      console.error('📝 Error fetching memos:', error);
+      console.error('Error fetching memos:', error);
       
       // テーブルが存在しない場合の具体的なエラーメッセージ
       if (error.code === '42P01' || error.message?.includes('does not exist')) {
@@ -180,7 +180,7 @@ const MemoManager: React.FC = () => {
     if (!user?.id) return;
 
     try {
-      console.log('📊 Calculating memo stats for user:', user.id);
+      console.log('Calculating memo stats for user:', user.id);
       
       // 基本的なメモデータを取得
       const { data: memosData, error: memosError } = await supabase
@@ -230,11 +230,11 @@ const MemoManager: React.FC = () => {
         recent_activity
       };
 
-      console.log('📊 Memo stats calculated:', calculatedStats);
+      console.log('Memo stats calculated:', calculatedStats);
       setStats(calculatedStats);
       
     } catch (error) {
-      console.error('📝 Error calculating memo stats:', error);
+      console.error('Error calculating memo stats:', error);
       // エラーの場合はデフォルト値を設定
       setStats({
         total_memos: 0,
@@ -357,7 +357,7 @@ const MemoManager: React.FC = () => {
         .insert(memoData);
 
       if (error) {
-        console.error('📝 Create memo error details:', {
+        console.error('Create memo error details:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
@@ -375,7 +375,7 @@ const MemoManager: React.FC = () => {
       resetForm();
       await Promise.all([fetchMemos(), fetchStats()]);
     } catch (error) {
-      console.error('📝 Error creating memo:', error);
+      console.error('Error creating memo:', error);
       toast({
         title: 'エラー',
         description: 'メモの作成に失敗しました。',
@@ -426,7 +426,7 @@ const MemoManager: React.FC = () => {
       resetForm();
       await Promise.all([fetchMemos(), fetchStats()]);
     } catch (error) {
-      console.error('📝 Error updating memo:', error);
+      console.error('Error updating memo:', error);
       toast({
         title: 'エラー',
         description: 'メモの更新に失敗しました。',
@@ -454,7 +454,7 @@ const MemoManager: React.FC = () => {
 
       await Promise.all([fetchMemos(), fetchStats()]);
     } catch (error) {
-      console.error('📝 Error deleting memo:', error);
+      console.error('Error deleting memo:', error);
       toast({
         title: 'エラー',
         description: 'メモの削除に失敗しました。',
@@ -475,7 +475,7 @@ const MemoManager: React.FC = () => {
 
       await Promise.all([fetchMemos(), fetchStats()]);
     } catch (error) {
-      console.error('📝 Error toggling favorite:', error);
+      console.error('Error toggling favorite:', error);
       toast({
         title: 'エラー',
         description: 'お気に入りの更新に失敗しました。',

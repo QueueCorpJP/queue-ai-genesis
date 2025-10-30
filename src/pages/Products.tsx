@@ -90,7 +90,7 @@ const Products = () => {
                   {/* 背景 */}
                   <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg mb-6">
                     <h3 className="font-bold text-navy-800 mb-2 flex items-center">
-                      <span className="text-amber-600 mr-2">🎯</span>背景
+                      背景
                     </h3>
                     <ul className="space-y-2 text-sm text-navy-600">
                       <li>• 毎年数千件のプロダクトが、運用リソース不足や採算割れで閉鎖</li>
@@ -103,7 +103,7 @@ const Products = () => {
                   {/* 仕組み（プロセス） */}
                   <div className="bg-emerald-50 p-6 rounded-lg mb-6">
                     <h3 className="font-bold text-navy-800 mb-4 flex items-center">
-                      <span className="text-emerald-600 mr-2">⚙️</span>仕組み（プロセス）
+                      仕組み（プロセス）
                     </h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-start">
@@ -137,7 +137,7 @@ const Products = () => {
                   {/* 主なユーザー層 */}
                   <div className="bg-navy-50 p-6 rounded-lg mb-6">
                     <h3 className="font-bold text-navy-800 mb-4 flex items-center">
-                      <span className="mr-2">👥</span>主なユーザー層
+                      主なユーザー層
                     </h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-start">
@@ -174,7 +174,7 @@ const Products = () => {
                   {/* 安全・透明な取引設計 */}
                   <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-8">
                     <h3 className="font-bold text-navy-800 mb-4 flex items-center">
-                      <span className="text-blue-600 mr-2">🛡️</span>安全・透明な取引設計
+                      安全・透明な取引設計
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2 text-sm">
@@ -214,7 +214,7 @@ const Products = () => {
                   {/* メッセージ */}
                   <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-2 border-emerald-300 p-6 rounded-xl mb-8 text-center">
                     <h3 className="font-bold text-emerald-800 mb-3 flex items-center justify-center">
-                      <span className="mr-2">✨</span>メッセージ
+                      メッセージ
                     </h3>
                     <p className="text-navy-700 leading-relaxed">
                       <span className="block font-semibold text-emerald-700 text-lg mb-2">開発者の努力を眠らせない。</span>

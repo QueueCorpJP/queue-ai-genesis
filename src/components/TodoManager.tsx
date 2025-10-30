@@ -289,7 +289,7 @@ const TodoManager: React.FC = () => {
 
       const { data: todosData, error: todosError } = await todosQuery;
       
-      console.log('📝 Todo Query Details:', {
+      console.log('Todo Query Details:', {
         isExecutive,
         viewMode,
         selectedMemberId,
@@ -300,11 +300,11 @@ const TodoManager: React.FC = () => {
       });
       
       if (todosError) {
-        console.error('📝 Todo Query Error:', todosError);
+        console.error('Todo Query Error:', todosError);
         throw todosError;
       }
 
-      console.log('📝 Raw Todos Data:', todosData);
+      console.log('Raw Todos Data:', todosData);
       console.log('Todos fetched:', todosData?.length || 0, 'todos');
 
       // メンバー情報を取得（役員または全体表示の場合）
@@ -1019,7 +1019,7 @@ const TodoManager: React.FC = () => {
               </div>
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-500">
-                  💡 期限が近い順に表示されています。完了したタスクは自動的にリストから除外されます。
+                  期限が近い順に表示されています。完了したタスクは自動的にリストから除外されます。
                 </p>
               </div>
             </div>

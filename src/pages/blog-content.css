@@ -390,7 +390,7 @@
 }
 
 .blog-content a[href="/consultation"]:before {
-  content: "💬 ";
+  content: "";
   margin-right: 8px;
 }
 

@@ -33,23 +33,24 @@ const CaseStudies: React.FC = () => {
       commentAuthor: "プラットフォーム事業責任者"
     },
     {
-      industry: "航空業界",
-      title: "設備点検の自動化＋OCRによる書類処理AI",
-      client: "航空機整備会社（国内大手）",
+      industry: "Web広告・マーケティング",
+      title: "AIエージェントを用いたブログ投稿自動化システム開発",
+      client: "Web広告・マーケティング会社",
+      videoUrl: "https://youtu.be/TRTCCWa2QZ0",
       technology: [
-        "現場業務AIエージェント（音声入力→自動記録）",
-        "OCR＋NLPによる帳票の構造化",
-        "保守記録の自動分類AI"
+        "AIエージェント開発（自動ブログ記事作成・投稿）",
+        "マルチプラットフォーム対応開発（WordPress/その他CMS/カスタムサイト）",
+        "任意のコードベース・フレームワークに対応する柔軟な開発"
       ],
-      challenge: "日々の点検報告書の手書き・転記作業が非効率で、人的ミスや確認遅れが安全性リスクに直結していた。",
-      solution: "・整備士がスマホに話しかけるだけで、点検記録をAIが即座に構造化・登録。\n・過去のPDF・紙帳票をOCRで読み取り、自動でデータベース化。報告漏れや点検抜けの検出にも活用。",
+      challenge: "Web広告・マーケティング会社が複数のクライアントサイトを運用する中で、WordPressだけでなく様々なカスタムサイトにも対応できるブログ投稿自動化システムが必要だった。既存のツールはWordPress専用が多く、カスタムサイトに対応できる唯一無二の開発パートナーを探していた。",
+      solution: "・Queue株式会社がAIエージェントを活用した自動ブログ投稿システムをゼロから開発。\n・WordPressのみならず、React、Vue、Next.js、独自CMSなど、どのコードベースのウェブサイトにも対応できる唯一無二のソリューションを実現。\n・クライアントの様々なサイト構造に対応し、API連携やクローリング技術を活用した効率的なコンテンツ運用を実現。",
       results: [
-        "点検報告作成時間を80%短縮",
-        "転記ミス・確認漏れの件数がゼロに",
-        "定期点検の遅延がほぼ解消"
+        "ブログ投稿作業時間を90%以上削減",
+        "複数サイトへの一括投稿を完全自動化",
+        "WordPress以外のカスタムサイトにも100%対応"
       ],
-      comment: "Queue社のAI導入により、整備現場のオペレーションは根本から変わりました。現場スタッフの定着率にも良い影響が出ています。",
-      commentAuthor: "航空整備統括マネージャー"
+      comment: "Queue株式会社は、WordPress以外のサイトにも対応できる唯一無二の開発パートナーでした。AIエージェント開発の専門性と、どんなコードベースにも対応できる柔軟な開発力により、複数のクライアントサイトの運用が根本から変わりました。",
+      commentAuthor: "Web広告・マーケティング会社 マーケティング責任者"
     },
     {
       industry: "AIアバター接客システム",
@@ -136,6 +137,21 @@ const CaseStudies: React.FC = () => {
                         </span>
                         <CardTitle className="text-2xl text-navy-800 mb-2">{caseStudy.title}</CardTitle>
                         <p className="text-navy-600 font-medium">クライアント：{caseStudy.client}</p>
+                        {caseStudy.videoUrl && (
+                          <div className="mt-3">
+                            <a 
+                              href={caseStudy.videoUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-navy-600 hover:text-navy-800 font-medium transition-colors"
+                            >
+                              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                              </svg>
+                              動画を見る
+                            </a>
+                          </div>
+                        )}
                           </div>
                         </div>
                   </CardHeader>

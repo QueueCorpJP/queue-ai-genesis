@@ -21,7 +21,7 @@ export const generateSitemapFiles = async (): Promise<{
   files?: string[];
 }> => {
   try {
-    console.log('🚀 サイトマップ生成開始...');
+    console.log('サイトマップ生成開始...');
     
     // 公開済み記事を取得
     const { data: articles, error } = await supabase
@@ -31,7 +31,7 @@ export const generateSitemapFiles = async (): Promise<{
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ 記事データ取得エラー:', error);
+      console.error('記事データ取得エラー:', error);
       return {
         success: false,
         message: `記事データ取得エラー: ${error.message}`
@@ -39,7 +39,7 @@ export const generateSitemapFiles = async (): Promise<{
     }
 
     const publishedArticles: ArticleForSitemap[] = articles || [];
-    console.log(`📰 公開記事数: ${publishedArticles.length}件`);
+    console.log(`公開記事数: ${publishedArticles.length}件`);
 
     // メインサイトマップ生成
     const mainSitemap = await generateSitemap(publishedArticles);
@@ -62,9 +62,9 @@ export const generateSitemapFiles = async (): Promise<{
     fs.writeFileSync(mainSitemapPath, mainSitemap, 'utf-8');
     fs.writeFileSync(newsSitemapPath, newsSitemap, 'utf-8');
 
-    console.log('✅ サイトマップファイル生成完了');
-    console.log(`📄 メインサイトマップ: ${mainSitemapPath}`);
-    console.log(`📰 ニュースサイトマップ: ${newsSitemapPath}`);
+    console.log('サイトマップファイル生成完了');
+    console.log(`メインサイトマップ: ${mainSitemapPath}`);
+    console.log(`ニュースサイトマップ: ${newsSitemapPath}`);
 
     return {
       success: true,
@@ -76,7 +76,7 @@ export const generateSitemapFiles = async (): Promise<{
     };
 
   } catch (error) {
-    console.error('❌ サイトマップ生成エラー:', error);
+    console.error('サイトマップ生成エラー:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error'
@@ -89,17 +89,17 @@ export const generateSitemapFiles = async (): Promise<{
  */
 export const updateSitemapOnPublish = async (articleId: string): Promise<void> => {
   try {
-    console.log(`🔄 記事公開によるサイトマップ更新開始: ${articleId}`);
+    console.log(`記事公開によるサイトマップ更新開始: ${articleId}`);
     
     const result = await generateSitemapFiles();
     
     if (result.success) {
-      console.log('✅ サイトマップ更新完了:', result.message);
+      console.log('サイトマップ更新完了:', result.message);
     } else {
-      console.error('❌ サイトマップ更新失敗:', result.message);
+      console.error('サイトマップ更新失敗:', result.message);
     }
   } catch (error) {
-    console.error('❌ サイトマップ更新エラー:', error);
+    console.error('サイトマップ更新エラー:', error);
   }
 };
 
@@ -108,10 +108,10 @@ export const updateSitemapOnPublish = async (articleId: string): Promise<void> =
  */
 export const generateSitemapDev = async (): Promise<void> => {
   if (typeof window !== 'undefined') {
-    console.warn('⚠️ この関数はサーバーサイドでのみ実行してください');
+    console.warn('この関数はサーバーサイドでのみ実行してください');
     return;
   }
 
   const result = await generateSitemapFiles();
-  console.log('📋 開発環境サイトマップ生成結果:', result);
+  console.log('開発環境サイトマップ生成結果:', result);
 };

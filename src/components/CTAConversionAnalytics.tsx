@@ -355,7 +355,7 @@ const CTAConversionAnalytics: React.FC = () => {
                 </ul>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-green-900 mb-2">🎯 改善アクション</h4>
+                <h4 className="font-semibold text-green-900 mb-2">改善アクション</h4>
                 <ul className="text-sm text-green-800 space-y-1">
                   <li>• 高コンバージョン記事の特徴を分析</li>
                   <li>• A/Bテストでより効果的なCTA文言を発見</li>

@@ -142,7 +142,7 @@ export const updateSitemapFiles = async (): Promise<{
   message: string;
 }> => {
   try {
-    console.log('🔄 サイトマップファイル自動更新開始...');
+    console.log('サイトマップファイル自動更新開始...');
     
     // サーバーサイドAPI呼び出し（Vercel Functions or 別途APIサーバー）
     const response = await fetch('/api/sitemap-update', {
@@ -162,7 +162,7 @@ export const updateSitemapFiles = async (): Promise<{
     const result = await response.json();
     
     if (result.success) {
-      console.log('✅ サイトマップファイル更新成功:', result.message);
+      console.log('サイトマップファイル更新成功:', result.message);
       return {
         success: true,
         message: result.message
@@ -172,10 +172,10 @@ export const updateSitemapFiles = async (): Promise<{
     }
 
   } catch (error) {
-    console.error('❌ サイトマップファイル更新エラー:', error);
+    console.error('サイトマップファイル更新エラー:', error);
     
     // フォールバック: ダウンロードで手動更新を促す
-    console.log('🔄 フォールバック: ダウンロード方式にフォールバック');
+    console.log('フォールバック: ダウンロード方式にフォールバック');
     return {
       success: false,
       message: `自動更新に失敗: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -198,17 +198,17 @@ export const autoUpdateSitemaps = async (
 }> => {
   try {
     if (showToast) {
-      toast.info('🔄 サイトマップを自動更新中...');
+      toast.info('サイトマップを自動更新中...');
     }
     
-    console.log(`🚀 自動サイトマップ更新開始 ${changedArticleId ? `(記事ID: ${changedArticleId})` : ''}`);
+    console.log(`自動サイトマップ更新開始 ${changedArticleId ? `(記事ID: ${changedArticleId})` : ''}`);
     
-    // 🎯 完全自動化: サーバーサイドでファイル更新
+    // 完全自動化: サーバーサイドでファイル更新
     const fileUpdateResult = await updateSitemapFiles();
     
     if (fileUpdateResult.success) {
       // 成功: publicフォルダのファイルが自動更新された
-      const message = `✅ サイトマップファイルを自動更新しました`;
+      const message = `サイトマップファイルを自動更新しました`;
       console.log(message);
       
       if (showToast) {
@@ -223,7 +223,7 @@ export const autoUpdateSitemaps = async (
       };
     } else {
       // 失敗: フォールバックとしてダウンロード方式
-      console.log('🔄 フォールバック: ダウンロード方式で対応...');
+      console.log('フォールバック: ダウンロード方式で対応...');
       
       // 全公開済み記事を取得
       const { data: articles, error } = await supabase
@@ -233,7 +233,7 @@ export const autoUpdateSitemaps = async (
         .order('published_at', { ascending: false });
 
       if (error) {
-        console.error('❌ 記事取得エラー:', error);
+        console.error('記事取得エラー:', error);
         if (showToast) {
           toast.error('サイトマップ更新に失敗しました');
         }
@@ -244,13 +244,13 @@ export const autoUpdateSitemaps = async (
       }
 
       const publishedArticles = articles || [];
-      console.log(`📰 公開記事数: ${publishedArticles.length}件`);
+      console.log(`公開記事数: ${publishedArticles.length}件`);
 
       // サイトマップXML生成
       const sitemapXml = generateSitemapXML(publishedArticles);
       const newsSitemapXml = generateNewsSitemapXML(publishedArticles);
 
-      const message = `⚠️ 自動更新は失敗しましたが、サイトマップを生成しました（${publishedArticles.length}記事）`;
+      const message = `自動更新は失敗しましたが、サイトマップを生成しました（${publishedArticles.length}記事）`;
       console.log(message);
       
       if (showToast) {
@@ -268,7 +268,7 @@ export const autoUpdateSitemaps = async (
     }
 
   } catch (error) {
-    console.error('❌ 自動サイトマップ更新エラー:', error);
+    console.error('自動サイトマップ更新エラー:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     if (showToast) {
@@ -290,9 +290,9 @@ export const onArticlePublished = async (
   articleId: string, 
   articleTitle: string
 ): Promise<void> => {
-  console.log(`📝 記事公開検知: "${articleTitle}" (ID: ${articleId})`);
+  console.log(`記事公開検知: "${articleTitle}" (ID: ${articleId})`);
   
-  toast.info(`📝 記事「${articleTitle}」を公開しました`, {
+  toast.info(`記事「${articleTitle}」を公開しました`, {
     description: 'サイトマップを自動更新中...'
   });
 
@@ -306,7 +306,7 @@ export const onArticlePublished = async (
     // Google Search Console通知（今後の実装）
     notifySearchEngines();
   } else {
-    toast.error('⚠️ 記事は公開されましたが、サイトマップ更新に失敗', {
+    toast.error('記事は公開されましたが、サイトマップ更新に失敗', {
       description: '手動でサイトマップを更新してください'
     });
   }
@@ -319,20 +319,20 @@ export const onArticleUnpublished = async (
   articleId: string, 
   articleTitle: string
 ): Promise<void> => {
-  console.log(`📝 記事非公開検知: "${articleTitle}" (ID: ${articleId})`);
+  console.log(`記事非公開検知: "${articleTitle}" (ID: ${articleId})`);
   
-  toast.info(`📝 記事「${articleTitle}」を非公開にしました`, {
+  toast.info(`記事「${articleTitle}」を非公開にしました`, {
     description: 'サイトマップを自動更新中...'
   });
 
   const result = await autoUpdateSitemaps(articleId, false);
   
   if (result.success) {
-    toast.success('✅ 記事非公開完了！', {
+    toast.success('記事非公開完了！', {
       description: 'サイトマップも自動更新されました'
     });
   } else {
-    toast.warning('⚠️ 記事は非公開になりましたが、サイトマップ更新に失敗');
+    toast.warning('記事は非公開になりましたが、サイトマップ更新に失敗');
   }
 };
 
@@ -351,6 +351,6 @@ const notifySearchEngines = async (): Promise<void> => {
     // await fetch('/api/notify-search-engines', { method: 'POST' });
     
   } catch (error) {
-    console.log('⚠️ 検索エンジン通知はスキップしました:', error);
+    console.log('検索エンジン通知はスキップしました:', error);
   }
 };

@@ -104,7 +104,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
     const quill = quillRef.current?.getEditor();
     if (quill) {
       const range = quill.getSelection(true);
-      const link = '<a href="/consultation" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; margin: 16px 0; transition: all 0.3s ease;"><span style="margin-right: 8px;">💬</span>無料相談を申し込む</a>';
+      const link = '<a href="/consultation" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; margin: 16px 0; transition: all 0.3s ease;">無料相談を申し込む</a>';
       quill.clipboard.dangerouslyPasteHTML(range.index, link);
       quill.setSelection(range.index + link.length);
     }
@@ -310,7 +310,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
       // if (toolbarContainer && !document.querySelector('.ql-table-insert')) {  // 一時的に無効化
         // const tableButton = document.createElement('button');
         // tableButton.className = 'ql-table-insert';
-        // tableButton.innerHTML = '📊';
+        // tableButton.innerHTML = '';
         // tableButton.title = 'テーブルを挿入';
         // tableButton.type = 'button';
         // tableButton.style.background = '#10b981';
@@ -340,7 +340,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
       if (toolbarContainer && !document.querySelector('.ql-consultation-link')) {
         const customButton = document.createElement('button');
         customButton.className = 'ql-consultation-link';
-        customButton.innerHTML = '💬';
+        customButton.innerHTML = '';
         customButton.title = '無料相談リンクを挿入';
         customButton.type = 'button';
         customButton.style.background = '#3b82f6';
@@ -400,7 +400,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
 
       if (article) {
         // 既存記事の更新
-        console.log('📝 Updating article with data:', articleData);
+        console.log('Updating article with data:', articleData);
         const { error, data } = await supabase
           .from('news_articles')
           .update(articleData)
@@ -408,24 +408,24 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
           .select();
 
         if (error) {
-          console.error('📝 Database error:', error);
+          console.error('Database error:', error);
           throw error;
         }
-        console.log('📝 Article updated successfully:', data);
+        console.log('Article updated successfully:', data);
         toast.success('記事を更新しました');
       } else {
         // 新規記事の作成
-        console.log('📝 Creating article with data:', articleData);
+        console.log('Creating article with data:', articleData);
         const { error, data } = await supabase
           .from('news_articles')
           .insert(articleData)
           .select();
 
         if (error) {
-          console.error('📝 Database error:', error);
+          console.error('Database error:', error);
           throw error;
         }
-        console.log('📝 Article created successfully:', data);
+        console.log('Article created successfully:', data);
         toast.success('記事を作成しました');
       }
 
@@ -758,7 +758,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
               <div className="bg-amber-50 border-b px-4 py-2 text-sm text-amber-800">
                 <div className="flex items-center space-x-2">
                   <MessageCircle className="h-4 w-4" />
-                  <span>💬ボタンで無料相談リンクを挿入できます | フォント・サイズ・色の変更が可能</span>
+                  <span>ボタンで無料相談リンクを挿入できます | フォント・サイズ・色の変更が可能</span>
                 </div>
               </div>
               <ReactQuill

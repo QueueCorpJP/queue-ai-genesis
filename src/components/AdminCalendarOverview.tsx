@@ -194,13 +194,13 @@ const AdminCalendarOverview: React.FC = () => {
 
       if (error) throw error;
 
-      console.log('👥 Members fetched:', data?.length || 0, 'members');
-      console.log('👥 Members data:', data);
+      console.log('Members fetched:', data?.length || 0, 'members');
+      console.log('Members data:', data);
       setMembers(data || []);
       
       // 部署一覧を抽出
       const uniqueDepartments = [...new Set(data?.map(m => m.department).filter(Boolean))] as string[];
-      console.log('🏢 Departments:', uniqueDepartments);
+      console.log('Departments:', uniqueDepartments);
       setDepartments(uniqueDepartments);
 
     } catch (error) {
@@ -260,7 +260,7 @@ const AdminCalendarOverview: React.FC = () => {
         if (process.env.NODE_ENV === 'development') {
           const scheduledRecords = (attendanceRecords || []).filter(r => r.status === 'scheduled');
           if (scheduledRecords.length > 0) {
-            console.log(`📅 ${member.name} の出勤予定:`, scheduledRecords);
+            console.log(`${member.name} の出勤予定:`, scheduledRecords);
           }
         }
 
@@ -323,8 +323,8 @@ const AdminCalendarOverview: React.FC = () => {
         });
       }
 
-      console.log('📅 Calendar data fetched:', membersCalendarData.length, 'members');
-      console.log('📅 Members calendar data:', membersCalendarData);
+      console.log('Calendar data fetched:', membersCalendarData.length, 'members');
+      console.log('Members calendar data:', membersCalendarData);
       setMembersCalendarData(membersCalendarData);
 
     } catch (error) {
@@ -374,7 +374,7 @@ const AdminCalendarOverview: React.FC = () => {
 
       if (error) throw error;
 
-      console.log('📊 Raw attendance data:', data);
+      console.log('Raw attendance data:', data);
 
       const formattedData: AttendanceStatus[] = (data || []).map(record => ({
         member_id: record.member_id,
@@ -385,7 +385,7 @@ const AdminCalendarOverview: React.FC = () => {
         work_hours: record.work_hours
       }));
 
-      console.log('📊 Formatted attendance data:', formattedData);
+      console.log('Formatted attendance data:', formattedData);
       setAttendanceData(formattedData);
 
     } catch (error) {
@@ -530,7 +530,7 @@ const AdminCalendarOverview: React.FC = () => {
         status: record.status
       }));
 
-      console.log('📅 今日の出勤者:', todayData);
+      console.log('今日の出勤者:', todayData);
       setTodayAttendees(todayData);
 
     } catch (error) {
@@ -587,11 +587,11 @@ const AdminCalendarOverview: React.FC = () => {
 
   // デバッグ: フィルタリング結果（開発時のみ）
   if (process.env.NODE_ENV === 'development') {
-    console.log('📋 Raw members data:', membersCalendarData.length);
-    console.log('📋 Filtered members data:', filteredMembersData.length);
-    console.log('📋 Search term:', searchTerm);
-    console.log('📋 Selected department:', selectedDepartment);
-    console.log('📋 Selected member:', selectedMember);
+    console.log('Raw members data:', membersCalendarData.length);
+    console.log('Filtered members data:', filteredMembersData.length);
+    console.log('Search term:', searchTerm);
+    console.log('Selected department:', selectedDepartment);
+    console.log('Selected member:', selectedMember);
   }
 
   // データリフレッシュ
@@ -724,26 +724,26 @@ const AdminCalendarOverview: React.FC = () => {
   const getEventTypeIcon = (eventType: string, calendarType: string) => {
     if (calendarType === 'company') {
       switch (eventType) {
-        case 'meeting': return '🤝';
-        case 'holiday': return '🏖️';
-        case 'training': return '📚';
-        case 'deadline': return '⚠️';
-        default: return '📅';
+        case 'meeting': return '';
+        case 'holiday': return '';
+        case 'training': return '';
+        case 'deadline': return '';
+        default: return '';
       }
     } else {
       // 勤怠関連のアイコン
       switch (eventType) {
-        case 'normal': return '🏢';      // 通常出勤
-        case 'overtime': return '⏰';    // 残業
-        case 'holiday': return '🏖️';    // 休日出勤
-        case 'remote': return '💻';      // リモートワーク
-        case 'halfday': return '🕐';     // 半日勤務
-        case 'personal': return '📅';
-        case 'meeting': return '🤝';
-        case 'appointment': return '📋';
-        case 'task': return '✅';
-        case 'reminder': return '⏰';
-        default: return '📌';
+        case 'normal': return '';      // 通常出勤
+        case 'overtime': return '';    // 残業
+        case 'holiday': return '';    // 休日出勤
+        case 'remote': return '';      // リモートワーク
+        case 'halfday': return '';     // 半日勤務
+        case 'personal': return '';
+        case 'meeting': return '';
+        case 'appointment': return '';
+        case 'task': return '';
+        case 'reminder': return '';
+        default: return '';
       }
     }
   };
@@ -785,12 +785,12 @@ const AdminCalendarOverview: React.FC = () => {
   // 勤怠タイプアイコン取得
   const getAttendanceTypeIcon = (type: string) => {
     switch (type) {
-      case 'regular': return '🏢';
-      case 'remote': return '🏠';
-      case 'business_trip': return '✈️';
-      case 'sick_leave': return '🤒';
-      case 'vacation': return '🏖️';
-      default: return '📅';
+      case 'regular': return '';
+      case 'remote': return '';
+      case 'business_trip': return '';
+      case 'sick_leave': return '';
+      case 'vacation': return '';
+      default: return '';
     }
   };
 
@@ -1468,7 +1468,7 @@ const AdminCalendarOverview: React.FC = () => {
                     </Table>
                     <div className="p-4 bg-blue-50 border-t">
                       <p className="text-sm text-blue-700">
-                        📅 カレンダーデータを読み込み中です。イベント情報は準備でき次第表示されます。
+                        カレンダーデータを読み込み中です。イベント情報は準備でき次第表示されます。
                       </p>
                     </div>
                   </div>

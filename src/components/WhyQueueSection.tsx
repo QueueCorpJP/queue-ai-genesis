@@ -61,7 +61,7 @@ const WhyQueueSection: React.FC = () => {
       <div className="container mx-auto relative z-10">
         <div className="text-center mb-12 sm:mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-navy-800">
-            ✅ Queueが選ばれる3つの理由
+            Queueが選ばれる3つの理由
           </h2>
           <p className="text-navy-600 max-w-3xl mx-auto text-sm sm:text-base leading-relaxed px-1">
             既製APIやノーコードツールでは届かない\"リアルな現場課題\"を解決する、
