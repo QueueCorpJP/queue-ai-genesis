@@ -2,7 +2,14 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(bot|crawler|spider|bing|google|duckduckbot|baidu|yandex|facebookexternalhit|twitterbot|linkedinbot|embedly|quora link preview|slackbot|vkShare|W3C_Validator|redditbot|applebot|whatsapp|telegrambot).*"
+        }
+      ],
+      "destination": "/api/ssr"
     }
   ],
   "headers": [
