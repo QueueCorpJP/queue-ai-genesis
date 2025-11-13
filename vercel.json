@@ -21,6 +21,10 @@
         }
       ],
       "destination": "/api/ssr?path=/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
