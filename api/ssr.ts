@@ -38,12 +38,14 @@ const routeToComponent: Record<string, React.FC> = {
 };
 
 function getTemplateHtml(): string {
-	// Try multiple possible paths for index.html in Vercel
+	// Try multiple possible paths for index.html in Vercel / static builds.
+	// Avoid using __dirname because this file can be bundled as an ES module
+	// where __dirname is not defined.
 	const possiblePaths = [
 		path.join(process.cwd(), 'index.html'),
+		path.join(process.cwd(), 'dist', 'index.html'),
 		path.join(process.cwd(), '..', 'index.html'),
-		path.join(__dirname, '..', 'index.html'),
-		path.join(__dirname, '..', '..', 'index.html'),
+		path.join(process.cwd(), '..', 'dist', 'index.html'),
 	];
 
 	for (const htmlPath of possiblePaths) {
