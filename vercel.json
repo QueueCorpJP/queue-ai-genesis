@@ -5,54 +5,25 @@
       "has": [
         {
           "type": "header",
-          "key": "accept",
-          "value": ".*text/html.*"
-        },
-        {
-          "type": "header",
           "key": "user-agent",
           "value": "(?i).*(bot|crawler|spider|bing|google|duckduckbot|baidu|yandex|facebookexternalhit|twitterbot|linkedinbot|embedly|quora|slackbot|vkshare|w3c_validator|redditbot|applebot|whatsapp|telegrambot|googlebot|gptbot|perplexity|claudebot|anthropic-ai|ccbot).*"
         }
       ],
-      "missing": [
-        {
-          "type": "filesystem",
-          "value": "/"
-        }
-      ],
-      "destination": "/prerender"
+      "destination": "/prerender/index.html"
     },
     {
       "source": "/(about|company|careers|contact|consultation|terms|privacy|products|products/workmate|case-studies|services|why-queue)",
       "has": [
         {
           "type": "header",
-          "key": "accept",
-          "value": ".*text/html.*"
-        },
-        {
-          "type": "header",
           "key": "user-agent",
           "value": "(?i).*(bot|crawler|spider|bing|google|duckduckbot|baidu|yandex|facebookexternalhit|twitterbot|linkedinbot|embedly|quora|slackbot|vkshare|w3c_validator|redditbot|applebot|whatsapp|telegrambot|googlebot|gptbot|perplexity|claudebot|anthropic-ai|ccbot).*"
         }
       ],
-      "missing": [
-        {
-          "type": "filesystem",
-          "value": "/$1"
-        }
-      ],
-      "destination": "/prerender/$1"
+      "destination": "/prerender/$1/index.html"
     },
     {
       "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": ".*text/html.*"
-        }
-      ],
       "missing": [
         {
           "type": "filesystem",
