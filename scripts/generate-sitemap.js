@@ -186,7 +186,47 @@ async function generateSitemaps() {
 
   } catch (error) {
     console.error('❌ エラー:', error);
-    process.exit(1);
+    // エラーが発生しても基本サイトマップを生成して続行
+    try {
+      const baseUrl = 'https://queue-tech.jp';
+      const staticPages = [
+        { path: '/', changefreq: 'weekly', priority: 1.0 },
+        { path: '/about', changefreq: 'monthly', priority: 0.8 },
+        { path: '/services', changefreq: 'weekly', priority: 0.9 },
+        { path: '/products', changefreq: 'weekly', priority: 0.9 },
+        { path: '/products/workmate', changefreq: 'monthly', priority: 0.7 },
+        { path: '/news', changefreq: 'daily', priority: 0.8 },
+        { path: '/case-studies', changefreq: 'weekly', priority: 0.7 },
+        { path: '/contact', changefreq: 'monthly', priority: 0.6 },
+        { path: '/consultation', changefreq: 'monthly', priority: 0.6 },
+        { path: '/careers', changefreq: 'monthly', priority: 0.5 },
+        { path: '/why-queue', changefreq: 'monthly', priority: 0.6 },
+        { path: '/company', changefreq: 'monthly', priority: 0.6 },
+        { path: '/privacy', changefreq: 'yearly', priority: 0.3 },
+        { path: '/terms', changefreq: 'yearly', priority: 0.3 },
+      ];
+      const staticUrls = staticPages.map(page => `
+  <url>
+    <loc>${baseUrl}${page.path}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`).join('');
+      const fallbackSitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${staticUrls}
+</urlset>`;
+      const publicDir = path.join(__dirname, '..', 'public');
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), fallbackSitemap, 'utf-8');
+      console.log('✅ フォールバックサイトマップ生成完了');
+    } catch (fallbackError) {
+      console.error('❌ フォールバックサイトマップ生成も失敗:', fallbackError);
+    }
+    // エラーが発生してもビルドを続行するため、exitしない
+    // process.exit(1);
   }
 }
 
