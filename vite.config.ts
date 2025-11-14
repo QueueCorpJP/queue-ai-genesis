@@ -4,63 +4,64 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { sitemapPlugin } from "./vite-sitemap-plugin";
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [
-    react(),
-    // Sitemap auto-generation plugin
-    sitemapPlugin(),
-    // Disable componentTagger in development to prevent service worker issues
-    // mode === 'development' && componentTagger(),
-  ].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+export default defineConfig(({ mode }) => {
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  // Prevent service worker registration issues
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(mode),
-  },
-  optimizeDeps: {
-    include: ['@supabase/supabase-js', '@supabase/postgrest-js'],
-    exclude: [],
-  },
-  build: {
-    commonjsOptions: {
-      include: [/node_modules/],
+    plugins: [
+      react(),
+      // Sitemap auto-generation plugin
+      sitemapPlugin(),
+      // Disable componentTagger in development to prevent service worker issues
+      // mode === 'development' && componentTagger(),
+    ].filter(Boolean),
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
     },
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Vendor chunks for better caching
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-router': ['react-router-dom'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-slot'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-supabase': ['@supabase/supabase-js', '@supabase/postgrest-js'],
-          'vendor-utils': ['clsx', 'class-variance-authority', 'tailwind-merge'],
+    // Prevent service worker registration issues
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(mode),
+    },
+    optimizeDeps: {
+      include: ['@supabase/supabase-js', '@supabase/postgrest-js'],
+      exclude: [],
+    },
+    build: {
+      commonjsOptions: {
+        include: [/node_modules/],
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Vendor chunks for better caching
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-router': ['react-router-dom'],
+            'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-slot'],
+            'vendor-query': ['@tanstack/react-query'],
+            'vendor-supabase': ['@supabase/supabase-js', '@supabase/postgrest-js'],
+            'vendor-utils': ['clsx', 'class-variance-authority', 'tailwind-merge'],
+          },
         },
       },
-    },
-    // Optimize chunk size
-    chunkSizeWarningLimit: 1000,
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
+      // Optimize chunk size
+      chunkSizeWarningLimit: 1000,
+      // Enable minification
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
       },
+      // Enable source maps for production debugging
+      sourcemap: false,
     },
-    // Enable source maps for production debugging
-    sourcemap: false,
-  },
-  ssr: {
-    noExternal: ['@supabase/supabase-js', '@supabase/postgrest-js'],
-  },
-}));
+    ssr: {
+      noExternal: ['@supabase/supabase-js', '@supabase/postgrest-js'],
+    },
+  };
+});

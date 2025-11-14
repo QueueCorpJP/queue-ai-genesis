@@ -111,6 +111,44 @@ const setCanonicalLink = () => {
 setMetaDescription();
 setCanonicalLink();
 
+const signalPrerendererReady = () => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
+  const dispatchReadyEvent = () => {
+    document.dispatchEvent(new Event('queue:hydrated'));
+  };
+
+  const scheduleDispatch = () => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => dispatchReadyEvent());
+    } else {
+      window.setTimeout(dispatchReadyEvent, 50);
+    }
+  };
+
+  const trigger = () => {
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(() => scheduleDispatch());
+    } else {
+      scheduleDispatch();
+    }
+  };
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    trigger();
+  } else {
+    window.addEventListener(
+      'DOMContentLoaded',
+      () => {
+        trigger();
+      },
+      { once: true }
+    );
+  }
+};
+
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error('Root element not found');
@@ -121,3 +159,5 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>
 );
+
+signalPrerendererReady();

@@ -78,8 +78,9 @@ const Blog: React.FC = () => {
 
   // SEO用のデータを生成
   const generateBlogListSEOData = () => {
-    const currentUrl = window.location.href;
-    const baseUrl = window.location.origin;
+    const siteUrl = 'https://queue-tech.jp';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : `${siteUrl}/news`;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : siteUrl;
     const imageUrl = `${baseUrl}/Queue.png`;
     const description = "Queue株式会社の技術ブログ。AI・機械学習の最新動向、開発事例、技術的な知見など、私たちの経験と学びを共有しています。";
     const title = "ブログ | Queue株式会社";

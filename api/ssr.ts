@@ -1,51 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import React from 'react';
-import { renderToString } from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom/server';
 import fs from 'fs';
 import path from 'path';
-import { Providers } from '../src/ssr/Providers';
-
-// Import page components for static routes we can safely SSR
-import Index from '../src/pages/Index';
-import About from '../src/pages/About';
-import Company from '../src/pages/Company';
-import Careers from '../src/pages/Careers';
-import Contact from '../src/pages/Contact';
-import Consultation from '../src/pages/Consultation';
-import Terms from '../src/pages/Terms';
-import Privacy from '../src/pages/Privacy';
-import Products from '../src/pages/Products';
-import ProductWorkmate from '../src/pages/ProductWorkmate';
-import CaseStudies from '../src/pages/CaseStudies';
-import Services from '../src/pages/Services';
-import WhyQueue from '../src/pages/WhyQueue';
-
-const routeToComponent: Record<string, React.FC> = {
-	'/': Index,
-	'/about': About,
-	'/company': Company,
-	'/careers': Careers,
-	'/contact': Contact,
-	'/consultation': Consultation,
-	'/terms': Terms,
-	'/privacy': Privacy,
-	'/products': Products,
-	'/products/workmate': ProductWorkmate,
-	'/case-studies': CaseStudies,
-	'/services': Services,
-	'/why-queue': WhyQueue,
-};
+import { marketingRoutes, type MarketingRoute } from '../src/ssr/routeList';
 
 function getTemplateHtml(): string {
-	// Try multiple possible paths for index.html in Vercel / static builds.
-	// Avoid using __dirname because this file can be bundled as an ES module
-	// where __dirname is not defined.
+	// Try multiple possible paths for index.html in Vercel
 	const possiblePaths = [
 		path.join(process.cwd(), 'index.html'),
-		path.join(process.cwd(), 'dist', 'index.html'),
 		path.join(process.cwd(), '..', 'index.html'),
-		path.join(process.cwd(), '..', 'dist', 'index.html'),
+		path.join(__dirname, '..', 'index.html'),
+		path.join(__dirname, '..', '..', 'index.html'),
 	];
 
 	for (const htmlPath of possiblePaths) {
@@ -81,6 +45,16 @@ function isBot(userAgent: string | undefined): boolean {
 	return /bot|crawler|spider|bing|google|duckduckbot|baidu|yandex|facebookexternalhit|twitterbot|linkedinbot|embedly|quora|slackbot|vkShare|W3C_Validator|redditbot|applebot|whatsapp|telegrambot|googlebot/i.test(ua);
 }
 
+function resolvePrerenderPath(route: MarketingRoute) {
+	const normalized = route === '/' ? '' : route.replace(/^\//, '');
+	const distDir = path.join(process.cwd(), 'dist', 'prerender');
+	return path.join(distDir, normalized, 'index.html');
+}
+
+function isMarketingRoute(route: string): route is MarketingRoute {
+	return marketingRoutes.includes(route as MarketingRoute);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
 	// Check user-agent as fallback (in case rewrite didn't catch it)
 	const userAgent = req.headers['user-agent'] || '';
@@ -102,63 +76,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 	console.log('[SSR] Rendering path:', normalizedPath, 'Query:', req.query, 'URL:', req.url);
 
-	const Component = routeToComponent[normalizedPath];
-	if (!Component) {
-		console.log('[SSR] No component found for path:', normalizedPath, 'Available routes:', Object.keys(routeToComponent));
-		// For routes we don't SSR, fall back to serving the base HTML so static hosting can handle it
+	if (!isMarketingRoute(normalizedPath)) {
+		console.log('[SSR] Path not in prerender list:', normalizedPath);
 		const html = getTemplateHtml();
 		res.setHeader('Content-Type', 'text/html; charset=utf-8');
 		return res.status(200).send(html);
 	}
 
+	const filePath = resolvePrerenderPath(normalizedPath);
 	try {
-		console.log('[SSR] Starting renderToString for:', normalizedPath);
-		const appHtml = renderToString(
-			<Providers>
-				<StaticRouter location={normalizedPath}>
-					<Component />
-				</StaticRouter>
-			</Providers>
-		);
-
-		console.log('[SSR] Render complete, HTML length:', appHtml.length);
-
-		let html = getTemplateHtml();
-		console.log('[SSR] Template HTML length:', html.length);
-		
-		// Inject SSR markup - handle various formats
-		const rootDivPatterns = [
-			/<div id="root"><\/div>/,
-			/<div id="root">\s*<\/div>/,
-			/<div id=['"]root['"]><\/div>/,
-			/<div id=['"]root['"]>\s*<\/div>/,
-		];
-
-		let replaced = false;
-		for (const pattern of rootDivPatterns) {
-			if (pattern.test(html)) {
-				html = html.replace(pattern, `<div id="root">${appHtml}</div>`);
-				replaced = true;
-				console.log('[SSR] Successfully injected HTML using pattern:', pattern);
-				break;
-			}
-		}
-
-		if (!replaced) {
-			console.warn('[SSR] Could not find root div to replace, appending instead');
-			html = html.replace('</body>', `<div id="root">${appHtml}</div></body>`);
-		}
-
+		const html = fs.readFileSync(filePath, 'utf8');
 		res.setHeader('Content-Type', 'text/html; charset=utf-8');
-		res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-		console.log('[SSR] Sending response, final HTML length:', html.length);
+		res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
 		return res.status(200).send(html);
 	} catch (err) {
-		console.error('[SSR] Render error:', err);
-		if (err instanceof Error) {
-			console.error('[SSR] Error stack:', err.stack);
-		}
-		// Fallback to base HTML on error
+		console.error('[SSR] Failed to read prerendered HTML:', filePath, err);
 		const html = getTemplateHtml();
 		res.setHeader('Content-Type', 'text/html; charset=utf-8');
 		return res.status(200).send(html);
