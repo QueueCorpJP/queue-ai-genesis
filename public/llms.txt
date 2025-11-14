@@ -1,0 +1,43 @@
+# Queue株式会社 / Queue Corporation
+
+> 日本企業向けにAI駆動開発・DX支援・自社AI製品を提供する技術会社。
+
+## 日本語
+
+### 概要・はじめに
+- [Queue株式会社 | AI・DX・ウェブで課題を最速解決！初回商談で無料デモ](https://queue-tech.jp/): AI駆動開発とDX支援全体像を示すトップページ。
+- [ご紹介 | Queue株式会社](https://queue-tech.jp/about): 社名の由来・理念・強みと相談導線をまとめた紹介。
+- [Queueが選ばれる3つの理由 | Queue株式会社](https://queue-tech.jp/why-queue): エンジニア体制と初回デモ方針など選定理由を整理。
+
+### サービス・製品
+- [Queue株式会社のサービス | Web・AI・システム開発の総合支援](https://queue-tech.jp/services): Web開発からAI受託開発・顧問・SESまでのサービス一覧。
+- [AI製品・ソリューション | Queue株式会社 - App Exit & Workmate](https://queue-tech.jp/products): App ExitやWorkmateなど自社AI製品・事業ラインの概要。
+- [Workmate（ワークメイト）ai](https://queue-tech.jp/products/workmate): 社内問い合わせ対応をAIで即時回答するWorkmateの詳細説明。
+
+### 導入事例
+- [導入事例 | Queue株式会社](https://queue-tech.jp/case-studies): 複数業界のAI導入事例と成果指標をまとめた一覧。
+
+### ブログ・ナレッジ（代表）
+- [ニュース・ブログ | Queue株式会社](https://queue-tech.jp/news): AI技術動向や開発事例など技術ブログ記事の一覧。
+- [DXとは？バズワードで終わらせないために、まず押さえるべき本質](https://queue-tech.jp/news/dx-small-business-poc): 中小企業向けにDXの定義と進め方の要点を解説。
+- [RAGとは？ChatGPTが“会社の頭脳”になる技術の正体](https://queue-tech.jp/news/rag-retrieval-augmented-generation): RAGの仕組みと社内データ検索連携の具体的な活用方法。
+- [AI受託開発とは？ゼロから始める中小企業のための完全ガイド【導入事例つき】](https://queue-tech.jp/news/ai-custom-development-benefits): AI受託開発の特徴・進行ステップ・導入事例を包括的に整理。
+- [エクセル地獄からの脱出！AIで叶える業務効率化術10選【2025年最新版】](https://queue-tech.jp/news/excel-automation-ai): Excel業務をAIで自動化する具体例と対象業務パターンを紹介。
+- [【初心者向け】AI開発プロジェクトの進め方をわかりやすく解説](https://queue-tech.jp/news/ai-development-trends-2025): AI開発プロジェクトの体制構築から運用フェーズまでの基本手順。
+
+### 法務・プライバシー・ファイル
+- [利用規約 | Queue株式会社](https://queue-tech.jp/terms): サービス利用条件・禁止事項・著作権など契約条件を記載。
+- [プライバシーポリシー | Queue株式会社](https://queue-tech.jp/privacy): 個人情報の収集目的・第三者提供・開示請求方針を説明。
+- [sitemap.xml](https://queue-tech.jp/sitemap.xml): 主要固定ページと代表的なニュース記事URLを列挙したサイトマップ。
+- [news-sitemap.xml](https://queue-tech.jp/news-sitemap.xml): ニュース・ブログ記事の公開日時付きサイトマップおよび構造化情報。
+- [ai-sitemap.xml](https://queue-tech.jp/ai-sitemap.xml): LLM向けに主要ページの要約・キーワードを付与した拡張サイトマップ。
+
+### サポート・会社情報
+- [お問い合わせ | Queue株式会社 - AI開発・プロンプトエンジニアリングのご相談](https://queue-tech.jp/contact): AI開発全般の問い合わせフォームと連絡先情報を掲載。
+- [無料相談予約 | Queue株式会社](https://queue-tech.jp/consultation): 要件や興味分野を送信して無料相談を予約する専用フォーム。
+- [会社概要 | Queue株式会社 - AI駆動開発のテクノロジー企業](https://queue-tech.jp/company): 所在地・代表者・設立・事業内容など基本的な企業情報。
+- [採用情報 | Queue株式会社](https://queue-tech.jp/careers): 募集職種・必要スキル・福利厚生と応募方法の案内。
+
+include: https://queue-tech.jp/llms-full.txt
+updated: 2025-11-15
+
