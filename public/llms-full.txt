@@ -191,6 +191,8 @@ A: 所在地・代表者・設立年月・資本金・メールアドレスや�
 
 Footer
 
-generated-by: llms-full builder • locale: ja-JP • updated: 2025-11-15
+generated-by: llms-full builder 
+• locale: ja-JP 
+• updated: 2025-11-15
 
 
