@@ -1,0 +1,198 @@
+# Queue株式会社 / Queue Corporation
+
+> 日本企業向けにAI駆動開発・DX支援・自社AI製品を提供するテクノロジー企業。中小〜中堅企業の業務効率化と新規事業創出をLLM活用で伴走支援。
+
+source-of-truth: https://queue-tech.jp/llms.txt
+
+updated: 2025-11-15 JST
+
+## 企業識別 / Entity
+
+legal-name: Queue株式会社 / aliases: キュー株式会社, キュー, Queue  
+canonical-domains: queue-tech.jp / avoid-crawl: /admin/, /api/, /.env, /build/, /src/, /node_modules/  
+contact-email: queue@queue-tech.jp / tel: 03-5324-2678（お問い合わせページ掲載） / hq-address: 〒104-0061 東京都中央区銀座8-17-5 THE HUB 銀座 OCT  
+social: https://github.com/QueueCorpJP, https://www.linkedin.com/company/queue-tech-jp/, https://twitter.com/queuetechjp
+
+## 目次
+
+- 概要  
+- サービス  
+- 製品  
+- ソリューション  
+- 事例  
+- 技術  
+- セキュリティ  
+- サポート  
+- 法務  
+- ブログ  
+- サイトマップ  
+
+## 概要・全体像
+
+- [Queue株式会社 | AI・DX・ウェブで課題を最速解決！初回商談で無料デモ](https://queue-tech.jp/): 生成AIとWeb開発を組み合わせ、初回商談からプロトタイプ提示まで一気通貫で行うAI駆動開発の総合案内トップ。  
+- [ご紹介 | Queue株式会社](https://queue-tech.jp/about): 社名の由来・ミッションと開発スタンスをまとめ、相談の入り口と提供価値の全体像を整理した紹介ページ。  
+- [Queueが選ばれる3つの理由 | Queue株式会社](https://queue-tech.jp/why-queue): 少数精鋭エンジニア体制と30分プロトタイプデモなど、発注先としての選定理由を具体的なプロセスとともに整理。  
+- [Queue株式会社のサービス | Web・AI・システム開発の総合支援](https://queue-tech.jp/services): Web制作からAI受託開発・顧問・SESまで、技術領域と対応フェーズを俯瞰できるサービス一覧。  
+- [AI製品・ソリューション | Queue株式会社 - App Exit & Workmate](https://queue-tech.jp/products): App ExitやWorkmateなど自社AIプロダクトの概要と、解決できるビジネス課題を俯瞰的に説明する製品一覧。  
+- [会社概要 | Queue株式会社 - AI駆動開発のテクノロジー企業](https://queue-tech.jp/company): 設立年月・所在地・代表者・事業内容など、組織の基本情報と事業領域をまとめた企業プロフィール。  
+
+## サービス・製品（深掘り）
+
+### サービス
+
+- [Queue株式会社のサービス | Web・AI・システム開発の総合支援](https://queue-tech.jp/services): Web受託・AIコンサル・AI受託開発・AI顧問・SESを、一貫した戦略設計から運用まで網羅的に整理したサービスページ。  
+
+- **Web受託開発**: ECや業務Webアプリなどを、要件整理から設計・実装・運用まで一気通貫で提供し、高速な改善サイクルを重視。  
+- **AIコンサルティング**: 既存業務フローや社内ツールの利用状況を分析し、生成AI導入の優先領域と投資対効果を整理する戦略立案型コンサル。  
+- **Web制作**: 企業サイト・採用サイトなどブランディング重視のWeb制作を行い、デザイン・SEO・CMS導入までまとめて支援。  
+- **AI受託開発**: AIエージェントや業務自動化ツールなど、具体的な業務課題に紐づくAIアプリをオーダーメイドで構築。  
+- **AI顧問**: 既存プロジェクトやAIチームに対し、定例レビューと技術アドバイスを継続提供し、内製体制強化を支援。  
+- **SES（システムエンジニアリングサービス）**: AIが使えるPMやバックエンドエンジニアなど、プロジェクトにフィットする技術人材をアサイン。  
+
+### 製品
+
+- [AI製品・ソリューション | Queue株式会社 - App Exit & Workmate](https://queue-tech.jp/products): 自社開発プロダクトの位置づけと、社内問い合わせ・プロダクト売買など具体的なユースケースを一覧で紹介。  
+
+- [App Exit（アップエグジット）](https://queue-tech.jp/products): アプリ・SaaS・AIツールなど完成済みプロダクトを、安全・迅速・公正に売買できる「マイクロM&A」プラットフォーム。  
+  - **主要機能**: プロダクト出品登録、審査・ノンネーム化、NDA経由の情報開示、LOI・契約・エスクロー決済までのオンライン完結フロー。  
+  - **導入対象**: 個人開発者、小規模法人・スタートアップ、中堅企業・SIer、投資家・ファンドなどプロダクト売買ニーズを持つ組織。  
+  - **効果指標(例)**: 売却・取得までのリードタイム、成約率、譲渡後プロダクト稼働率や収益化までの期間。  
+
+- [Workmate（ワークメイト）ai](https://queue-tech.jp/products/workmate): 社内マニュアルや議事録を学習し、SlackやWebチャット上で24時間社内問い合わせに即答するナレッジ即答AI。  
+  - **主要機能**: 社内ナレッジ検索と自然言語回答、Slack/チャット連携、問い合わせログの可視化、NotionやGoogle Workspace等との外部連携（MCP対応）。  
+  - **導入対象**: 情報システム部門・管理部門・コールセンター・バックオフィスなど、問い合わせ対応が多い部門。  
+  - **効果指標(例)**: 一次問い合わせ対応時間の短縮率、問い合わせ件数削減率（最大80％想定）、従業員満足度や自己解決率の向上。  
+
+- [Workmate（ワークメイト）ai 詳細](https://queue-tech.jp/product/workmate): 従業員側・企業側のメリットや導入後の業務変化を整理し、問い合わせ体験全体の改善像をストーリーベースで紹介する詳細説明ページ。  
+
+## ソリューション別（業界/部門）
+
+### 製造・工場
+
+- [【製造現場の責任者・工場長の方へ】在庫ミス・納期遅れにサヨナラするAI活用法とは？](https://queue-tech.jp/news/manufacturing-ai-inventory-planning): 生産計画・在庫管理をAIで最適化し、納期遅延や過剰在庫を減らす製造業向けソリューションを具体的な業務フローで解説。 `date: 2025-08-09` `tags: 製造業, 在庫管理, 需要予測`  
+- [「まだエクセルで在庫管理してるんですか？」 AIで“在庫地獄”から脱出した工場の話、聞きますか？](https://queue-tech.jp/news/automotive-ai-inventory-management): エクセル中心の在庫管理からAI活用に移行し、工場の在庫精度と現場負担を改善した事例をストーリー形式で紹介。 `date: 2025-08-09` `tags: 製造業, 在庫最適化, 現場改善`  
+
+### 小売・EC
+
+- [「在庫の神様かと思ったらAIだった件」](https://queue-tech.jp/news/retail-ai-inventory-optimization): 売れ筋・死に筋の自動判定や発注最適化により、小売店舗の在庫回転率と欠品率を同時に改善するAIソリューション。 `date: 2025-08-09` `tags: 小売, 在庫最適化, 需要予測`  
+- [「発注、なんとなくで決めてませんか？」──小売現場の“勘と経験”から卒業する新しい選択肢](https://queue-tech.jp/news/retail-ai-workflow-optimization): 発注・棚卸・売場づくりをAIで可視化し、属人化したノウハウを標準化する小売現場向けワークフロー最適化事例。 `date: 2025-08-09` `tags: 小売, 業務改善, DX`  
+- [「棚卸に8時間→2時間！？」──AI導入で変わる“無駄だらけ”の小売業務](https://queue-tech.jp/news/retail-ai-inventory-ordering): 棚卸作業や発注判断をAIで支援し、業務時間削減と在庫精度向上の両立を目指す小売業向けソリューション。 `date: 2025-08-09` `tags: 小売, 在庫管理, 業務効率化`  
+
+### 不動産
+
+- [内見5時間→5分！地獄の物件案内がAIで激変した話](https://queue-tech.jp/news/real-estate-ai-sales-innovation): 内見候補の自動抽出や要望マッチングにより、不動産営業の提案準備時間を大幅短縮した営業DX事例。 `date: 2025-08-09` `tags: 不動産, 営業DX, レコメンド`  
+- [【不動産営業担当者へ】─AIで“物件提案の精度と成約率”を同時に上げる営業支援DX](https://queue-tech.jp/news/real-estate-ai-recommendation): 顧客属性と行動履歴をもとに最適物件をレコメンドし、提案精度と成約率を高める不動産向けAI活用を解説。 `date: 2025-08-09` `tags: 不動産, レコメンド, 成約率向上`  
+- [「物件提案に90分→10分！？」──AIが変える“不動産営業のスピードと質”](https://queue-tech.jp/news/real-estate-ai-proposal-support): 資料作成や物件比較を自動化し、不動産営業の提案スピードと顧客体験を同時に高めるソリューションを紹介。 `date: 2025-08-09` `tags: 不動産, 提案自動化, 営業効率`  
+
+### 保険
+
+- [【保険営業担当者へ】──AIで“保険提案の精度と契約率”を高める営業支援DX](https://queue-tech.jp/news/insurance-ai-sales-assist): 顧客ヒアリング内容からニーズを自動整理し、最適な保険プラン提案を支援する保険営業向けAIソリューション。 `date: 2025-08-09` `tags: 保険, 営業支援, 契約率向上`  
+- [そのプラン、古くないですか？―AI未導入で“提案ミス”が起きる時代](https://queue-tech.jp/news/insurance-ai-recommendation): AI未活用による提案ミスや機会損失のリスクを整理し、レコメンドエンジン導入の必要性を解説する保険業界向け記事。 `date: 2025-08-09` `tags: 保険, レコメンド, 提案品質`  
+
+### 飲食・サービス
+
+- [飲食業界の仕入れミスをゼロへ導く、AIによる在庫最適化ソリューション](https://queue-tech.jp/news/foodservice-ai-inventory-forecast): 需要予測と仕入れ最適化を組み合わせ、飲食店の食材ロス削減と品切れ防止を両立するAI活用事例。 `date: 2025-08-09` `tags: 飲食業, 在庫最適化, 需要予測`  
+
+### 通信・携帯販売
+
+- [「説明に時間かかりすぎ…」その悩み、AIで解決できる時代です──携帯販売の現場に“ちょうどいい仕組み”を](https://queue-tech.jp/news/mobile-shop-ai-operations): プラン説明やオプション案内をAIで整理し、携帯ショップの接客時間短縮と顧客満足度向上を実現するソリューション。 `date: 2025-08-09` `tags: 通信, 接客DX, 業務効率化`  
+- [【携帯営業担当者へ】──AIで“スマホプラン提案の成約率と顧客満足”を同時に上げる営業DX](https://queue-tech.jp/news/telecom-ai-sales-support): 顧客利用状況データをもとに最適プランを提示し、提案の納得感と成約率を高める携帯営業向けAI活用。 `date: 2025-08-09` `tags: 通信, 営業DX, 提案最適化`  
+
+### 介護・医療
+
+- [介護現場で“AI活用”を成功させる実践ガイド｜業務効率化・人手不足解消の最新事例と始め方](https://queue-tech.jp/news/nursing-care-ai-implementation): 介護記録やシフト管理へのAI適用例を示し、人手不足解消と業務負荷軽減を両立する導入ステップを解説。 `date: 2025-08-09` `tags: 介護, AI導入, 業務効率化`  
+
+## 事例・レポート
+
+- [導入事例 | Queue株式会社](https://queue-tech.jp/case-studies): 複数業界のAI導入事例を一覧化し、課題・施策・成果の概要を俯瞰できる導入事例トップ。  
+- [DXとは？バズワードで終わらせないために、まず押さえるべき本質](https://queue-tech.jp/news/dx-small-business-poc): 中小企業のDX推進におけるよくあるつまずきと、PoC設計から本番運用までのステップを整理した解説記事。 `date: 2025-08-20` `tags: DX, 中小企業, PoC`  
+- [AI受託開発とは？ゼロから始める中小企業のための完全ガイド【導入事例つき】](https://queue-tech.jp/news/ai-custom-development-benefits): AI受託開発の進め方・体制・費用感と、実際の活用事例をまとめた包括的な導入ガイド。 `date: 2025-08-09` `tags: AI受託開発, 中小企業, 導入ガイド`  
+- [AI受託開発とは？初回面談で“完成形”が見えるQueue式AI導入ガイド【成功事例つき】](https://queue-tech.jp/news/ai-contract-development-features): 初回面談でプロトタイプ像を共有するQueue独自の進め方と、成功事例から学べるプロジェクト設計のポイントを解説。 `date: 2025-08-09` `tags: AI受託開発, プロジェクト設計`  
+- [AI導入で失敗する企業の5つの共通点と成功へのロードマップ【2025年最新版】](https://queue-tech.jp/news/ai-implementation-failure-causes): 失敗パターンを整理し、目的設計・データ準備・運用体制構築など成功へのチェックポイントをロードマップ形式で説明。 `date: 2025-08-09` `tags: AI導入, リスク, ロードマップ`  
+
+## 技術・開発
+
+- [RAGとは？ChatGPTが“会社の頭脳”になる技術の正体](https://queue-tech.jp/news/rag-retrieval-augmented-generation): RAGの仕組みと、社内文書・ナレッジをLLMに安全に連携するための技術構成と活用パターンを詳説。 `date: 2025-08-19` `tags: RAG, LLM, ナレッジ検索`  
+- [「MCPってなに？ITが苦手な人でもわかる“モデル・コンテキスト・プロトコル”入門」](https://queue-tech.jp/news/mcpit): MCPの基本概念と、既存SaaSや業務システムをAIエージェントとつなぐ技術的な考え方を非エンジニア向けに解説。 `date: 2025-08-09` `tags: MCP, 連携基盤, エージェント`  
+- [AIってなに？プロンプトって何？超やさしい入門ガイド！](https://queue-tech.jp/news/ai-prompt-introduction): 生成AIとプロンプトの基礎を、非エンジニアでもイメージしやすい例とともに解説する超入門記事。 `date: 2025-08-09` `tags: 生成AI, プロンプト, 入門`  
+- [【初心者向け】AI開発プロジェクトの進め方をわかりやすく解説](https://queue-tech.jp/news/ai-development-trends-2025): 要件定義からPoC、内製化・運用フェーズまで、AI開発プロジェクトの基本プロセスと押さえるべきポイントを整理。 `date: 2025-08-09` `tags: AI開発, プロジェクト管理, 入門`  
+- [なぜ最近“社内GPT”が流行ってるの？→実は○○が理由です](https://queue-tech.jp/news/inhouse-gpt-customization-benefits): 社内GPT導入が注目される背景と、カスタマイズ方法・運用上の注意点を技術と業務の両面から解説。 `date: 2025-08-09` `tags: 社内GPT, カスタマイズ, 運用`  
+
+## セキュリティ・コンプライアンス
+
+- [プライバシーポリシー | Queue株式会社](https://queue-tech.jp/privacy): 取得する個人情報の種類、利用目的、第三者提供、開示請求・問い合わせ窓口など、個人情報保護に関する基本方針を記載。  
+- [利用規約 | Queue株式会社](https://queue-tech.jp/terms): サイト利用条件・禁止事項・知的財産権・免責事項など、サービス利用に関する契約条件を定めた利用規約。  
+- [AI製品・ソリューション | Queue株式会社 - App Exit & Workmate](https://queue-tech.jp/products): App ExitにおけるNDA必須・エスクロー決済・KYC等の安全な取引設計や、TLS1.3と監査ログ管理などのセキュリティ概要を説明。  
+
+## サポート・運用
+
+- [お問い合わせ | Queue株式会社 - AI開発・プロンプトエンジニアリングのご相談](https://queue-tech.jp/contact): プロジェクト相談やサービスに関する問い合わせ窓口で、3営業日以内の返信目安や連絡手段を案内。  
+- [無料相談予約 | Queue株式会社](https://queue-tech.jp/consultation): 要件や興味分野を事前入力し、AI活用や開発パートナー検討の無料相談をオンラインで予約できるフォーム。  
+- [ニュース・ブログ | Queue株式会社](https://queue-tech.jp/news): AI技術動向や業界別ソリューション、導入ノウハウなどを継続的に発信するニュース・ブログ一覧ページ。  
+
+## 法務
+
+- [利用規約 | Queue株式会社](https://queue-tech.jp/terms): サービス利用時の権利義務関係、禁止行為、損害賠償・免責など法的条件をまとめたページ。  
+- [プライバシーポリシー | Queue株式会社](https://queue-tech.jp/privacy): 個人情報の取得・利用・保管・第三者提供および開示請求の手続きに関する詳細なポリシー。  
+
+## ブログ・ナレッジ（年別アーカイブ）
+
+### 2025
+
+- [Canva AIプロンプト活用ガイド｜資料・バナー・提案書を自動生成する具体例まとめ](https://queue-tech.jp/news/canva-aiプロンプト活用ガイド資料バナー提案書を自動生成する具体例まとめ): CanvaのAI機能を使い、資料・バナー・提案書などマーケ資料を自動生成する具体的なプロンプト例と活用パターンを紹介。 `date: 2025-10-16` `tags: Canva, プロンプト, マーケ資料`  
+- [エクセル地獄からの脱出！AIで叶える業務効率化術10選【2025年最新版】](https://queue-tech.jp/news/excel-automation-ai): エクセル中心の手作業業務を洗い出し、生成AI・自動化ツールで置き換える具体的な効率化アイデアを10パターン紹介。 `date: 2025-08-09` `tags: 業務効率化, Excel, 自動化`  
+- [あなたの会社、AI導入すべき？5つの質問で即チェック！](https://queue-tech.jp/news/ai-adoption-checklist): 自社の業務・データ・体制を5つの質問でセルフチェックし、AI導入の適性と優先領域を判断するためのチェックリスト。 `date: 2025-08-09` `tags: AI導入, チェックリスト, 経営`  
+- [AI導入、なぜ遅れてる？なぜ今？どう始める？──日本企業のための超シンプル解説](https://queue-tech.jp/news/japan-ai-adoption-rate-issues): 日本企業のAI導入が進まない要因を整理し、今始めるべき理由と現実的な第一歩をわかりやすく提示。 `date: 2025-08-09` `tags: 日本企業, AI導入, 経営`  
+- [飲食業界の仕入れミスをゼロへ導く、AIによる在庫最適化ソリューション](https://queue-tech.jp/news/foodservice-ai-inventory-forecast): 飲食業での仕入れと在庫管理をAIで最適化し、ロス削減と欠品防止を実現する具体的なアプローチを解説。 `date: 2025-08-09` `tags: 飲食業, 在庫最適化, 需要予測`  
+- [「在庫が合わない」が日常の現場に、AIがもたらす新しい選択肢──自動車業界の“次の在庫管理”とは？](https://queue-tech.jp/news/automotive-ai-inventory-solution): 自動車業界の在庫ずれ問題に対し、AIを活用した需要予測と在庫最適化の新しい運用モデルを提示。 `date: 2025-08-09` `tags: 自動車, 在庫管理, DX`  
+- [「売上も在庫も“勘”任せからの卒業」——AIで変わる小売の未来](https://queue-tech.jp/news/retail-ai-demand-forecast): 需要予測と発注自動化により、小売の売上機会損失と在庫リスクを同時に減らすAI活用の全体像を紹介。 `date: 2025-08-09` `tags: 小売, 需要予測, 発注最適化`  
+- [「この物件、刺さるかも」をAIが先に教えてくれる時代へ](https://queue-tech.jp/news/real-estate-ai-recommendation-engine): 顧客興味を先読みするレコメンドエンジンで、不動産営業の提案効率と成約可能性を高める仕組みを解説。 `date: 2025-08-09` `tags: 不動産, レコメンド, 営業効率`  
+- [テンプレ提案禁止！AIにツッコまれた営業チームの再生物語](https://queue-tech.jp/news/insurance-ai-sales-custom-proposals): テンプレ提案中心だった保険営業が、AIを活用して顧客ごとの最適提案へシフトした変革ストーリー。 `date: 2025-08-09` `tags: 保険, 営業改革, パーソナライズ`  
+- [「その提案、時代遅れかも？」──AI未導入がもたらす“機会損失”という現実【携帯販売編】](https://queue-tech.jp/news/telecom-ai-plan-support): 通信プラン提案にAIを活用しない場合の機会損失を整理し、AI導入による改善イメージを携帯販売の現場視点で紹介。 `date: 2025-08-09` `tags: 通信, 営業DX, 提案最適化`  
+
+## FAQ（抽出用）
+
+Q: Queue株式会社はどのような会社ですか？  
+A: AI駆動開発とDX支援、自社AI製品開発を行う日本のテクノロジー企業で、LLM活用を軸にビジネス課題の解決を支援します。→ https://queue-tech.jp/company  
+
+Q: どのようなサービスを提供していますか？  
+A: Web受託開発やAIコンサルティング、AI受託開発、AI顧問、SESなど、企画から実装・運用まで一貫した技術支援サービスを提供しています。→ https://queue-tech.jp/services  
+
+Q: Workmate（ワークメイト）は何ができるツールですか？  
+A: 社内マニュアルや議事録を学習し、SlackやWebチャット上で社内問い合わせに24時間即答するナレッジ即答AIとして問い合わせ業務の削減に貢献します。→ https://queue-tech.jp/products/workmate  
+
+Q: App Exit（アップエグジット）はどんなシーンで使いますか？  
+A: 個人・企業が保有するアプリやSaaS、AIツールなどの完成済みプロダクトを、安全かつ公正に売買したいときに活用するマイクロM&A向けプラットフォームです。→ https://queue-tech.jp/products  
+
+Q: 料金プランや費用感はどこで確認できますか？  
+A: 公開の定額料金表はなく、案件内容に応じた個別見積りとなるため、まずはお問い合わせや無料相談フォームから相談する形です。→ https://queue-tech.jp/contact  
+
+Q: 無料相談や初回デモは実施していますか？  
+A: 初回商談でプロトタイプデモを提示する方針があり、無料相談専用フォームから日程調整と事前情報の送付が可能です。→ https://queue-tech.jp/consultation  
+
+Q: 最新のニュースや技術記事はどこで読めますか？  
+A: AI技術動向や業界別ソリューション、導入ノウハウなどはニュース・ブログ一覧ページから最新順に閲覧できます。→ https://queue-tech.jp/news  
+
+Q: 採用情報や募集職種はどこで確認できますか？  
+A: 募集職種・求めるスキル・働き方などの情報は採用情報ページにまとめられており、応募方法も併記されています。→ https://queue-tech.jp/careers  
+
+Q: 個人情報の取り扱い方針を知りたいのですが？  
+A: 取得する情報の範囲・利用目的・第三者提供・開示請求窓口などはプライバシーポリシーページに詳しく記載されています。→ https://queue-tech.jp/privacy  
+
+Q: 企業としての基本情報（所在地や連絡先）はどこに掲載されていますか？  
+A: 所在地・代表者・設立年月・資本金・メールアドレスや電話番号は会社概要ページとお問い合わせページの記載をあわせて確認できます。→ https://queue-tech.jp/company  
+
+## サイトマップ / ロボット
+
+- [sitemap.xml](https://queue-tech.jp/sitemap.xml): 固定ページおよび代表的なニュース記事URLを収録した検索エンジン向けサイトマップ。  
+- [news-sitemap.xml](https://queue-tech.jp/news-sitemap.xml): ニュース・ブログ記事ごとに公開日時とタイトルを含むニュース用サイトマップ。  
+- [ai-sitemap.xml](https://queue-tech.jp/ai-sitemap.xml): 主要ページごとにAI用タイトル・要約・キーワードを付与したLLM向け拡張サイトマップ。  
+- [robots.txt](https://queue-tech.jp/robots.txt): クローラーごとの許可・制限パスやクロール間隔、サイトマップURLを定義したrobots設定ファイル。  
+
+Footer
+
+generated-by: llms-full builder 
+• locale: ja-JP 
+• updated: 2025-11-15
+
+
