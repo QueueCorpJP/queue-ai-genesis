@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Plus, Upload, Image as ImageIcon, MessageCircle, Table, Sparkles } from 'lucide-react';
+import { X, Plus, Upload, Image as ImageIcon, MessageCircle, Table, Sparkles, Edit, Trash2, ArrowUp, ArrowDown, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { generateSlug, calculateReadingTime } from '@/utils/seoUtils';
@@ -83,6 +83,10 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
   const [summaryHistory, setSummaryHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [summaryHistoryIndex, setSummaryHistoryIndex] = useState(-1);
+  
+  // 目次編集用の状態管理
+  const [editingTocIndex, setEditingTocIndex] = useState<number | null>(null);
+  const [editingTocItem, setEditingTocItem] = useState<{ title: string; level: number } | null>(null);
 
   // 目次自動生成機能
   const generateTableOfContents = () => {
@@ -121,6 +125,108 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     } else {
       toast.warning('見出しタグ（H1〜H6）が見つかりませんでした');
     }
+  };
+
+  // 目次項目の編集開始
+  const startEditingTocItem = (index: number) => {
+    const item = formData.table_of_contents[index];
+    setEditingTocIndex(index);
+    setEditingTocItem({ title: item.title, level: item.level });
+  };
+
+  // 目次項目の編集保存
+  const saveTocItem = (index: number) => {
+    if (!editingTocItem || editingTocItem.title.trim() === '') {
+      toast.error('タイトルを入力してください');
+      return;
+    }
+
+    const updatedToc = [...formData.table_of_contents];
+    updatedToc[index] = {
+      ...updatedToc[index],
+      title: editingTocItem.title.trim(),
+      level: editingTocItem.level,
+      anchor: `heading-${index + 1}` // アンカーも更新
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      table_of_contents: updatedToc
+    }));
+
+    setEditingTocIndex(null);
+    setEditingTocItem(null);
+    toast.success('目次項目を更新しました');
+  };
+
+  // 目次項目の編集キャンセル
+  const cancelEditingTocItem = () => {
+    setEditingTocIndex(null);
+    setEditingTocItem(null);
+  };
+
+  // 目次項目の削除
+  const deleteTocItem = (index: number) => {
+    if (!confirm('この目次項目を削除しますか？')) return;
+
+    const updatedToc = formData.table_of_contents.filter((_, i) => i !== index);
+    // 削除後にorderを再設定
+    const reorderedToc = updatedToc.map((item, i) => ({
+      ...item,
+      order: i + 1,
+      anchor: `heading-${i + 1}`
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      table_of_contents: reorderedToc
+    }));
+
+    toast.success('目次項目を削除しました');
+  };
+
+  // 目次項目の順序変更（上に移動）
+  const moveTocItemUp = (index: number) => {
+    if (index === 0) return;
+
+    const updatedToc = [...formData.table_of_contents];
+    [updatedToc[index - 1], updatedToc[index]] = [updatedToc[index], updatedToc[index - 1]];
+    
+    // orderを再設定
+    const reorderedToc = updatedToc.map((item, i) => ({
+      ...item,
+      order: i + 1,
+      anchor: `heading-${i + 1}`
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      table_of_contents: reorderedToc
+    }));
+
+    toast.success('目次項目を上に移動しました');
+  };
+
+  // 目次項目の順序変更（下に移動）
+  const moveTocItemDown = (index: number) => {
+    if (index === formData.table_of_contents.length - 1) return;
+
+    const updatedToc = [...formData.table_of_contents];
+    [updatedToc[index], updatedToc[index + 1]] = [updatedToc[index + 1], updatedToc[index]];
+    
+    // orderを再設定
+    const reorderedToc = updatedToc.map((item, i) => ({
+      ...item,
+      order: i + 1,
+      anchor: `heading-${i + 1}`
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      table_of_contents: reorderedToc
+    }));
+
+    toast.success('目次項目を下に移動しました');
   };
 
   // SEOデータ自動生成機能
@@ -220,6 +326,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         meta_robots: article.meta_robots || 'index, follow'
       });
       setImagePreview(article.image_url || '');
+      // 編集状態をリセット
+      setEditingTocIndex(null);
+      setEditingTocItem(null);
       // 既存記事編集時にハブ/サブ関連データも読み込む
       if (article.page_type === 'hub') {
         fetchSubPages(article.id);
@@ -262,6 +371,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         meta_robots: 'index, follow'
       });
       setImagePreview('');
+      // 編集状態をリセット
+      setEditingTocIndex(null);
+      setEditingTocItem(null);
     }
   }, [article]);
 
@@ -1288,20 +1400,140 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         
         {formData.table_of_contents && formData.table_of_contents.length > 0 && (
           <div className="space-y-2">
-            <Label>目次プレビュー</Label>
-            <div className="bg-white border rounded-md p-3 max-h-32 overflow-y-auto">
-              <ol className="space-y-1 text-sm">
+            <Label>目次プレビュー（編集可能）</Label>
+            <div className="bg-white border rounded-md p-3 max-h-96 overflow-y-auto">
+              <div className="space-y-2">
                 {formData.table_of_contents.map((item: any, index: number) => (
-                  <li key={index} className={`ml-${(item.level - 1) * 4} flex items-center`}>
-                    <span className="text-blue-600 mr-2">
-                      {formData.toc_style === 'numbered' && `${index + 1}.`}
-                      {formData.toc_style === 'bulleted' && (item.level === 1 ? '●' : item.level === 2 ? '○' : '▪')}
-                    </span>
-                    <span className="text-gray-700">{item.title}</span>
-                  </li>
+                  <div 
+                    key={index} 
+                    className={`flex items-center gap-2 p-2 rounded-md border ${
+                      editingTocIndex === index ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}
+                    style={{ marginLeft: `${(item.level - 1) * 16}px` }}
+                  >
+                    {/* 順序変更ボタン */}
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0"
+                        onClick={() => moveTocItemUp(index)}
+                        disabled={index === 0}
+                        title="上に移動"
+                      >
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0"
+                        onClick={() => moveTocItemDown(index)}
+                        disabled={index === formData.table_of_contents.length - 1}
+                        title="下に移動"
+                      >
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* 見出しレベル表示・編集 */}
+                    <div className="flex items-center gap-2 flex-1">
+                      {editingTocIndex === index ? (
+                        <>
+                          <Select
+                            value={editingTocItem?.level.toString() || '1'}
+                            onValueChange={(value) => setEditingTocItem(prev => prev ? { ...prev, level: parseInt(value) } : null)}
+                          >
+                            <SelectTrigger className="w-20 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">H1</SelectItem>
+                              <SelectItem value="2">H2</SelectItem>
+                              <SelectItem value="3">H3</SelectItem>
+                              <SelectItem value="4">H4</SelectItem>
+                              <SelectItem value="5">H5</SelectItem>
+                              <SelectItem value="6">H6</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={editingTocItem?.title || ''}
+                            onChange={(e) => setEditingTocItem(prev => prev ? { ...prev, title: e.target.value } : null)}
+                            className="flex-1 h-8"
+                            placeholder="見出しタイトル"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                saveTocItem(index);
+                              } else if (e.key === 'Escape') {
+                                cancelEditingTocItem();
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            className="h-8"
+                            onClick={() => saveTocItem(index)}
+                          >
+                            <Save className="h-3 w-3 mr-1" />
+                            保存
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8"
+                            onClick={cancelEditingTocItem}
+                          >
+                            キャンセル
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-blue-600 font-mono text-xs w-8">
+                            {formData.toc_style === 'numbered' && `${index + 1}.`}
+                            {formData.toc_style === 'bulleted' && (item.level === 1 ? '●' : item.level === 2 ? '○' : '▪')}
+                            {formData.toc_style === 'plain' && ''}
+                            {formData.toc_style === 'hierarchical' && `H${item.level}`}
+                          </span>
+                          <span className="text-gray-700 flex-1">{item.title}</span>
+                          <Badge variant="outline" className="text-xs">
+                            H{item.level}
+                          </Badge>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => startEditingTocItem(index)}
+                            title="編集"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => deleteTocItem(index)}
+                            title="削除"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 ))}
-              </ol>
+              </div>
             </div>
+            <p className="text-xs text-gray-500">
+              💡 各項目をクリックして編集できます。順序変更ボタンで並び替えも可能です。
+            </p>
           </div>
         )}
       </div>
