@@ -14,6 +14,7 @@ import { ArticleCTA } from '@/components/ArticleCTA';
 import TableOfContents from '@/components/TableOfContents';
 import readingTimeTracker from '@/utils/readingTimeTracker';
 import { generateArticleSEOData, generateBreadcrumbs } from '@/utils/seoUtils';
+import { getArticleUrlPath, NEWS_BASE_PATH, getFullArticleUrl } from '@/config/urls';
 
 // 目次項目の型定義
 type TableOfContentsItem = {
@@ -276,8 +277,8 @@ const BlogPost: React.FC = () => {
       },
       breadcrumbs: [
         { name: 'ホーム', url: `${window.location.origin}` },
-        { name: 'ブログ', url: `${window.location.origin}/news` },
-        { name: article.title, url: `${window.location.origin}/news/${article.slug || article.id}` }
+        { name: 'ブログ', url: `${window.location.origin}${NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH}` },
+        { name: article.title, url: getFullArticleUrl(article.slug, article.id) }
       ]
     };
   };
@@ -308,7 +309,7 @@ const BlogPost: React.FC = () => {
               お探しの記事は削除されたか、URLが間違っている可能性があります。
             </p>
             <Button asChild>
-              <Link to="/news">ブログ一覧に戻る</Link>
+              <Link to={NEWS_BASE_PATH === '/' ? '/' : NEWS_BASE_PATH}>ブログ一覧に戻る</Link>
             </Button>
           </div>
         </main>
@@ -334,12 +335,12 @@ const BlogPost: React.FC = () => {
               <nav className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500 overflow-x-auto" aria-label="パンくずナビゲーション">
                 <Link to="/" className="hover:text-navy-600 whitespace-nowrap">ホーム</Link>
                 <span className="text-gray-400">/</span>
-                <Link to="/news" className="hover:text-navy-600 whitespace-nowrap">ブログ</Link>
+                <Link to={NEWS_BASE_PATH === '/' ? '/' : NEWS_BASE_PATH} className="hover:text-navy-600 whitespace-nowrap">ブログ</Link>
                 {article.page_type === 'sub' && parentHub && (
                   <>
                     <span className="text-gray-400">/</span>
                     <Link
-                      to={parentHub.slug ? `/${parentHub.slug}` : `/news/id/${parentHub.id}`}
+                      to={parentHub.slug ? `/${parentHub.slug}` : getArticleUrlPath(null, parentHub.id)}
                       className="hover:text-navy-600 whitespace-nowrap"
                     >
                       {parentHub.title}
@@ -360,7 +361,7 @@ const BlogPost: React.FC = () => {
               {article.page_type === 'sub' && parentHub && (
                 <div className="mb-3 sm:mb-4">
                   <Link
-                    to={parentHub.slug ? `/${parentHub.slug}` : `/news/id/${parentHub.id}`}
+                    to={parentHub.slug ? `/${parentHub.slug}` : getArticleUrlPath(null, parentHub.id)}
                     className="inline-flex items-center text-xs sm:text-sm text-navy-700 hover:text-navy-900"
                   >
                     <ArrowLeft className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
@@ -376,7 +377,7 @@ const BlogPost: React.FC = () => {
                 size="sm"
                 className="mb-4 sm:mb-6 bg-white border-gray-200 hover:bg-gray-50"
               >
-                <Link to="/news" className="inline-flex items-center text-xs sm:text-sm">
+                <Link to={NEWS_BASE_PATH === '/' ? '/' : NEWS_BASE_PATH} className="inline-flex items-center text-xs sm:text-sm">
                   <ArrowLeft className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">ブログ一覧に戻る</span>
                   <span className="sm:hidden">戻る</span>
@@ -492,9 +493,7 @@ const BlogPost: React.FC = () => {
                               to={
                                 article.slug && sub.slug
                                   ? `/${article.slug}/${sub.slug}`
-                                  : sub.slug
-                                    ? `/news/${sub.slug}`
-                                    : `/news/id/${sub.id}`
+                                  : getArticleUrlPath(sub.slug, sub.id)
                               }
                               className="block"
                             >

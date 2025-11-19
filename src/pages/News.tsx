@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/pagination';
 import { Calendar, Clock, ArrowRight, Image as ImageIcon, List } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getArticleUrlPath, NEWS_BASE_PATH } from '@/config/urls';
 
 // 目次項目の型定義
 type TableOfContentsItem = {
@@ -77,15 +78,14 @@ const Blog: React.FC = () => {
 
   // 記事URLを生成するヘルパー関数
   const getArticleUrl = (article: BlogArticle) => {
-    // ここでは既存の /news/* ルーティングを維持しつつ、
-    // フロント側では別途 /:hubSlug や /:hubSlug/:slug からもアクセスできるようにしています。
-    return article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    return getArticleUrlPath(article.slug, article.id);
   };
 
   // SEO用のデータを生成
   const generateBlogListSEOData = () => {
     const siteUrl = 'https://queue-tech.jp';
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : `${siteUrl}/news`;
+    const newsPath = NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH;
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : `${siteUrl}${newsPath}`;
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : siteUrl;
     const imageUrl = `${baseUrl}/Queue.png`;
     const description = "Queue株式会社の技術ブログ。AI・機械学習の最新動向、開発事例、技術的な知見など、私たちの経験と学びを共有しています。";
@@ -132,7 +132,7 @@ const Blog: React.FC = () => {
       "inLanguage": "ja-JP",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": `${baseUrl}/news?search={search_term_string}`,
+        "target": `${baseUrl}${newsPath}?search={search_term_string}`,
         "query-input": "required name=search_term_string"
       }
     };

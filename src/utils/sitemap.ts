@@ -1,3 +1,5 @@
+import { getFullArticleUrl, NEWS_BASE_PATH } from '@/config/urls';
+
 interface SitemapUrl {
   url: string;
   lastmod: string;
@@ -29,6 +31,7 @@ interface NewsArticle {
 export const generateSitemap = async (articles: NewsArticle[] = []): Promise<string> => {
   const baseUrl = 'https://queue-tech.jp';
   const urls: SitemapUrl[] = [];
+  const newsPath = NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH;
 
   // Static pages
   const staticPages = [
@@ -38,7 +41,7 @@ export const generateSitemap = async (articles: NewsArticle[] = []): Promise<str
     { path: '/products', changefreq: 'weekly' as const, priority: 0.9 },
   
     { path: '/products/workmate', changefreq: 'monthly' as const, priority: 0.7 },
-    { path: '/news', changefreq: 'daily' as const, priority: 0.8 },
+    { path: newsPath || '/news', changefreq: 'daily' as const, priority: 0.8 },
     { path: '/case-studies', changefreq: 'weekly' as const, priority: 0.7 },
     { path: '/contact', changefreq: 'monthly' as const, priority: 0.6 },
     { path: '/consultation', changefreq: 'monthly' as const, priority: 0.6 },
@@ -65,10 +68,10 @@ export const generateSitemap = async (articles: NewsArticle[] = []): Promise<str
   );
 
   publishedArticles.forEach(article => {
-    // スラッグがある場合はスラッグを使用、なければIDを使用
-    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    // Use configurable URL helper
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
     urls.push({
-      url: `${baseUrl}${urlPath}`,
+      url: articleUrl,
       lastmod: new Date(article.updated_at).toISOString(),
       changefreq: 'monthly',
       priority: 0.6
@@ -145,10 +148,10 @@ export const generateNewsSitemap = async (articles: NewsArticle[] = []): Promise
   );
 
   const newsUrls = publishedArticles.map(article => {
-    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
     return `
   <url>
-    <loc>${baseUrl}${urlPath}</loc>
+    <loc>${articleUrl}</loc>
     <news:news>
       <news:publication>
         <news:name>Queue株式会社</news:name>
@@ -178,21 +181,25 @@ export const generateRSSFeed = async (articles: NewsArticle[] = []): Promise<str
     .sort((a, b) => new Date(b.published_at!).getTime() - new Date(a.published_at!).getTime())
     .slice(0, 20); // Latest 20 articles
 
-  const rssItems = publishedArticles.map(article => `
+  const rssItems = publishedArticles.map(article => {
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
+    return `
     <item>
       <title>${escapeXml(article.title)}</title>
-      <link>${baseUrl}/news/${article.id}</link>
-      <guid>${baseUrl}/news/${article.id}</guid>
+      <link>${articleUrl}</link>
+      <guid>${articleUrl}</guid>
       <pubDate>${new Date(article.published_at!).toUTCString()}</pubDate>
       <author>queue@queue-tech.jp (Queue株式会社)</author>
       <category>AI・テクノロジー</category>
-    </item>`).join('');
+    </item>`;
+  }).join('');
 
+  const newsPath = NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Queue株式会社 ニュース</title>
-    <link>${baseUrl}/news</link>
+    <link>${baseUrl}${newsPath}</link>
     <description>AI技術で企業のDXを加速するQueue株式会社の最新ニュース</description>
     <language>ja</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>

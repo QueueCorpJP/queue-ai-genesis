@@ -1,6 +1,8 @@
 // SEO最適化ユーティリティ関数
 // 検索エンジンクロール最適化のための各種ヘルパー関数
 
+import { getFullArticleUrl, NEWS_BASE_PATH } from '@/config/urls';
+
 export interface ArticleSEOData {
   // 基本情報
   id: string;
@@ -70,9 +72,7 @@ export interface SEOMetaData {
 export const generateArticleSEOData = (article: ArticleSEOData): SEOMetaData => {
   const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
   const defaultImage = `${baseUrl}/Queue.png`;
-  const articleUrl = article.slug 
-    ? `${baseUrl}/news/${article.slug}`
-    : `${baseUrl}/news/${article.id}`;
+  const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
 
   // HTMLタグを除去
   const stripHtml = (html: string): string => {
@@ -289,9 +289,7 @@ export const calculateSEOScore = (article: ArticleSEOData): {
  */
 export const generateSitemapEntry = (article: ArticleSEOData) => {
   const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-  const articleUrl = article.slug 
-    ? `${baseUrl}/news/${article.slug}`
-    : `${baseUrl}/news/${article.id}`;
+  const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
   
   const lastmod = article.updated_at || article.published_at;
   const publishedDate = article.published_at ? new Date(article.published_at) : new Date();
@@ -327,6 +325,7 @@ export const generateSitemapEntry = (article: ArticleSEOData) => {
  */
 export const generateBreadcrumbs = (article: ArticleSEOData) => {
   const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
+  const newsPath = NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH;
   
   return {
     "@context": "https://schema.org",
@@ -342,15 +341,13 @@ export const generateBreadcrumbs = (article: ArticleSEOData) => {
         "@type": "ListItem",
         "position": 2,
         "name": "ブログ",
-        "item": `${baseUrl}/news`
+        "item": `${baseUrl}${newsPath}`
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": article.title,
-        "item": article.slug 
-          ? `${baseUrl}/news/${article.slug}`
-          : `${baseUrl}/news/${article.id}`
+        "item": getFullArticleUrl(article.slug, article.id, baseUrl)
       }
     ]
   };

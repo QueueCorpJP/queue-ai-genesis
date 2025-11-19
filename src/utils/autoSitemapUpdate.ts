@@ -5,6 +5,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { getFullArticleUrl, NEWS_BASE_PATH } from '@/config/urls';
 
 interface Article {
   id: string;
@@ -20,6 +21,7 @@ interface Article {
  */
 export const generateSitemapXML = (articles: Article[]): string => {
   const baseUrl = 'https://queue-tech.jp';
+  const newsPath = NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH;
   
   // 静的ページ
   const staticPages = [
@@ -28,7 +30,7 @@ export const generateSitemapXML = (articles: Article[]): string => {
     { path: '/services', changefreq: 'weekly', priority: 0.9 },
     { path: '/products', changefreq: 'weekly', priority: 0.9 },
     { path: '/products/workmate', changefreq: 'monthly', priority: 0.7 },
-    { path: '/news', changefreq: 'daily', priority: 0.8 },
+    { path: newsPath || '/news', changefreq: 'daily', priority: 0.8 },
     { path: '/case-studies', changefreq: 'weekly', priority: 0.7 },
     { path: '/contact', changefreq: 'monthly', priority: 0.6 },
     { path: '/consultation', changefreq: 'monthly', priority: 0.6 },
@@ -53,10 +55,10 @@ export const generateSitemapXML = (articles: Article[]): string => {
   );
 
   const articleUrls = publishedArticles.map(article => {
-    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
     return `
   <url>
-    <loc>${baseUrl}${urlPath}</loc>
+    <loc>${articleUrl}</loc>
     <lastmod>${new Date(article.updated_at).toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -81,10 +83,10 @@ export const generateNewsSitemapXML = (articles: Article[]): string => {
   );
 
   const newsUrls = publishedArticles.map(article => {
-    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
     return `
   <url>
-    <loc>${baseUrl}${urlPath}</loc>
+    <loc>${articleUrl}</loc>
     <news:news>
       <news:publication>
         <news:name>Queue株式会社</news:name>
