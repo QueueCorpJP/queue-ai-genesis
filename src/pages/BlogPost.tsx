@@ -7,7 +7,7 @@ import { Container } from '@/components/ui/container';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, ExternalLink, ArrowLeft, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ArticleCTA } from '@/components/ArticleCTA';
