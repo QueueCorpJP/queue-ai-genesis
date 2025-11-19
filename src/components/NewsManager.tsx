@@ -10,7 +10,6 @@ import { Search, Edit, Trash2, Eye, Calendar, Filter, Download, Image as ImageIc
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import NewsEditor from './NewsEditor';
-import NewsEditorForm from './NewsEditorForm';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { onArticlePublished, onArticleUnpublished, autoUpdateSitemaps, downloadFile } from '@/utils/autoSitemapUpdate';
 
@@ -42,8 +41,6 @@ const NewsManager: React.FC = () => {
   const [pageTypeFilter, setPageTypeFilter] = useState<'all' | 'normal' | 'hub' | 'sub'>('all');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -204,17 +201,6 @@ const NewsManager: React.FC = () => {
     }
   };
 
-  const handleEdit = (article: NewsArticle) => {
-    setEditingArticle(article);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleEditSave = () => {
-    setIsEditDialogOpen(false);
-    setEditingArticle(null);
-    fetchArticles(); // 記事一覧を再取得
-  };
-
   const getStatusBadge = (status: string) => {
     const variants = {
       draft: 'bg-gray-100 text-gray-800 border-gray-200',
@@ -314,14 +300,19 @@ const NewsManager: React.FC = () => {
                 <Eye className="w-4 h-4 mr-1" />
                 詳細
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleEdit(article)}
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                編集
-              </Button>
+              <NewsEditor
+                article={article}
+                onSave={fetchArticles}
+                trigger={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    編集
+                  </Button>
+                }
+              />
               <Button
                 size="sm"
                 variant="outline"
@@ -538,13 +529,18 @@ const NewsManager: React.FC = () => {
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEdit(article)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
+              <NewsEditor
+                article={article}
+                onSave={fetchArticles}
+                trigger={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                }
+              />
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -694,24 +690,6 @@ const NewsManager: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 編集ダイアログ */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>記事を編集</DialogTitle>
-            <DialogDescription>
-              記事の内容を編集できます。リッチテキストエディターで文字装飾や無料相談リンクの挿入が可能です。
-            </DialogDescription>
-          </DialogHeader>
-          {editingArticle && (
-            <NewsEditorForm 
-              article={editingArticle}
-              onSave={handleEditSave}
-              onCancel={() => setIsEditDialogOpen(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
