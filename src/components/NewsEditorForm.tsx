@@ -44,6 +44,10 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     auto_generate_toc: false,
     toc_style: 'numbered' as 'numbered' | 'bulleted' | 'plain' | 'hierarchical',
     status: 'draft' as 'draft' | 'published' | 'archived',
+    // ハブ構造関連フィールド
+    page_type: 'normal' as 'normal' | 'hub' | 'sub',
+    parent_hub_id: '' as string | null,
+    cluster_sort_order: '' as number | '' | null,
     // SEO関連フィールド
     seo_title: '',
     meta_description: '',
@@ -70,6 +74,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
   const [imagePreview, setImagePreview] = useState<string>('');
   const quillRef = useRef<any>(null);
   const summaryQuillRef = useRef<any>(null);
+  // ハブページ選択用
+  const [hubOptions, setHubOptions] = useState<{ id: string; title: string; slug?: string | null }[]>([]);
+  const [hubSubPages, setHubSubPages] = useState<any[]>([]);
   
   // 元に戻す機能用の履歴管理
   const [contentHistory, setContentHistory] = useState<string[]>([]);
@@ -185,6 +192,12 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         auto_generate_toc: article.auto_generate_toc || false,
         toc_style: article.toc_style || 'numbered',
         status: article.status || 'draft',
+        // ハブ構造関連フィールド（未設定データは既存記事として normal 扱い）
+        page_type: (article.page_type as 'normal' | 'hub' | 'sub') || 'normal',
+        parent_hub_id: article.parent_hub_id || null,
+        cluster_sort_order: typeof article.cluster_sort_order === 'number'
+          ? article.cluster_sort_order
+          : '',
         // SEO関連フィールド
         seo_title: article.seo_title || '',
         meta_description: article.meta_description || '',
@@ -207,6 +220,10 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         meta_robots: article.meta_robots || 'index, follow'
       });
       setImagePreview(article.image_url || '');
+      // 既存記事編集時にハブ/サブ関連データも読み込む
+      if (article.page_type === 'hub') {
+        fetchSubPages(article.id);
+      }
     } else {
       setFormData({
         title: '',
@@ -220,6 +237,9 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         auto_generate_toc: false,
         toc_style: 'numbered',
         status: 'draft',
+        page_type: 'normal',
+        parent_hub_id: null,
+        cluster_sort_order: '',
         // SEO関連フィールド
         seo_title: '',
         meta_description: '',
@@ -244,6 +264,51 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
       setImagePreview('');
     }
   }, [article]);
+
+  // ハブ候補の一覧を取得（ページ種別 = hub の記事）
+  useEffect(() => {
+    const loadHubs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('news_articles')
+          .select('id, title, slug, page_type')
+          .eq('page_type', 'hub')
+          .order('title', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching hub pages:', error);
+          return;
+        }
+
+        setHubOptions(data || []);
+      } catch (err) {
+        console.error('Error loading hub pages:', err);
+      }
+    };
+
+    loadHubs();
+  }, []);
+
+  // 指定ハブの配下ページ一覧取得（ハブ編集時に利用）
+  const fetchSubPages = async (hubId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('news_articles')
+        .select('id, title, slug, status, cluster_sort_order, published_at')
+        .eq('parent_hub_id', hubId)
+        .order('cluster_sort_order', { ascending: true })
+        .order('published_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching sub pages for hub:', error);
+        return;
+      }
+
+      setHubSubPages(data || []);
+    } catch (err) {
+      console.error('Error loading sub pages:', err);
+    }
+  };
 
   // ハンドラー関数を先に定義
   const insertConsultationLink = () => {
@@ -682,6 +747,16 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
         auto_generate_toc: formData.auto_generate_toc || false,
         toc_style: formData.toc_style || 'numbered',
         status: formData.status,
+        // ハブ構造メタデータ
+        page_type: formData.page_type || 'normal',
+        parent_hub_id:
+          formData.page_type === 'sub' && formData.parent_hub_id
+            ? formData.parent_hub_id
+            : null,
+        cluster_sort_order:
+          formData.page_type === 'sub' && formData.cluster_sort_order !== ''
+            ? Number(formData.cluster_sort_order)
+            : null,
         published_at: formData.status === 'published' ? now : null,
         updated_at: now,
         // SEO関連フィールド
@@ -895,6 +970,112 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
           </Select>
         </div>
       </div>
+
+      {/* ハブ構造設定 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="page_type">ページ種別</Label>
+          <Select
+            value={formData.page_type}
+            onValueChange={(value: 'normal' | 'hub' | 'sub') =>
+              setFormData(prev => ({ ...prev, page_type: value }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="ページ種別を選択" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">通常の記事</SelectItem>
+              <SelectItem value="hub">ハブページ</SelectItem>
+              <SelectItem value="sub">ハブ配下のページ</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500">
+            「ハブページ」は特定テーマのまとめページ、「ハブ配下のページ」はそのテーマ内のユースケースや業界別紹介などを想定しています。
+          </p>
+        </div>
+
+        {/* ハブ配下ページの場合のみ: 親ハブ＋並び順 */}
+        {formData.page_type === 'sub' && (
+          <div className="space-y-2">
+            <Label htmlFor="parent_hub_id">親ハブページ</Label>
+            <Select
+              value={formData.parent_hub_id || ''}
+              onValueChange={(value: string) =>
+                setFormData(prev => ({ ...prev, parent_hub_id: value || null }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="親ハブページを選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {hubOptions.length === 0 ? (
+                  <SelectItem value="" disabled>
+                    ハブページがまだ作成されていません
+                  </SelectItem>
+                ) : (
+                  hubOptions.map(hub => (
+                    <SelectItem key={hub.id} value={hub.id}>
+                      {hub.title}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <div className="space-y-1 mt-3">
+              <Label htmlFor="cluster_sort_order">ハブ内の表示順序（任意）</Label>
+              <Input
+                id="cluster_sort_order"
+                type="number"
+                min={1}
+                placeholder="例: 1（小さい番号ほど上に表示されます）"
+                value={formData.cluster_sort_order === '' ? '' : formData.cluster_sort_order}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    cluster_sort_order: e.target.value === '' ? '' : Number(e.target.value),
+                  }))
+                }
+              />
+              <p className="text-xs text-gray-500">
+                未設定の場合は公開日の新しい順に並びます。
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ハブページ編集時: 配下ページの簡易リスト（読み取り専用） */}
+      {formData.page_type === 'hub' && article && (
+        <div className="mt-2 border border-dashed border-navy-100 rounded-lg p-3 bg-navy-50/40">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-navy-800">
+              このハブに紐付いているページ一覧（読み取り専用）
+            </p>
+          </div>
+          {hubSubPages.length === 0 ? (
+            <p className="text-xs text-gray-600">
+              まだこのハブ配下のページは設定されていません。「ページ種別」で「ハブ配下のページ」を選択し、このハブを親として紐付けてください。
+            </p>
+          ) : (
+            <ul className="space-y-1 text-xs text-gray-700">
+              {hubSubPages.map(sub => (
+                <li key={sub.id} className="flex items-center justify-between">
+                  <span className="truncate">
+                    {sub.cluster_sort_order != null && (
+                      <span className="font-mono mr-1">#{sub.cluster_sort_order}</span>
+                    )}
+                    {sub.title}
+                  </span>
+                  <span className="ml-2 text-[11px] text-gray-500 whitespace-nowrap">
+                    {sub.status === 'published' ? '公開' : '下書き'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       
       {/* SEO自動生成ボタン */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

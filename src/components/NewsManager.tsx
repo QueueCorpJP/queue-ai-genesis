@@ -28,6 +28,10 @@ interface NewsArticle {
   status: 'draft' | 'published' | 'archived';
   tags?: string[];
   sort_order?: number;
+  // ハブ構造関連フィールド（オプション）
+  page_type?: 'normal' | 'hub' | 'sub';
+  parent_hub_id?: string | null;
+  cluster_sort_order?: number | null;
 }
 
 const NewsManager: React.FC = () => {
@@ -35,6 +39,7 @@ const NewsManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [pageTypeFilter, setPageTypeFilter] = useState<'all' | 'normal' | 'hub' | 'sub'>('all');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -237,8 +242,11 @@ const NewsManager: React.FC = () => {
       article.content.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || article.status === statusFilter;
+    const matchesPageType =
+      pageTypeFilter === 'all' ||
+      (article.page_type || 'normal') === pageTypeFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesPageType;
   });
 
   const exportToCSV = () => {
@@ -369,7 +377,7 @@ const NewsManager: React.FC = () => {
 
             {/* Filters */}
             <div className={`${mobileFiltersOpen || !isMobile ? 'block' : 'hidden'} md:block`}>
-              <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -381,24 +389,40 @@ const NewsManager: React.FC = () => {
                 />
               </div>
             </div>
-                <div className="flex gap-2">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">すべて</SelectItem>
-                <SelectItem value="draft">下書き</SelectItem>
-                <SelectItem value="published">公開</SelectItem>
-                <SelectItem value="archived">アーカイブ</SelectItem>
-              </SelectContent>
-            </Select>
-                  <Button onClick={exportToCSV} variant="outline" size="icon">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  <Button onClick={generateSitemapFiles} variant="outline" size="icon" title="サイトマップ生成">
-                    <Globe className="h-4 w-4" />
-                  </Button>
+                <div className="flex flex-col md:flex-row gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full md:w-40">
+                      <SelectValue placeholder="ステータス" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      <SelectItem value="draft">下書き</SelectItem>
+                      <SelectItem value="published">公開</SelectItem>
+                      <SelectItem value="archived">アーカイブ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={pageTypeFilter}
+                    onValueChange={(value: 'all' | 'normal' | 'hub' | 'sub') => setPageTypeFilter(value)}
+                  >
+                    <SelectTrigger className="w-full md:w-44">
+                      <SelectValue placeholder="ページ種別" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべての種別</SelectItem>
+                      <SelectItem value="normal">通常の記事</SelectItem>
+                      <SelectItem value="hub">ハブページ</SelectItem>
+                      <SelectItem value="sub">ハブ配下のページ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex gap-2 md:ml-2">
+                    <Button onClick={exportToCSV} variant="outline" size="icon">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={generateSitemapFiles} variant="outline" size="icon" title="サイトマップ生成">
+                      <Globe className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

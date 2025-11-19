@@ -44,6 +44,10 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
     auto_generate_toc: false,
     toc_style: 'numbered' as 'numbered' | 'bulleted' | 'plain' | 'hierarchical',
     status: 'draft' as 'draft' | 'published' | 'archived',
+    // ハブ構造関連フィールド
+    page_type: 'normal' as 'normal' | 'hub' | 'sub',
+    parent_hub_id: '' as string | null,
+    cluster_sort_order: '' as number | '' | null,
     // SEO関連フィールド
     seo_title: '',
     meta_description: '',
@@ -69,6 +73,8 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
   const [imagePreview, setImagePreview] = useState<string>('');
   const quillRef = useRef<any>(null);
   const summaryQuillRef = useRef<any>(null);
+  // ハブページ一覧（親ハブ選択用）
+  const [hubOptions, setHubOptions] = useState<{ id: string; title: string; slug?: string | null }[]>([]);
 
   // 元に戻す・やり直し機能（useMemoより前に定義）
   const handleContentUndo = () => {
@@ -243,6 +249,12 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         auto_generate_toc: article.auto_generate_toc || false,
         toc_style: article.toc_style || 'numbered',
         status: article.status || 'draft',
+        // ハブ構造
+        page_type: (article.page_type as 'normal' | 'hub' | 'sub') || 'normal',
+        parent_hub_id: article.parent_hub_id || null,
+        cluster_sort_order: typeof article.cluster_sort_order === 'number'
+          ? article.cluster_sort_order
+          : '',
         // SEO関連フィールド
         seo_title: article.seo_title || '',
         meta_description: article.meta_description || '',
@@ -277,6 +289,9 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         auto_generate_toc: false,
         toc_style: 'numbered',
         status: 'draft',
+        page_type: 'normal',
+        parent_hub_id: null,
+        cluster_sort_order: '',
         // SEO関連フィールド
         seo_title: '',
         meta_description: '',
@@ -300,6 +315,30 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
       setImagePreview('');
     }
   }, [article]);
+
+  // ハブ候補の一覧を取得（ページ種別 = hub の記事）
+  useEffect(() => {
+    const loadHubs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('news_articles')
+          .select('id, title, slug, page_type')
+          .eq('page_type', 'hub')
+          .order('title', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching hub pages:', error);
+          return;
+        }
+
+        setHubOptions(data || []);
+      } catch (err) {
+        console.error('Error loading hub pages:', err);
+      }
+    };
+
+    loadHubs();
+  }, []);
 
   // Quillエディタの初期化後にカスタムボタンを追加
   useEffect(() => {
@@ -381,7 +420,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
 
       const now = new Date().toISOString();
       
-      // 基本的な記事データのみをデータベースに送信（SEOフィールドは自動生成に任せる）
+      // 記事データ（ハブ構造メタデータ含む）をデータベースに送信
       const articleData = {
         title: formData.title,
         summary: formData.summary,
@@ -395,7 +434,16 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         toc_style: formData.toc_style || 'numbered',
         status: formData.status,
         published_at: formData.status === 'published' ? now : null,
-        updated_at: now
+        updated_at: now,
+        page_type: formData.page_type || 'normal',
+        parent_hub_id:
+          formData.page_type === 'sub' && formData.parent_hub_id
+            ? formData.parent_hub_id
+            : null,
+        cluster_sort_order:
+          formData.page_type === 'sub' && formData.cluster_sort_order !== ''
+            ? Number(formData.cluster_sort_order)
+            : null
       };
 
       if (article) {
@@ -664,6 +712,79 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
                 style={{ minHeight: '120px' }}
               />
             </div>
+          </div>
+
+          {/* ハブ構造設定 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="page_type">ページ種別</Label>
+              <Select
+                value={formData.page_type}
+                onValueChange={(value: 'normal' | 'hub' | 'sub') =>
+                  setFormData(prev => ({ ...prev, page_type: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="ページ種別を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">通常の記事</SelectItem>
+                  <SelectItem value="hub">ハブページ</SelectItem>
+                  <SelectItem value="sub">ハブ配下のページ</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                「ハブページ」は特定テーマのまとめページ、「ハブ配下のページ」はそのテーマ内のユースケースや業界別紹介などを想定しています。
+              </p>
+            </div>
+
+            {formData.page_type === 'sub' && (
+              <div className="space-y-2">
+                <Label htmlFor="parent_hub_id">親ハブページ</Label>
+                <Select
+                  value={formData.parent_hub_id || ''}
+                  onValueChange={(value: string) =>
+                    setFormData(prev => ({ ...prev, parent_hub_id: value || null }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="親ハブページを選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hubOptions.length === 0 ? (
+                      <SelectItem value="" disabled>
+                        ハブページがまだ作成されていません
+                      </SelectItem>
+                    ) : (
+                      hubOptions.map(hub => (
+                        <SelectItem key={hub.id} value={hub.id}>
+                          {hub.title}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <div className="space-y-1 mt-3">
+                  <Label htmlFor="cluster_sort_order">ハブ内の表示順序（任意）</Label>
+                  <Input
+                    id="cluster_sort_order"
+                    type="number"
+                    min={1}
+                    placeholder="例: 1（小さい番号ほど上に表示されます）"
+                    value={formData.cluster_sort_order === '' ? '' : formData.cluster_sort_order}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        cluster_sort_order: e.target.value === '' ? '' : Number(e.target.value),
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-gray-500">
+                    未設定の場合は公開日の新しい順に並びます。
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 画像アップロード */}

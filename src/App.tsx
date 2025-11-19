@@ -65,6 +65,14 @@ const App = () => (
               <Route path="/news" element={<Blog />} />
               <Route path="/news/:slug" element={<BlogPost />} />
               <Route path="/news/id/:id" element={<BlogPost />} />
+              {/* ハブページおよびハブ配下ページ用のクリーンURL
+                  例:
+                    - /ai-jutaku                （page_type = 'hub' の記事）
+                    - /ai-jutaku/blog-automation（page_type = 'sub' で親ハブが ai-jutaku の記事）
+                  既存の /news/* ルーティングは維持しつつ、
+                  追加の入り口として扱うためSEO上のカノニカルURLは従来通り /news/... を利用します。 */}
+              <Route path="/:hubSlug/:slug" element={<BlogPost />} />
+              <Route path="/:slug" element={<BlogPost />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/admin" element={<Admin />} />

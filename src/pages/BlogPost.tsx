@@ -62,14 +62,20 @@ type BlogArticle = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  // ハブ構造関連フィールド（オプション）
+  page_type?: 'normal' | 'hub' | 'sub' | null;
+  parent_hub_id?: string | null;
+  cluster_sort_order?: number | null;
 };
 
 const BlogPost: React.FC = () => {
-  const { id, slug } = useParams<{ id?: string; slug?: string }>();
+  const { id, slug } = useParams<{ id?: string; slug?: string; hubSlug?: string }>();
   const navigate = useNavigate();
   const [article, setArticle] = useState<BlogArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [hubSubPages, setHubSubPages] = useState<BlogArticle[]>([]);
+  const [parentHub, setParentHub] = useState<BlogArticle | null>(null);
 
   useEffect(() => {
     if (!id && !slug) {
@@ -114,6 +120,15 @@ const BlogPost: React.FC = () => {
       }
 
       setArticle(data);
+
+      // ハブページの場合は配下ページ一覧を取得
+      if (data.page_type === 'hub') {
+        fetchSubPages(data.id);
+      }
+      // ハブ配下ページの場合は親ハブ情報を取得
+      if (data.page_type === 'sub' && data.parent_hub_id) {
+        fetchParentHub(data.parent_hub_id);
+      }
       
       // 閲覧時間トラッキング開始
       await readingTimeTracker.startTracking(data.id);
@@ -126,6 +141,49 @@ const BlogPost: React.FC = () => {
       setNotFound(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ハブページ用: 配下のサブページ一覧を取得
+  const fetchSubPages = async (hubId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('news_articles')
+        .select('*')
+        .eq('status', 'published')
+        .eq('parent_hub_id', hubId)
+        .order('cluster_sort_order', { ascending: true })
+        .order('published_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching sub pages for hub:', error);
+        return;
+      }
+
+      setHubSubPages((data || []) as BlogArticle[]);
+    } catch (err) {
+      console.error('Error loading sub pages:', err);
+    }
+  };
+
+  // サブページ用: 親ハブ情報を取得
+  const fetchParentHub = async (hubId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('news_articles')
+        .select('*')
+        .eq('id', hubId)
+        .eq('status', 'published')
+        .single();
+
+      if (error) {
+        console.error('Error fetching parent hub:', error);
+        return;
+      }
+
+      setParentHub(data as BlogArticle);
+    } catch (err) {
+      console.error('Error loading parent hub:', err);
     }
   };
 
@@ -277,6 +335,17 @@ const BlogPost: React.FC = () => {
                 <Link to="/" className="hover:text-navy-600 whitespace-nowrap">ホーム</Link>
                 <span className="text-gray-400">/</span>
                 <Link to="/news" className="hover:text-navy-600 whitespace-nowrap">ブログ</Link>
+                {article.page_type === 'sub' && parentHub && (
+                  <>
+                    <span className="text-gray-400">/</span>
+                    <Link
+                      to={parentHub.slug ? `/${parentHub.slug}` : `/news/id/${parentHub.id}`}
+                      className="hover:text-navy-600 whitespace-nowrap"
+                    >
+                      {parentHub.title}
+                    </Link>
+                  </>
+                )}
                 <span className="text-gray-400">/</span>
                 <span className="text-gray-900 truncate min-w-0">{article.title}</span>
               </nav>
@@ -287,6 +356,19 @@ const BlogPost: React.FC = () => {
         <section className="py-4 sm:py-6 md:py-8 lg:py-12 relative">
           <Container>
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* サブページ用: ハブページへの小さな戻りリンク */}
+              {article.page_type === 'sub' && parentHub && (
+                <div className="mb-3 sm:mb-4">
+                  <Link
+                    to={parentHub.slug ? `/${parentHub.slug}` : `/news/id/${parentHub.id}`}
+                    className="inline-flex items-center text-xs sm:text-sm text-navy-700 hover:text-navy-900"
+                  >
+                    <ArrowLeft className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>{parentHub.title} のハブページに戻る</span>
+                  </Link>
+                </div>
+              )}
+
               {/* Back Button */}
               <Button
                 asChild
@@ -366,6 +448,57 @@ const BlogPost: React.FC = () => {
                         dangerouslySetInnerHTML={{ __html: article.summary }}
                       />
                     </div>
+                  )}
+
+                  {/* ハブページ用: 関連ページ一覧（クラスターインデックス） */}
+                  {article.page_type === 'hub' && hubSubPages.length > 0 && (
+                    <section className="mt-2 sm:mt-4">
+                      <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-3">
+                        このテーマに関連するページ
+                      </h2>
+                      <p className="text-sm text-gray-600 mb-3">
+                        ハブページに紐付けられた関連コンテンツです。ユースケース別・業界別・サービス紹介などをまとめて閲覧できます。
+                      </p>
+                      <div className="space-y-3 sm:space-y-4">
+                        {hubSubPages.map(sub => (
+                          <div
+                            key={sub.id}
+                            className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50 hover:bg-white transition-colors"
+                          >
+                            <Link
+                              to={
+                                article.slug && sub.slug
+                                  ? `/${article.slug}/${sub.slug}`
+                                  : sub.slug
+                                    ? `/news/${sub.slug}`
+                                    : `/news/id/${sub.id}`
+                              }
+                              className="block"
+                            >
+                              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">
+                                {sub.title}
+                              </h3>
+                              {sub.summary && (
+                                <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">
+                                  {stripHtmlTags(sub.summary)}
+                                </p>
+                              )}
+                              <div className="mt-2 flex items-center justify-between text-[11px] sm:text-xs text-gray-500">
+                                <span>
+                                  {sub.published_at
+                                    ? new Date(sub.published_at).toLocaleDateString('ja-JP')
+                                    : ''}
+                                </span>
+                                <span className="inline-flex items-center text-navy-700">
+                                  詳しく見る
+                                  <ArrowRight className="ml-1 h-3 w-3" />
+                                </span>
+                              </div>
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
                   )}
                 </header>
 

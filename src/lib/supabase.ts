@@ -231,6 +231,9 @@ export interface Database {
           table_of_contents: any[] | null
           auto_generate_toc: boolean
           toc_style: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
+          page_type?: 'normal' | 'hub' | 'sub' | null
+          parent_hub_id?: string | null
+          cluster_sort_order?: number | null
           status: 'draft' | 'published' | 'archived'
           published_at: string | null
           created_at: string
@@ -248,6 +251,9 @@ export interface Database {
           table_of_contents?: any[] | null
           auto_generate_toc?: boolean
           toc_style?: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
+          page_type?: 'normal' | 'hub' | 'sub' | null
+          parent_hub_id?: string | null
+          cluster_sort_order?: number | null
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           created_at?: string
@@ -265,6 +271,9 @@ export interface Database {
           table_of_contents?: any[] | null
           auto_generate_toc?: boolean
           toc_style?: 'numbered' | 'bulleted' | 'plain' | 'hierarchical'
+          page_type?: 'normal' | 'hub' | 'sub' | null
+          parent_hub_id?: string | null
+          cluster_sort_order?: number | null
           status?: 'draft' | 'published' | 'archived'
           published_at?: string | null
           created_at?: string

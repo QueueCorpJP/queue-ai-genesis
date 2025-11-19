@@ -46,6 +46,10 @@ type BlogArticle = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  // ハブ構造関連フィールド（オプション）
+  page_type?: 'normal' | 'hub' | 'sub' | null;
+  parent_hub_id?: string | null;
+  cluster_sort_order?: number | null;
 };
 
 const ARTICLES_PER_PAGE = 10;
@@ -73,6 +77,8 @@ const Blog: React.FC = () => {
 
   // 記事URLを生成するヘルパー関数
   const getArticleUrl = (article: BlogArticle) => {
+    // ここでは既存の /news/* ルーティングを維持しつつ、
+    // フロント側では別途 /:hubSlug や /:hubSlug/:slug からもアクセスできるようにしています。
     return article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
   };
 

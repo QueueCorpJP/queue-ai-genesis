@@ -3,6 +3,62 @@
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
   
   <url>
+    <loc>https://queue-tech.jp/news/ai-jutaku</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-19T06:36:45.782Z</news:publication_date>
+      <news:title>中小企業向けAI受託開発・AIアプリ開発のご案内</news:title>
+    </news:news>
+    <lastmod>2025-11-19T06:36:45.782Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/inventory-optimization</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-19T06:36:45.782Z</news:publication_date>
+      <news:title>在庫最適化AIによる需要予測と発注自動化</news:title>
+    </news:news>
+    <lastmod>2025-11-19T06:36:45.782Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/internal-gpt</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-19T06:36:45.782Z</news:publication_date>
+      <news:title>社内GPT構築（Internal GPT）</news:title>
+    </news:news>
+    <lastmod>2025-11-19T06:36:45.782Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/news/blog-automation</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-19T06:36:45.782Z</news:publication_date>
+      <news:title>ブログ自動投稿AIエージェント</news:title>
+    </news:news>
+    <lastmod>2025-11-19T06:36:45.782Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://queue-tech.jp/news/canva-aiプロンプト活用ガイド資料バナー提案書を自動生成する具体例まとめ</loc>
     <news:news>
       <news:publication>
