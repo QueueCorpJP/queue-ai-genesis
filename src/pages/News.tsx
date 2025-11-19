@@ -209,6 +209,18 @@ const Blog: React.FC = () => {
       : cleanSummary;
   };
 
+  // ハブページと通常記事を分類
+  const hubArticles = articles.filter((article) => article.page_type === 'hub');
+  const normalArticles = articles.filter((article) => article.page_type !== 'hub');
+
+  // カード上部のバッジ文言を記事種別ごとに変更
+  const getArticleBadgeLabel = (article: BlogArticle) => {
+    if (article.page_type === 'sub') {
+      return '関連コンテンツ';
+    }
+    return 'ブログ';
+  };
+
   const seoData = generateBlogListSEOData();
 
   return (
@@ -242,6 +254,98 @@ const Blog: React.FC = () => {
         <section className="py-8 md:py-16">
           <Container>
             <div className="max-w-7xl mx-auto">
+              {/* Hub Articles Highlight Section */}
+              {!loading && hubArticles.length > 0 && (
+                <div className="mb-10 md:mb-12">
+                  <div className="flex items-baseline justify-between mb-3 md:mb-4">
+                    <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+                      特集・ハブページ
+                    </h2>
+                    <p className="text-xs md:text-sm text-gray-500">
+                      テーマごとのハブページから関連コンテンツをまとめて閲覧できます。
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 md:space-y-5">
+                    {hubArticles.map((hub) => (
+                      <Card
+                        key={hub.id}
+                        className="border border-amber-100 bg-gradient-to-r from-amber-50 via-white to-navy-50/40 shadow-sm hover:shadow-md transition-shadow duration-300"
+                      >
+                        <CardContent className="p-4 md:p-6">
+                          <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+                            {/* サムネイル（任意） */}
+                            {hub.image_url && (
+                              <div className="w-full md:w-44 h-40 md:h-32 rounded-lg overflow-hidden bg-navy-50 flex-shrink-0">
+                                <img
+                                  src={hub.image_url}
+                                  alt={hub.title}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <Badge className="bg-amber-500 text-white text-xs px-2 py-1 shadow-sm">
+                                  ハブページ
+                                </Badge>
+                                <span className="text-[11px] md:text-xs text-amber-800">
+                                  特定テーマのまとめ・入り口となる特集ページ
+                                </span>
+                              </div>
+
+                              <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3 leading-snug">
+                                <Link
+                                  to={getArticleUrl(hub)}
+                                  className="hover:text-navy-700 transition-colors duration-200"
+                                >
+                                  {hub.title}
+                                </Link>
+                              </h2>
+
+                              <p className="text-sm md:text-base text-gray-700 mb-3 md:mb-4 line-clamp-3">
+                                {getSafeSummary(hub.summary, 160)}
+                              </p>
+
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center">
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    <time dateTime={hub.published_at || hub.created_at}>
+                                      {formatDate(hub.published_at || hub.created_at)}
+                                    </time>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    <span>{calculateReadTime(hub.content)}分で読める</span>
+                                  </div>
+                                </div>
+                                <Button
+                                  asChild
+                                  size="sm"
+                                  className="bg-navy-700 hover:bg-navy-600 text-xs h-7 px-3"
+                                >
+                                  <Link to={getArticleUrl(hub)}>
+                                    ハブページを見る
+                                    <ArrowRight className="ml-1 h-3 w-3" />
+                                  </Link>
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {loading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-600 mx-auto"></div>
@@ -253,14 +357,14 @@ const Blog: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  {articles.map((article) => (
+                  {normalArticles.map((article) => (
                     <Card key={article.id} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
                       <CardContent className="p-0">
                         <article className="relative">
                           {/* ブログタグ */}
                           <div className="absolute top-2 right-2 z-10">
                             <Badge className="bg-navy-600 text-white text-xs px-2 py-1 shadow-sm">
-                              ブログ
+                              {getArticleBadgeLabel(article)}
                             </Badge>
                           </div>
 

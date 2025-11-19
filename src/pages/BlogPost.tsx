@@ -388,7 +388,7 @@ const BlogPost: React.FC = () => {
                 {/* Article Header */}
                 <header className="p-4 sm:p-6 md:p-8 border-b border-gray-200">
                   {/* Meta Information */}
-                  <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-4">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3">
                     <div className="flex items-center">
                       <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       <time dateTime={article.published_at || article.created_at} className="whitespace-nowrap">
@@ -404,7 +404,7 @@ const BlogPost: React.FC = () => {
                         {article.tags.slice(0, 3).map((tag) => (
                           <Badge 
                             key={tag} 
-                            variant="outline" 
+                            variant="outline"
                             className="bg-navy-50 text-navy-700 border-navy-200 text-xs px-2 py-1"
                           >
                             {tag}
@@ -418,6 +418,29 @@ const BlogPost: React.FC = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Hub/Sub labels */}
+                  {article.page_type === 'hub' && (
+                    <div className="mb-3 sm:mb-4">
+                      <Badge className="bg-amber-500 text-white text-[11px] sm:text-xs px-2 py-0.5 mr-2">
+                        ハブページ
+                      </Badge>
+                      <span className="text-[11px] sm:text-xs text-amber-800">
+                        このテーマに関する関連コンテンツをまとめた特集ページです。
+                      </span>
+                    </div>
+                  )}
+
+                  {article.page_type === 'sub' && parentHub && (
+                    <div className="mb-3 sm:mb-4">
+                      <Badge className="bg-navy-600 text-white text-[11px] sm:text-xs px-2 py-0.5 mr-2">
+                        関連コンテンツ
+                      </Badge>
+                      <span className="text-[11px] sm:text-xs text-gray-700">
+                        ハブ「{parentHub.title}」に紐づくユースケース・詳細解説ページです。
+                      </span>
+                    </div>
+                  )}
 
                   {/* Title */}
                   <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 sm:mb-6">
