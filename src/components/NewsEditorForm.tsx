@@ -231,7 +231,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
 
   // SEOデータ自動生成機能
   const generateSEOData = () => {
-    const { title, summary, content, tags } = formData;
+    const { title, summary, content, tags, source_url } = formData;
     if (!title.trim()) {
       toast.error('タイトルを入力してからSEOデータを生成してください');
       return;
@@ -252,8 +252,31 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     const metaDescription = cleanSummary || stripHtml(content).substring(0, 150) + '...';
     const finalMetaDescription = metaDescription.length > 160 ? metaDescription.substring(0, 160).trim() + '...' : metaDescription;
     
-    // スラッグ生成
-    const slug = generateSlug(title);
+    // スラッグ生成ロジック
+    // 1) 既にスラッグが入力されている場合はそれを優先
+    // 2) 未設定かつ source_url がある場合は、そのURLの末尾パスから自動生成
+    // 3) それでも未設定ならタイトルから生成（従来の挙動）
+    let slug = (formData.slug || '').trim();
+
+    if (!slug) {
+      // source_url から末尾のパスセグメントを抽出
+      if (source_url) {
+        try {
+          const urlObj = new URL(source_url);
+          const segments = urlObj.pathname.split('/').filter(Boolean);
+          if (segments.length > 0) {
+            slug = segments[segments.length - 1];
+          }
+        } catch (e) {
+          console.warn('Invalid source_url for slug generation:', source_url, e);
+        }
+      }
+
+      // フォールバック: タイトルからスラッグ生成
+      if (!slug) {
+        slug = generateSlug(title);
+      }
+    }
     
     // メタキーワード生成
     const keywords = ['Queue株式会社', 'AI', '人工知能', ...tags].join(', ');
@@ -261,7 +284,7 @@ const NewsEditorForm: React.FC<NewsEditorFormProps> = ({ article, onSave, onCanc
     // 読了時間計算
     const readingTime = calculateReadingTime(content);
     
-    // カノニカルURL生成
+    // カノニカルURL生成（従来どおりパスのみを保存）
     const canonicalUrl = `/news/${slug}`;
 
     setFormData(prev => ({
