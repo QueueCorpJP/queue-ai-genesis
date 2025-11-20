@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Plus, Upload, Image as ImageIcon, ExternalLink, MessageCircle, Table } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { generateSlug } from '@/utils/seoUtils';
 // @ts-ignore - react-quillのタイプ定義が存在しないため
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -420,6 +421,29 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
 
       const now = new Date().toISOString();
       
+      // スラッグ生成ロジック
+      // 1) 出典URLがあれば、その末尾パスセグメントを最優先で使用
+      // 2) 出典URLがない場合は既存の slug を利用
+      // 3) 両方ない場合はタイトルからスラッグを生成
+      let slug: string | null = null;
+
+      if (formData.source_url) {
+        try {
+          const urlObj = new URL(formData.source_url);
+          const segments = urlObj.pathname.split('/').filter(Boolean);
+          if (segments.length > 0) {
+            slug = segments[segments.length - 1];
+          }
+        } catch (e) {
+          console.warn('Invalid source_url for slug generation:', formData.source_url, e);
+        }
+      }
+
+      if (!slug) {
+        const existingSlug = (formData.slug || '').trim();
+        slug = existingSlug || generateSlug(formData.title);
+      }
+      
       // 記事データ（ハブ構造メタデータ含む）をデータベースに送信
       const articleData = {
         title: formData.title,
@@ -432,6 +456,7 @@ const NewsEditor: React.FC<NewsEditorProps> = ({ article, onSave, trigger }) => 
         table_of_contents: formData.table_of_contents || null,
         auto_generate_toc: formData.auto_generate_toc || false,
         toc_style: formData.toc_style || 'numbered',
+        slug,
         status: formData.status,
         published_at: formData.status === 'published' ? now : null,
         updated_at: now,
