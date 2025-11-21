@@ -3,16 +3,72 @@
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
   
   <url>
-    <loc>https://queue-tech.jp/news/ai-jutaku</loc>
+    <loc>https://queue-tech.jp/ai-jutaku/inventory-optimization</loc>
     <news:news>
       <news:publication>
         <news:name>Queue株式会社</news:name>
         <news:language>ja</news:language>
       </news:publication>
-      <news:publication_date>2025-11-19T08:48:10.057Z</news:publication_date>
+      <news:publication_date>2025-11-20T06:51:09.493Z</news:publication_date>
+      <news:title>在庫最適化AIとは？小売・飲食の「廃棄を減らしつつ欠品も防ぐ」発注の仕組み</news:title>
+    </news:news>
+    <lastmod>2025-11-20T06:51:09.493Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/ai-jutaku/real-estate-sales-ai</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-20T03:43:26.242Z</news:publication_date>
+      <news:title>不動産営業支援AIとは？「このお客様に刺さる物件」をAIが先に教えてくれる仕組み</news:title>
+    </news:news>
+    <lastmod>2025-11-20T03:43:26.242Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/ai-jutaku/blog-automation</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-20T03:37:51.968Z</news:publication_date>
+      <news:title>ブログ自動化AIエージェントとは？企画・執筆・入稿まで自動で回す仕組みの作り方</news:title>
+    </news:news>
+    <lastmod>2025-11-20T03:37:51.968Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/ai-jutaku/internal-gpt</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-20T03:09:27.410Z</news:publication_date>
+      <news:title>社内GPT構築サービスとは？マニュアル・規程・FAQを学習した「社内専用ChatGPT」の作り方</news:title>
+    </news:news>
+    <lastmod>2025-11-20T03:09:27.410Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://queue-tech.jp/ai-jutaku</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Queue株式会社</news:name>
+        <news:language>ja</news:language>
+      </news:publication>
+      <news:publication_date>2025-11-19T09:54:16.588Z</news:publication_date>
       <news:title>中小企業向けAI受託開発・AIアプリ開発のご案内</news:title>
     </news:news>
-    <lastmod>2025-11-19T08:48:10.057Z</lastmod>
+    <lastmod>2025-11-19T09:54:16.588Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
