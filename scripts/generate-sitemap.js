@@ -70,14 +70,34 @@ const generateMainSitemap = (articles = []) => {
   </url>`).join('');
 
   // 記事ページのXML
+  // 親ハブスラグ解決用マップ
+  const articleMap = new Map(articles.map(a => [a.id, a]));
+
   const articleUrls = articles.map(article => {
-    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    let urlPath = '';
+    
+    if (article.page_type === 'hub' && article.slug) {
+      urlPath = `/${article.slug}`;
+    } else if (article.page_type === 'sub' && article.parent_hub_id && article.slug) {
+      const parent = articleMap.get(article.parent_hub_id);
+      if (parent && parent.slug) {
+        urlPath = `/${parent.slug}/${article.slug}`;
+      } else {
+        // フォールバック: 親が見つからない場合でも何らかのURLを生成
+        urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+      }
+    } else {
+      urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    }
+
+    const priority = article.page_type === 'hub' ? 0.8 : 0.6;
+
     return `
   <url>
     <loc>${baseUrl}${urlPath}</loc>
     <lastmod>${new Date(article.updated_at).toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>${priority}</priority>
   </url>`;
   }).join('');
 
@@ -91,9 +111,25 @@ const generateMainSitemap = (articles = []) => {
 // ニュースサイトマップ生成
 const generateNewsSitemap = (articles = []) => {
   const baseUrl = 'https://queue-tech.jp';
+  // 親ハブスラグ解決用マップ
+  const articleMap = new Map(articles.map(a => [a.id, a]));
   
   const newsUrls = articles.map(article => {
-    const urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    let urlPath = '';
+    
+    if (article.page_type === 'hub' && article.slug) {
+      urlPath = `/${article.slug}`;
+    } else if (article.page_type === 'sub' && article.parent_hub_id && article.slug) {
+      const parent = articleMap.get(article.parent_hub_id);
+      if (parent && parent.slug) {
+        urlPath = `/${parent.slug}/${article.slug}`;
+      } else {
+        urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+      }
+    } else {
+      urlPath = article.slug ? `/news/${article.slug}` : `/news/id/${article.id}`;
+    }
+
     return `
   <url>
     <loc>${baseUrl}${urlPath}</loc>
@@ -134,7 +170,7 @@ async function generateSitemaps() {
       console.log('📊 記事データ取得中...');
       const { data: articles, error } = await supabase
         .from('news_articles')
-        .select('id, title, slug, updated_at, published_at, status')
+        .select('id, title, slug, updated_at, published_at, status, page_type, parent_hub_id')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
 
@@ -153,7 +189,8 @@ async function generateSitemaps() {
           console.log('📰 取得記事例:', publishedArticles.slice(0, 2).map(a => ({ 
             id: a.id, 
             title: a.title.substring(0, 30) + '...', 
-            slug: a.slug 
+            slug: a.slug,
+            type: a.page_type
           })));
         }
       }

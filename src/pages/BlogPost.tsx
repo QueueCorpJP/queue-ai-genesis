@@ -247,8 +247,13 @@ const BlogPost: React.FC = () => {
 
   // SEOデータ生成（新しいSEOユーティリティを使用）
   const generateSEOData = (article: BlogArticle) => {
-    const seoData = generateArticleSEOData(article);
-    const breadcrumbs = generateBreadcrumbs(article);
+    const articleForSeo = {
+      ...article,
+      parent_hub_slug: parentHub?.slug
+    };
+
+    const seoData = generateArticleSEOData(articleForSeo);
+    const breadcrumbs = generateBreadcrumbs(articleForSeo);
     
     return {
       title: seoData.title,
@@ -268,7 +273,7 @@ const BlogPost: React.FC = () => {
       robots: seoData.robots,
       publishedTime: seoData.publishedTime,
       modifiedTime: seoData.modifiedTime,
-      articleType: seoData.articleType,
+      articleType: seoData.articleType as "article" | "website" | "product" | "service",
       focusKeyword: article.focus_keyword,
       readingTime: article.reading_time_minutes || calculateReadTime(article.content),
       structuredData: {

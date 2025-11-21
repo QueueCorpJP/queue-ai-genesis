@@ -10,6 +10,8 @@ interface ArticleForSitemap {
   updated_at: string;
   published_at: string | null;
   status: 'published' | 'draft' | 'archived';
+  page_type?: 'normal' | 'hub' | 'sub' | null;
+  parent_hub_id?: string | null;
 }
 
 /**
@@ -26,7 +28,7 @@ export const generateSitemapFiles = async (): Promise<{
     // 公開済み記事を取得
     const { data: articles, error } = await supabase
       .from('news_articles')
-      .select('id, title, slug, updated_at, published_at, status')
+      .select('id, title, slug, updated_at, published_at, status, page_type, parent_hub_id')
       .eq('status', 'published')
       .order('created_at', { ascending: false });
 

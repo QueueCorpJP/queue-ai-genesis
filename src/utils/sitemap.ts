@@ -26,12 +26,17 @@ interface NewsArticle {
   updated_at: string;
   published_at: string | null;
   status: 'published' | 'draft' | 'archived';
+  page_type?: 'normal' | 'hub' | 'sub' | null;
+  parent_hub_id?: string | null;
 }
 
 export const generateSitemap = async (articles: NewsArticle[] = []): Promise<string> => {
   const baseUrl = 'https://queue-tech.jp';
   const urls: SitemapUrl[] = [];
   const newsPath = NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH;
+
+  // Create a map for quick lookup of parent hub slugs
+  const articleMap = new Map(articles.map(a => [a.id, a]));
 
   // Static pages
   const staticPages = [
@@ -68,13 +73,22 @@ export const generateSitemap = async (articles: NewsArticle[] = []): Promise<str
   );
 
   publishedArticles.forEach(article => {
+    // Resolve parent hub slug if needed
+    let parentHubSlug = null;
+    if (article.page_type === 'sub' && article.parent_hub_id) {
+      const parent = articleMap.get(article.parent_hub_id);
+      if (parent && parent.slug) {
+        parentHubSlug = parent.slug;
+      }
+    }
+
     // Use configurable URL helper
-    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl, article.page_type, parentHubSlug);
     urls.push({
       url: articleUrl,
       lastmod: new Date(article.updated_at).toISOString(),
       changefreq: 'monthly',
-      priority: 0.6
+      priority: article.page_type === 'hub' ? 0.8 : 0.6
     });
   });
 
@@ -143,12 +157,24 @@ export const generateSitemap = async (articles: NewsArticle[] = []): Promise<str
 export const generateNewsSitemap = async (articles: NewsArticle[] = []): Promise<string> => {
   const baseUrl = 'https://queue-tech.jp';
   
+  // Create a map for quick lookup of parent hub slugs
+  const articleMap = new Map(articles.map(a => [a.id, a]));
+
   const publishedArticles = articles.filter(article => 
     article.status === 'published' && article.published_at
   );
 
   const newsUrls = publishedArticles.map(article => {
-    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
+    // Resolve parent hub slug if needed
+    let parentHubSlug = null;
+    if (article.page_type === 'sub' && article.parent_hub_id) {
+      const parent = articleMap.get(article.parent_hub_id);
+      if (parent && parent.slug) {
+        parentHubSlug = parent.slug;
+      }
+    }
+
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl, article.page_type, parentHubSlug);
     return `
   <url>
     <loc>${articleUrl}</loc>
@@ -176,13 +202,25 @@ export const generateNewsSitemap = async (articles: NewsArticle[] = []): Promise
 export const generateRSSFeed = async (articles: NewsArticle[] = []): Promise<string> => {
   const baseUrl = 'https://queue-tech.jp';
   
+  // Create a map for quick lookup of parent hub slugs
+  const articleMap = new Map(articles.map(a => [a.id, a]));
+
   const publishedArticles = articles
     .filter(article => article.status === 'published' && article.published_at)
     .sort((a, b) => new Date(b.published_at!).getTime() - new Date(a.published_at!).getTime())
     .slice(0, 20); // Latest 20 articles
 
   const rssItems = publishedArticles.map(article => {
-    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
+    // Resolve parent hub slug if needed
+    let parentHubSlug = null;
+    if (article.page_type === 'sub' && article.parent_hub_id) {
+      const parent = articleMap.get(article.parent_hub_id);
+      if (parent && parent.slug) {
+        parentHubSlug = parent.slug;
+      }
+    }
+
+    const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl, article.page_type, parentHubSlug);
     return `
     <item>
       <title>${escapeXml(article.title)}</title>

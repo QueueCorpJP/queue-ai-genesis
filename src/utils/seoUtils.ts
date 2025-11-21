@@ -43,6 +43,8 @@ export interface ArticleSEOData {
   // 従来フィールド
   image_url?: string;
   tags?: string[];
+  page_type?: 'normal' | 'hub' | 'sub' | null;
+  parent_hub_slug?: string | null;
 }
 
 export interface SEOMetaData {
@@ -72,7 +74,7 @@ export interface SEOMetaData {
 export const generateArticleSEOData = (article: ArticleSEOData): SEOMetaData => {
   const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
   const defaultImage = `${baseUrl}/Queue.png`;
-  const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
+  const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl, article.page_type, article.parent_hub_slug);
 
   // HTMLタグを除去
   const stripHtml = (html: string): string => {
@@ -289,7 +291,7 @@ export const calculateSEOScore = (article: ArticleSEOData): {
  */
 export const generateSitemapEntry = (article: ArticleSEOData) => {
   const baseUrl = import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-  const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl);
+  const articleUrl = getFullArticleUrl(article.slug, article.id, baseUrl, article.page_type, article.parent_hub_slug);
   
   const lastmod = article.updated_at || article.published_at;
   const publishedDate = article.published_at ? new Date(article.published_at) : new Date();
@@ -347,7 +349,7 @@ export const generateBreadcrumbs = (article: ArticleSEOData) => {
         "@type": "ListItem",
         "position": 3,
         "name": article.title,
-        "item": getFullArticleUrl(article.slug, article.id, baseUrl)
+        "item": getFullArticleUrl(article.slug, article.id, baseUrl, article.page_type, article.parent_hub_slug)
       }
     ]
   };

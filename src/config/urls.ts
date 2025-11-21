@@ -13,7 +13,17 @@
 export const NEWS_BASE_PATH = import.meta.env.VITE_NEWS_BASE_PATH || '/news';
 
 // Helper function to generate article URL
-export const getArticleUrl = (slug?: string | null, id?: string): string => {
+export const getArticleUrl = (slug?: string | null, id?: string, pageType?: string | null, parentHubSlug?: string | null): string => {
+  // ハブページの場合はルート直下のURLを生成
+  if (pageType === 'hub' && slug) {
+    return `/${slug}`;
+  }
+
+  // サブページの場合は /親ハブ/子スラッグ の形式を生成
+  if (pageType === 'sub' && parentHubSlug && slug) {
+    return `/${parentHubSlug}/${slug}`;
+  }
+
   const basePath = NEWS_BASE_PATH === '/' ? '' : NEWS_BASE_PATH;
   
   if (slug) {
@@ -25,14 +35,14 @@ export const getArticleUrl = (slug?: string | null, id?: string): string => {
 };
 
 // Helper function to generate article URL path (without domain)
-export const getArticleUrlPath = (slug?: string | null, id?: string): string => {
-  return getArticleUrl(slug, id);
+export const getArticleUrlPath = (slug?: string | null, id?: string, pageType?: string | null, parentHubSlug?: string | null): string => {
+  return getArticleUrl(slug, id, pageType, parentHubSlug);
 };
 
 // Helper function to generate full article URL with domain
-export const getFullArticleUrl = (slug?: string | null, id?: string, baseUrl?: string): string => {
+export const getFullArticleUrl = (slug?: string | null, id?: string, baseUrl?: string, pageType?: string | null, parentHubSlug?: string | null): string => {
   const siteUrl = baseUrl || import.meta.env.VITE_SITE_URL || 'https://queue-tech.jp';
-  const path = getArticleUrlPath(slug, id);
+  const path = getArticleUrlPath(slug, id, pageType, parentHubSlug);
   return `${siteUrl}${path}`;
 };
 
